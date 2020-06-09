@@ -3,31 +3,35 @@ import json
 from solar.common.solar_event import Solar_Event
 from solar.solar_database import database_name
 
-def event_exists(solar_event):
-    sol = solar_dict.sol
-    is_present_already = conn.execute("SELECT * FROM hek_events WHERE sol = ?",(sol,))
+solar_connection = None
+
+
+def get_connection():
+    global solar_connection
+    if not solar_connection:
+        solar_connection = sqlite.connect(database_name)
+    return solar_connection
+
+
+def event_exists(connection, solar_event):
+    sol = solar_event.sol
+    is_present_already = connection.execute(
+        "SELECT * FROM hek_events WHERE sol = ?", (sol,)
+    )
     if is_present_already.fetchone():
         return True
     else:
         return False
 
+
 def insert_solar_event(connection, sol_ev):
-    if not event_exists(solar_dict):
-        sol = sol_ev.sol
-        x_min = sol_ev.x_min
-        x_max = sol_ev.x_max
-        y_min = sol_ev.y_min
-        y_max = sol_ev.y_max
-        hgc_x = sol_ev.hgc_x
-        hgc_y = sol_ev.hgc_y
-        start_time = sol_ev.start_time
-        end_time = sol_ev.end_time
+    if not event_exists(connection, sol_ev):
         try:
             connection.execute(
                 """INSERT INTO 
-                hek_events(sol,start_time,end_time,x_min,x_max,y_min,y_max,hgc_x,hgc_y) 
-                VALUES (?,?,?,?,?,?,?,?,?)""",
-                (sol, start_time, end_time, x_min, x_max, y_min, y_max, hgc_x, hgc_y),
+                hek_events 
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?) """,
+                sol_ev,
             )
         except sqlite3.Error as e:
             print(f"Could not insert event: {e}")
@@ -36,15 +40,36 @@ def insert_solar_event(connection, sol_ev):
             connection.commit()
 
 
+def get_event(connection, solar_id):
+    data = connection.execute("SELECT * FROM hek_events WHERE sol = ?", (sol,))
+    return Solar_Event._make(data.fetchone())
+
+def get_all_events(connection):
+    data = connection.execute("SELECT * FROM hek_events WHERE sol = ?", (sol,))
+    events = [Solar_Event._make(x) for x in data.fetchall()]
+    return events
+
 
 def insert_all_events(connection, events):
     for event in events:
         insert_solar_event(connection, event)
 
 
-if __name__=='__main__':
+def update_record(connection, event, field, value):
+        try:
+            connection.execute(
+            """ UPDATE hek_events
+            SET ? =? 
+            WHERE event_id = ?;
+                """,
+            (field, value, event.event_id),)
+        except sqlite3.Error as e:
+            print(f"Could not update event: {event}")
+            connection.rollback()
+        else:
+            connection.commit()
+
+if __name__ == "__main__":
     conn = sqlite3.connect(database_name)
     conn.execute(SCHEMA)
     conn.close()
-
-

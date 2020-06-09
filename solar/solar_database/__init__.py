@@ -6,7 +6,7 @@ database_name  = 'test.db'
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS 
 hek_events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+    event_id TEXT NOT NULL,
     sol TEXT NOT NULL,
     start_time TEXT NOT NULL,
     end_time TEXT NOT NULL,
@@ -15,7 +15,9 @@ hek_events (
     y_min    INTEGER,
     y_max    INTEGER,
     hgc_x REAL,
-    hgc_y REAL
+    hgc_y REAL,
+    instrument TEXT,
+    ssw_job_id TEXT
 );
 """
 
