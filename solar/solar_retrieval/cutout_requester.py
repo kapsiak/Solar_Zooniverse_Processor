@@ -8,13 +8,12 @@ import sys
 import threading
 import concurrent.futures
 from solar.common.solar_event import Solar_Event
+import solar.solar_database.database as db
 
 
 def download_file(from_url, target):
     with open(target, "wb") as f:
         f.write(requests.get(from_url).content)
-
-
 
 
 class Cutout_Request:
@@ -109,6 +108,15 @@ class Cutout_Request:
             self.data_response_url = self.data_response_url_template.format(
                 ssw_id=self.job_id
             )
+            add_to_database(db.get_connection())
+            
+
+        
+    def add_to_database(self, connection):
+        if self.job_id:
+            db.update_record(connection, 'ssw_job_id' , self.job_id)
+        
+
 
     def fetch_data(self):
         if self.job_id == None:

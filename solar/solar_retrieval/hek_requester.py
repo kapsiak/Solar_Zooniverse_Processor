@@ -6,6 +6,7 @@ import json
 from solar.common.solar_event import Solar_Event
 import solar.solar_database.database as sd
 from solar.solar_database import database_name
+import sqlite3
 
 class Hek_Request:
     base_url = "http://www.lmsal.com/hek/her"
@@ -32,9 +33,6 @@ class Hek_Request:
         self.found_count = 0
 
         self.events = []
-
-
-        self.database_connection = None
 
     def request(self):
         try:
@@ -69,6 +67,9 @@ class Hek_Request:
                 f" to {self.start_time.strftime(self.time_format)} "
             )
             self.data_json = json.loads(json.dumps(self.response.json()))
+            with open('temp.json', 'w') as f:
+                f.write(json.dumps(self.data_json))
+
             for event in self.data_json["result"]:
                 self.events.append(
                     Solar_Event(
@@ -81,6 +82,8 @@ class Hek_Request:
                         y_max=event["boundbox_c2ur"],
                         hgc_x=event["hgc_x"],
                         hgc_y=event["hgc_y"],
+                        instrument = event["obs_instrument"],
+                        event_id=event["SOL_standard"]
                     )
                 )
             self.found = len(self.events)
@@ -89,10 +92,11 @@ class Hek_Request:
     def print_to_file(self, filename="data.json"):
         with open(filename, "w") as f:
             print(f"Writing results to {filename}")
-            f.write(json.dumps(self.events, indent=4, sort_keys=True))
+            f.write(json.dumps([e._asdict() for e in all_events], indent=4))
+
     def save_to_database(self,database_name):
         with sqlite3.connect(database_name) as conn:
-            db.insert_all_events(self.database_connection,self.events)
+            sd.insert_all_events(conn,self.events)
             
         
 
@@ -115,7 +119,7 @@ if __name__ == "__main__":
                 f"{date}-01-01T00:00:00",
                 f"{date+1}-01-01T00:00:00",
             )
-            for date in range(2007, 2011)
+            for date in range(2007, 2010)
         ]
         for future in concurrent.futures.as_completed(futures):
             events, found = future.result()
