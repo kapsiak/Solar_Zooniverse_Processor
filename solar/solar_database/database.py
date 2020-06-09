@@ -9,7 +9,7 @@ solar_connection = None
 def get_connection():
     global solar_connection
     if not solar_connection:
-        solar_connection = sqlite.connect(database_name)
+        solar_connection = sqlite3.connect(database_name)
     return solar_connection
 
 
@@ -58,13 +58,13 @@ def insert_all_events(connection, events):
 def update_record(connection, event, field, value):
         try:
             connection.execute(
-            """ UPDATE hek_events
-            SET ? =? 
+            f""" UPDATE hek_events
+            SET {field} = ? 
             WHERE event_id = ?;
                 """,
-            (field, value, event.event_id),)
+            (value, event.event_id))
         except sqlite3.Error as e:
-            print(f"Could not update event: {event}")
+            print(f"Could not update event {event.sol}: {e}")
             connection.rollback()
         else:
             connection.commit()

@@ -108,13 +108,13 @@ class Cutout_Request:
             self.data_response_url = self.data_response_url_template.format(
                 ssw_id=self.job_id
             )
-            add_to_database(db.get_connection())
+            self.add_to_database(db.get_connection())
             
 
         
     def add_to_database(self, connection):
         if self.job_id:
-            db.update_record(connection, 'ssw_job_id' , self.job_id)
+            db.update_record(connection, self.e, 'ssw_job_id' , self.job_id)
         
 
 

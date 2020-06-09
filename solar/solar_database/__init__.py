@@ -21,6 +21,7 @@ hek_events (
 );
 """
 
+print(f'Initializing database {database_name}')
 conn = sqlite3.connect(database_name)
 conn.execute(SCHEMA)
 conn.close()
