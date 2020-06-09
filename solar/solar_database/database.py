@@ -1,12 +1,7 @@
 import sqlite3
 import json
-from Solar.common.solar_event import Solar_Event
-
-
-
-
-
-
+from solar.common.solar_event import Solar_Event
+from solar.solar_database import database_name
 
 def event_exists(solar_event):
     sol = solar_dict.sol

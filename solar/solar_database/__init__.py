@@ -1,6 +1,7 @@
 import sqlite3 
 
-database_name = "test.db"
+
+database_name  = 'test.db'
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS 

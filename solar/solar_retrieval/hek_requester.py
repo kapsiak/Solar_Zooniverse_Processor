@@ -4,7 +4,8 @@ from requests.exceptions import HTTPError
 import concurrent.futures
 import json
 from solar.common.solar_event import Solar_Event
-
+import solar.solar_database.database as sd
+from solar.solar_database import database_name
 
 class Hek_Request:
     base_url = "http://www.lmsal.com/hek/her"
@@ -31,6 +32,9 @@ class Hek_Request:
         self.found_count = 0
 
         self.events = []
+
+
+        self.database_connection = None
 
     def request(self):
         try:
@@ -86,11 +90,17 @@ class Hek_Request:
         with open(filename, "w") as f:
             print(f"Writing results to {filename}")
             f.write(json.dumps(self.events, indent=4, sort_keys=True))
+    def save_to_database(self,database_name):
+        with sqlite3.connect(database_name) as conn:
+            db.insert_all_events(self.database_connection,self.events)
+            
+        
 
 
 def solar_requester_wrapper(start_time, end_time):
     s = Hek_Request(["cj"], start_time, end_time)
     s.request()
+    s.save_to_database('test.db')
     return (s.events, s.found_count)
 
 
