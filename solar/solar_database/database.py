@@ -3,13 +3,11 @@ import json
 from solar.common.solar_event import Solar_Event
 from solar.solar_database import database_name
 
-solar_connection = None
+#solar_connection = None
 
 
 def get_connection():
-    global solar_connection
-    if not solar_connection:
-        solar_connection = sqlite3.connect(database_name)
+    solar_connection = sqlite3.connect(database_name)
     return solar_connection
 
 
@@ -40,12 +38,12 @@ def insert_solar_event(connection, sol_ev):
             connection.commit()
 
 
-def get_event(connection, solar_id):
-    data = connection.execute("SELECT * FROM hek_events WHERE sol = ?", (sol,))
+def get_event(connection, event_id):
+    data = connection.execute("SELECT * FROM hek_events WHERE event_id = ?", (event_id,))
     return Solar_Event._make(data.fetchone())
 
 def get_all_events(connection):
-    data = connection.execute("SELECT * FROM hek_events WHERE sol = ?", (sol,))
+    data = connection.execute("SELECT * FROM hek_event")
     events = [Solar_Event._make(x) for x in data.fetchall()]
     return events
 
