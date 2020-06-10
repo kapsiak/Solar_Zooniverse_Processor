@@ -43,7 +43,7 @@ def get_event(connection, event_id):
     return Solar_Event._make(data.fetchone())
 
 def get_all_events(connection):
-    data = connection.execute("SELECT * FROM hek_event")
+    data = connection.execute("SELECT * FROM hek_events")
     events = [Solar_Event._make(x) for x in data.fetchall()]
     return events
 
