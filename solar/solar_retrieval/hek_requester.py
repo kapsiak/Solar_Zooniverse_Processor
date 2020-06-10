@@ -13,7 +13,7 @@ class Hek_Request:
     time_format = "%Y-%m-%dT%H:%M:%S"
 
     def __init__(
-        self, event_types, start_time, end_time, x1=-1200, x2=1200, y1=-1200, y2=1200
+        self, start_time, end_time, event_types=['cj'], x1=-1200, x2=1200, y1=-1200, y2=1200
     ):
         self.event_types = event_types
         self.query_type = 2
@@ -94,9 +94,8 @@ class Hek_Request:
             print(f"Writing results to {filename}")
             f.write(json.dumps([e._asdict() for e in all_events], indent=4))
 
-    def save_to_database(self,database_name):
-        with sqlite3.connect(database_name) as conn:
-            sd.insert_all_events(conn,self.events)
+    def save_to_database(self,connection):
+        sd.insert_all_events(connection,self.events)
             
         
 
