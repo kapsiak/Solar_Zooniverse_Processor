@@ -17,7 +17,7 @@ def get_ssw_from_database(connection,event_id):
     if ret:
         return ret[0]
     else:
-        return False
+        return None
 
 
 def download_file(from_url, target):
@@ -153,7 +153,7 @@ class Cutout_Request:
                 data_acquired = True
             else:
                 print("Data not available") 
-            time.sleep(self.delay_time)
+                time.sleep(self.delay_time)
             print(f"Attempting to fetch data from {self.data_response_url}") 
         print("Data now available") 
         if data_acquired:
@@ -168,31 +168,40 @@ class Cutout_Request:
             self.file_list = [re.search(".*/(.*)$", x)[1] for x in self.file_list if x]
 
     def download_fits_files(self, save_dir_loc=None):
-        save_dir = save_dir_loc if save_dir_loc else self.save_dir
-        self.save_dir.mkdir(parents=True, exist_ok=True)
-        download_list = [file_path for file_path in self.file_list if not (save_dir / fits_file_url).exists()]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            for fits_file_url in download_list:
-                executor.submit(download_file, self.data_response_url + fits_file_url , save_dir / fits_file_url)
+        if(self.file_list):
+            #save_dir = Path(save_dir_loc) if save_dir_loc else self.save_dir
+            self.save_dir.mkdir(parents=True, exist_ok=True)
+            download_list = [file_path for file_path in self.file_list] #if not (save_dir / fits_file_url).is_file()]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                for fits_file_url in download_list:
+                    executor.submit(download_file, self.data_response_url + fits_file_url , self.save_dir / fits_file_url)
+            return True
+        else:
+            print(f'Looks like there are no files to download for event {self.e.event_id}')
+            return False
+
 
     def execute_full(self,connection):
-        self.job_id = self.get_ssw_from_database(connection)
-        if not self.job_id:
-            self.request()
+        self.request()
         self.fetch_data()
         self.download_fits_files()
 
 
 
-def cuttout_wrapper(event):
-    c = Cutout_Request(c)
-    c.execute_full()
+def cuttout_wrapper(event,connection):
+    c = Cutout_Request(event)
+    c.execute_full(connection)
 
 
 def multithread_cuttout(list_of_events):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=500) as executor:
+    print(f"Launching threaded cuttout service")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        futures = []
         for event in list_of_events:
-            executor.submit(cuttout_wrapper,event)
+            with db.get_connection() as this_conn:
+                print(f"Submitting event {event}")
+                f=executor.submit(cuttout_wrapper,event,this_conn)
+                futures.append(f)
 
 
 
