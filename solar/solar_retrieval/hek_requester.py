@@ -17,8 +17,8 @@ class Hek_Request:
     ):
         self.event_types = event_types
         self.query_type = 2
-        self.start_time = datetime.strptime(start_time, self.time_format)
-        self.end_time = datetime.strptime(end_time, self.time_format)
+        self.start_time = datetime.strptime(start_time, Hek_Request.time_format)
+        self.end_time = datetime.strptime(end_time, Hek_Request.time_format)
         self.x1 = x1
         self.x2 = x2
         self.y1 = y1
@@ -71,9 +71,11 @@ class Hek_Request:
                 f.write(json.dumps(self.data_json))
 
             for event in self.data_json["result"]:
+                sols =event["SOL_standard"]
+                sols = sols.replace(':','')
                 self.events.append(
                     Solar_Event(
-                        sol=event["SOL_standard"],
+                        sol=sols,
                         start_time=event["event_starttime"],
                         end_time=event["event_endtime"],
                         x_min=event["boundbox_c1ll"],
@@ -83,7 +85,7 @@ class Hek_Request:
                         hgc_x=event["hgc_x"],
                         hgc_y=event["hgc_y"],
                         instrument = event["obs_instrument"],
-                        event_id=event["SOL_standard"]
+                        event_id=sols
                     )
                 )
             self.found = len(self.events)
