@@ -4,8 +4,8 @@ from requests.exceptions import HTTPError
 import concurrent.futures
 import json
 from solar.common.solar_event import Solar_Event
-import solar.solar_database.database as sd
-from solar.solar_database import database_name
+import solar.database.database as sd
+from solar.database import database_name
 import sqlite3
 
 class Hek_Request:

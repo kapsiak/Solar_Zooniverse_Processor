@@ -8,7 +8,7 @@ import sys
 import threading
 import concurrent.futures
 from solar.common.solar_event import Solar_Event
-import solar.solar_database.database as db
+import solar.database.database as db
 
 
 def get_ssw_from_database(connection,event_id):

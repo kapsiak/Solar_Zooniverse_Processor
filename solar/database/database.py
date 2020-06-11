@@ -1,7 +1,7 @@
 import sqlite3
 import json
 from solar.common.solar_event import Solar_Event
-from solar.solar_database import database_name
+from solar.database import database_name
 from functools import wraps
 # solar_connection = None
 

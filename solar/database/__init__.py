@@ -17,6 +17,7 @@ hek_events (
     hgc_x REAL,
     hgc_y REAL,
     instrument TEXT,
+    filter TEXT,
     ssw_job_id TEXT
 );
 """
