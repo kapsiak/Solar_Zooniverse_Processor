@@ -1,28 +1,8 @@
-import sqlite3 
-
+import peewee as pw
 
 database_name  = 'test.db'
+database_storage_file = 'images'
+file_name_format = '{sol_id}/{file_name}'
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS 
-hek_events (
-    event_id TEXT NOT NULL,
-    sol TEXT NOT NULL,
-    start_time TEXT NOT NULL,
-    end_time TEXT NOT NULL,
-    x_min    INTEGER,
-    x_max    INTEGER,
-    y_min    INTEGER,
-    y_max    INTEGER,
-    hgc_x REAL,
-    hgc_y REAL,
-    instrument TEXT,
-    filter TEXT,
-    ssw_job_id TEXT
-);
-"""
+database = pw.SqliteDatabase(database_name)
 
-print(f'Initializing database {database_name}')
-conn = sqlite3.connect(database_name)
-conn.execute(SCHEMA)
-conn.close()
