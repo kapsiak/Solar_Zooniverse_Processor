@@ -4,15 +4,15 @@ from requests.exceptions import HTTPError
 import concurrent.futures
 import json
 from solar.common.solar_event import Solar_Event
-import solar.database.database as sd
-from solar.database import database_name
+import solar.database.database as db
+from solar.database.tables import Solar_Event
 import sqlite3
 from solar.retrieval.attribute import Attribute as Att
 
 
+    
 class Hek_Request:
     base_url = "http://www.lmsal.com/hek/her"
-    time_format = "%Y-%m-%dT%H:%M:%S"
     attribute_list = []
 
     def __init__(self, start_time, end_time, **kwargs):
@@ -21,10 +21,10 @@ class Hek_Request:
         self.x2 = Att("x2", kwargs.get("x2", 1200))
         self.y1 = Att("y1", kwargs.get("y1", -1200))
         self.y2 = Att("y2", kwargs.get("y2", 1200))
-        self.event_types = Att("event_types", kwargs.get("event_types", ["cj"]))
-        self.channel = Att("channel", kwargs.get("channel", 304), "OBS_ChannelID")
+        self.event_types = Att("event_type", kwargs.get("event_types", ["cj"]))
+        self.channel = Att("channel", kwargs.get("channel", 304), "obs_channelid")
         self.coord_sys = Att(
-            "coord_sys", kwargs.get("coord_sys", "helioprojective"), "Event_CoordSys"
+            "coord_sys", kwargs.get("coord_sys", "helioprojective"), "event_coordsys"
         )
         self.start_time = Att("start_time", start_time, "event_starttime")
         self.end_time = Att("end_time", end_time, "event_endtime")
@@ -34,7 +34,7 @@ class Hek_Request:
         self.other = [Att(x, kwargs[x]) for x in kwargs]
 
         self.reponse = None
-        self.data_json = None
+        self.json_data = None
         self.found_count = 0
 
         self.events = []
@@ -47,19 +47,18 @@ class Hek_Request:
                         self.use_json,
                         self.cmd,
                         self.command_type,
+                        self.event_types,
+                        self.start_time,
+                        self.end_time,
+                        self.coord_sys,
                         self.x1,
                         self.x2,
                         self.y1,
                         self.y2,
-                        self.event_types,
                         self.channel,
-                        self.coord_sys,
-                        self.start_time,
-                        self.end_time,
-                        *self.other,
+                        *(self.other)
                     ]
                 }
-        print(to_pass)
         try:
             self.response = requests.get(
                 Hek_Request.base_url,
@@ -71,16 +70,20 @@ class Hek_Request:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
             print(f"Successfully retrieved events")
-            print(self.response.request.body)
-            print(self.response.text)
+            self.json_data = json.loads(self.response.text)
+            print(json.dumps(self.json_data,indent=4))
+            self.events = [db.create_solar_event(x,'HEK') for x  in self.json_data["result"]]                
+
 
     def print_to_file(self, filename="data.json"):
         with open(filename, "w") as f:
             print(f"Writing results to {filename}")
             f.write(json.dumps([e._asdict() for e in self.events], indent=4))
 
-    def save_to_database(self, connection):
-        pass
+    def save_to_database(self):
+        for e in self.events:
+            if not Solar_Event.select().where(Solar_Event.event_id == e.event_id):
+                e.save()
 
 
 def solar_requester_wrapper(start_time, end_time):
@@ -93,6 +96,8 @@ def solar_requester_wrapper(start_time, end_time):
 if __name__ == "__main__":
     h = Hek_Request(
         "2010-06-01T00:00:00",
-       "2011-06-30T00:00:00",
+       "2011-06-10T00:00:00",
+       event_types = ['cj']
     )
     h.request()
+    h.save_to_database()
