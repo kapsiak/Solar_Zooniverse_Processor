@@ -5,11 +5,9 @@ import concurrent.futures
 import json
 import solar.database.utils as db
 from solar.database.tables import Solar_Event
-import sqlite3
 from solar.retrieval.attribute import Attribute as Att
 
 
-    
 class Hek_Request:
     """
     Encapsulates a request to the Hek system
@@ -45,28 +43,26 @@ class Hek_Request:
         self.response = None
 
     def request(self):
-        to_pass = { p.query_name: p.get_value()
-                    for p in [
-                        self.use_json,
-                        self.cmd,
-                        self.command_type,
-                        self.event_types,
-                        self.start_time,
-                        self.end_time,
-                        self.coord_sys,
-                        self.x1,
-                        self.x2,
-                        self.y1,
-                        self.y2,
-                        self.channel,
-                        *(self.other)
-                    ]
-                }
+        to_pass = {
+            p.query_name: p.get_value()
+            for p in [
+                self.use_json,
+                self.cmd,
+                self.command_type,
+                self.event_types,
+                self.start_time,
+                self.end_time,
+                self.coord_sys,
+                self.x1,
+                self.x2,
+                self.y1,
+                self.y2,
+                self.channel,
+                *(self.other),
+            ]
+        }
         try:
-            self.response = requests.get(
-                Hek_Request.base_url,
-                params=to_pass
-            )
+            self.response = requests.get(Hek_Request.base_url, params=to_pass)
         except HTTPError as http_err:
             print(f"HTTP error occurred: {http_err}")  # Python 3.6
         except Exception as err:
@@ -74,8 +70,9 @@ class Hek_Request:
         else:
             print(f"Successfully retrieved events")
             self.json_data = json.loads(self.response.text)
-            self.events = [db.create_solar_event(x,'HEK') for x  in self.json_data["result"]]                
-
+            self.events = [
+                db.create_solar_event(x, "HEK") for x in self.json_data["result"]
+            ]
 
     def print_to_file(self, filename="data.json"):
         with open(filename, "w") as f:
@@ -97,10 +94,6 @@ def solar_requester_wrapper(start_time, end_time):
 
 
 if __name__ == "__main__":
-    h = Hek_Request(
-        "2010-06-01T00:00:00",
-       "2011-06-10T00:00:00",
-       event_types = ['cj']
-    )
+    h = Hek_Request("2010-06-01T00:00:00", "2011-06-10T00:00:00", event_types=["cj"])
     h.request()
     h.save_to_database()
