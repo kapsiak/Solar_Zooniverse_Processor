@@ -5,6 +5,8 @@ from datetime import datetime
 from solar.retrieval.downloads import multi_downloader
 from pathlib import Path
 from solar.common.utils import checksum
+from sunpy.map import Map
+from solar.common.time_format import TIME_FORMAT_HIGH_PREC
 
 
 class BaseModel(pw.Model):
@@ -61,21 +63,26 @@ class Fits_File(BaseModel):
     instrument = pw.CharField(default="NA")
     channel = pw.CharField(default="NA")
 
+    coord_sys_1 = pw.CharField(default="NA")
+    coord_sys_2 = pw.CharField(default="NA")
+
     ssw_cutout_id = pw.CharField(default="NA")
 
     image_time = pw.DateTimeField(default=datetime.now())
 
-    unit_x = pw.CharField(default='arcsec')
-    unit_y = pw.CharField(default='arcsec')
+    unit_1 = pw.CharField(default='arcsec')
+    unit_2 = pw.CharField(default='arcsec')
 
-    reference_pixel_x = pw.FloatField(default=-1)
-    reference_pixel_y = pw.FloatField(default=-1)
-    reference_pixel_wcs_x = pw.FloatField(default=-1)
-    reference_pixel_wcs_y = pw.FloatField(default=-1)
+    reference_pixel_1 = pw.FloatField(default=-1)
+    reference_pixel_2 = pw.FloatField(default=-1)
+    reference_pixel_wcs_1 = pw.FloatField(default=-1)
+    reference_pixel_wcs_2 = pw.FloatField(default=-1)
 
-    pixel_size = pw.FloatField(default=-1)
-    im_dim_x = pw.IntegerField(default=-1)
-    im_dim_y = pw.IntegerField(default=-1)
+    pixel_size_1 = pw.FloatField(default=-1)
+    pixel_size_2 = pw.FloatField(default=-1)
+
+    im_dim_1 = pw.IntegerField(default=-1)
+    im_dim_2 = pw.IntegerField(default=-1)
 
     def __repr__(self):
         return f"""Fits: {self.file_path}"""
@@ -124,7 +131,41 @@ Hash            = {self.file_hash}
         multi_downloader(needed)
         for f in bad_files:
             f.get_hash()
+        
+        for f in Fits_File.select():
+            f.extract_fits_data()
+
         print(f"Update complete")
+
+    def extract_fits_data(self):
+        m = Map(self.file_path)
+        header = m.meta
+        
+        self.instrument = header.instrume
+        self.channel =  header.wavelnth
+
+        self.image_time = datetime.strptime(header.date-obs, TIME_FORMAT_HIGH_PREC)
+
+        self.unit_1 = header.cunit1
+        self.unit_2 = header.cunit2
+
+        self.reference_pixel_1 = header.crpix1
+        self.reference_pixel_2 = header.crpix2
+        self.reference_pixel_wcs_1 = header.crval1
+        self.reference_pixel_wcs_2 = header.crval2
+
+        self.pixel_size_1 = header.cdel1
+        self.pixel_size_2 = header.cdel2
+
+        self.im_dim_1 = header.naxis1
+        self.im_dim_2 = header.naxis2
+
+        self.coord_sys_1 = header.ctype1
+        self.coord_sys_2 = header.ctype2
+
+        self.save()
+
+
 
 
 class Image_File(BaseModel):
