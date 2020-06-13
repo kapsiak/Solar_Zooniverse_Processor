@@ -5,60 +5,44 @@ import re
 from pathlib import Path
 import time
 import sys
-import threading
+from solar.common.time_format import TIME_FORMAT
+import solar.database.string as dbs
+from solar.database import database_storage_dir,file_name_format
+from solar.database.tables import Solar_Event,Fits_File
+from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
-from solar.common.solar_event import Solar_Event
-import solar.database.database as db
-
-
-def get_ssw_from_database(connection,event_id):
-    data = connection.execute("SELECT (ssw_job_id) FROM hek_events WHERE event_id=? AND NOT ssw_job_id='NO_REQUEST'",(event_id,))
-    ret = data.fetchone()
-    if ret:
-        return ret[0]
-    else:
-        return None
-
-
-def download_file(from_url, target):
-    with open(target, "wb") as f:
-        f.write(requests.get(from_url).content)
-
+import tqdm
 
 class Cutout_Request:
+        # The base url for the ssw response, a response from this returns, most importatnyl, the job ID associated with this cuttout request
+    base_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
+    data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
+
+
     def __init__(
         self,
         event,
-        repeat_query=True,
-        verbose = True
     ):
-        self.e = event
-
+        
+        if type(event) == str:
+            self.event = Solar_Event.select().where(Solar_Event.event_id == event).get()
+        else:
+            self.event = event
+        
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
-        self.download_dir = Path("fits")
-        self.save_dir = self.e.event_id
-        self.save_dir = self.download_dir / self.save_dir
 
         # Information associated with the cuttout request
-        self.xcen = (self.e.x_min + self.e.x_max) / 2
-        self.ycen = (self.e.y_min + self.e.y_max) / 2
-        self.fovx = abs(self.e.x_max - self.e.x_min)
-        self.fovy= abs(self.e.y_max - self.e.y_min)
+        self.fovx = abs(self.event.x_max - self.event.x_min)
+        self.fovy= abs(self.event.y_max - self.event.y_min)
         self.notrack = 1
-        self.waves = 304
         
 
-        # The base url for the ssw response, a response from this returns, most importatnyl, the job ID associated with this cuttout request
-        self.base_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
-        # The requests response
-        self.reponse = None
-        # The text from the response
-        self.data = None
-        # The SSW job ID
-        self.job_id = None
+        
+        self.reponse = None # The requests response
+        self.data = None # The text from the response
+        self.job_id = None  # The SSW job ID
 
         # The is the template for the URL where the job will be located when it completes
-        self.data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
 
         # The data_response url after the job id has been subsitituted in
         self.data_response_url = None
@@ -72,21 +56,6 @@ class Cutout_Request:
         # A list of the fits files
         self.file_list = []
 
-
-        #currently unused
-        self.verbose = verbose
-
-        self.connection = db.get_connection()
-
-
-        self.ssw_in_database = False
-
-
-
-    def add_to_database(self,connection):
-        if self.job_id:
-            db.update_record(connection, self.e, 'ssw_job_id' , self.job_id)
-
     def request(self):
         """
         Make a request to the SSW server in order to begin processing
@@ -95,57 +64,37 @@ class Cutout_Request:
             self.job_id -> The job id of the ssw_process
          
         """
-        
-        self.job_id = get_ssw_from_database(db.get_connection(),self.e.event_id)
-        print(self.job_id)
-        if self.job_id:
-            temp_url = self.data_response_url_template.format(
-            ssw_id=self.job_id
-        )
-
-            print(f"""Looks like the event with id {self.e.event_id} is already in process 
-                    The ID is: {self.job_id}
-                    The status may be views at {temp_url}
-                    """)
+        try:
+            self.response = requests.get(
+                self.base_url,
+                params={
+                    "starttime": self.event.start_time.strftime(TIME_FORMAT),
+                    "endtime": self.event.end_time.strftime(TIME_FORMAT),
+                    "instrume": 'aia',
+                    "xcen": self.event.hpc_x,
+                    "ycen": self.event.hpc_y,
+                    "fovx": self.fovx,
+                    "fovy": self.fovy,
+                    "max_frames": 10,
+                    "waves": 304,
+                    "queue_job": 1
+                },
+            )
+        except HTTPError as http_err:
+            print(f"HTTP error occurred: {http_err}")  # Python 3.6
+        except Exception as err:
+            print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            try:
-                self.response = requests.get(
-                    self.base_url,
-                    params={
-                        "starttime": self.e.start_time,
-                        "endtime": self.e.end_time,
-                        "instrume": self.e.instrument,
-                        "notrack": self.notrack,
-                        "xcen": self.xcen,
-                        "ycen": self.ycen,
-                        "fovx": self.fovx,
-                        "fovy": self.fovy,
-                        "max_frames": 10,
-                        "waves": self.waves,
-                        "queue_job": 1,
-                    },
-                )
-            except HTTPError as http_err:
-                print(f"HTTP error occurred: {http_err}")  # Python 3.6
-            except Exception as err:
-                print(f"Other error occurred: {err}")  # Python 3.6
-            else:
-                print(
-                    f"Successfully submitted request "
-                    f"from times {self.e.start_time}"
-                    f" to {self.e.end_time} "
-                )
-                self.data = self.response.text
-                self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[1]
-                self.add_to_database(db.get_connection())
-        self.data_response_url = self.data_response_url_template.format(
-            ssw_id=self.job_id
-        )
+            print(
+                f"Successfully submitted request "
+            )
+            self.data = self.response.text
+            self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[1]
+            self.data_response_url = Cutout_Request.data_response_url_template.format(
+            ssw_id=self.job_id)
 
-    def fetch_data(self):
-        if self.job_id == None:
-            self.request()
-
+    def get_data_file_list(self):
+        self.data_response_url = Cutout_Request.data_response_url_template.format(ssw_id=self.job_id)
         data_acquired = False
         while not data_acquired:
             self.data_response = requests.get(self.data_response_url)
@@ -167,41 +116,32 @@ class Cutout_Request:
             self.file_list = list_files_raw.split("\n")
             self.file_list = [re.search(".*/(.*)$", x)[1] for x in self.file_list if x]
 
-    def download_fits_files(self, save_dir_loc=None):
-        if(self.file_list):
-            #save_dir = Path(save_dir_loc) if save_dir_loc else self.save_dir
-            self.save_dir.mkdir(parents=True, exist_ok=True)
-            download_list = [file_path for file_path in self.file_list] #if not (save_dir / fits_file_url).is_file()]
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                for fits_file_url in download_list:
-                    executor.submit(download_file, self.data_response_url + fits_file_url , self.save_dir / fits_file_url)
-            return True
-        else:
-            print(f'Looks like there are no files to download for event {self.e.event_id}')
-            return False
-
-
-    def execute_full(self,connection):
+    def complete_execution(self):
         self.request()
-        self.fetch_data()
-        self.download_fits_files()
+        self.get_data_file_list()
+
+    def as_fits(self):
+        ret = []
+        for fits_server_file in self.file_list:
+            f = Fits_File(
+                    event = self.event
+                   ,sol_standard = self.event.sol_standard
+                   , ssw_cutout_id = self.job_id
+                   , server_file_name = fits_server_file
+                   , server_full_path = self.data_response_url + fits_server_file
+                   )
+                   
+            f.file_path = Path(database_storage_dir) / dbs.format_string(file_name_format, f, file_type='FITS')
+            ret.append(f)
+        return ret
 
 
+def make_cutout_request( c):
+    c.complete_execution()
+    return c
 
-def cuttout_wrapper(event,connection):
-    c = Cutout_Request(event)
-    c.execute_full(connection)
-
-
-def multithread_cuttout(list_of_events):
-    print(f"Launching threaded cuttout service")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-        futures = []
-        for event in list_of_events:
-            with db.get_connection() as this_conn:
-                print(f"Submitting event {event}")
-                f=executor.submit(cuttout_wrapper,event,this_conn)
-                futures.append(f)
-
-
-
+def multi_cutout(list_of_reqs):
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        cmap = {executor.submit(make_cutout_request,c) : c for c  in list_of_reqs}
+        ret = [future.result() for future in concurrent.futures.as_completed(cmap)] 
+    return ret

@@ -3,8 +3,7 @@ from datetime import datetime
 from requests.exceptions import HTTPError
 import concurrent.futures
 import json
-from solar.common.solar_event import Solar_Event
-import solar.database.database as db
+import solar.database.utils as db
 from solar.database.tables import Solar_Event
 import sqlite3
 from solar.retrieval.attribute import Attribute as Att
@@ -12,6 +11,10 @@ from solar.retrieval.attribute import Attribute as Att
 
     
 class Hek_Request:
+    """
+    Encapsulates a request to the Hek system
+    """
+
     base_url = "http://www.lmsal.com/hek/her"
     attribute_list = []
 
@@ -71,7 +74,6 @@ class Hek_Request:
         else:
             print(f"Successfully retrieved events")
             self.json_data = json.loads(self.response.text)
-            print(json.dumps(self.json_data,indent=4))
             self.events = [db.create_solar_event(x,'HEK') for x  in self.json_data["result"]]                
 
 
@@ -81,9 +83,10 @@ class Hek_Request:
             f.write(json.dumps([e._asdict() for e in self.events], indent=4))
 
     def save_to_database(self):
-        for e in self.events:
-            if not Solar_Event.select().where(Solar_Event.event_id == e.event_id):
-                e.save()
+        with db.database:
+            for e in self.events:
+                if not Solar_Event.select().where(Solar_Event.event_id == e.event_id):
+                    e.save()
 
 
 def solar_requester_wrapper(start_time, end_time):
