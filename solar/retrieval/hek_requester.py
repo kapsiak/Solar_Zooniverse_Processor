@@ -58,7 +58,7 @@ class Hek_Request:
                 self.y1,
                 self.y2,
                 self.channel,
-                *(self.other),
+                *self.other,
             ]
         }
         try:

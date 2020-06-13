@@ -7,7 +7,7 @@ import time
 import sys
 from solar.common.time_format import TIME_FORMAT
 import solar.database.string as dbs
-from solar.database import database_storage_dir, file_name_format
+from solar.database import database_storage_dir, fits_file_name_format
 from solar.database.tables import Solar_Event, Fits_File
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
@@ -128,7 +128,7 @@ class Cutout_Request:
             )
 
             f.file_path = Path(database_storage_dir) / dbs.format_string(
-                file_name_format, f, file_type="FITS"
+                fits_file_name_format, f, file_type="FITS"
             )
             ret.append(f)
         return ret

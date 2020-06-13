@@ -1,5 +1,5 @@
 import peewee as pw
-from solar.database import database, file_name_format
+from solar.database import database, fits_file_name_format
 import solar.database.string as dbs
 from datetime import datetime
 from solar.retrieval.downloads import multi_downloader
@@ -65,10 +65,13 @@ class Fits_File(BaseModel):
 
     image_time = pw.DateTimeField(default=datetime.now())
 
+    unit_x = pw.CharField(default='arcsec')
+    unit_y = pw.CharField(default='arcsec')
+
     reference_pixel_x = pw.FloatField(default=-1)
     reference_pixel_y = pw.FloatField(default=-1)
     reference_pixel_wcs_x = pw.FloatField(default=-1)
-    reference_pixel_hpc_y = pw.FloatField(default=-1)
+    reference_pixel_wcs_y = pw.FloatField(default=-1)
 
     pixel_size = pw.FloatField(default=-1)
     im_dim_x = pw.IntegerField(default=-1)
@@ -86,7 +89,7 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-        self.file_path = dbs.format_string(file_name_format, self, file_type="FITS")
+        self.file_path = dbs.format_string(fits_file_name_format, self, file_type="FITS")
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
@@ -122,6 +125,20 @@ Hash            = {self.file_hash}
         for f in bad_files:
             f.get_hash()
         print(f"Update complete")
+
+
+class Image_File(BaseModel):
+
+    fits_file = pw.ForeignKeyField(Fits_File, backref="image_file")
+
+    file_path = pw.CharField(default="NA")
+    file_hash = pw.CharField(default="NA")
+
+
+
+
+
+
 
 
 TABLES = [Solar_Event, Fits_File]
