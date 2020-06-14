@@ -19,6 +19,38 @@ class BaseModel(pw.Model):
         database = database
 
 
+class File_Model(BaseModel):
+
+    file_path = pw.CharField(default="NA")
+    file_hash = pw.CharField(default="NA")
+
+
+    def correct_file_path(self):
+        pass
+
+    @classmethod
+    def correct_path_database(cls):
+        for f in cls.select():
+            f.correct_file_path()
+
+    def get_hash(self):
+        try:
+            self.file_hash = checksum(self.file_path)
+        except IOError as e:
+            print(f"Could not get hash: {e}")
+            self.file_hash = "NA"
+        self.save()
+        return self.file_hash
+
+    def check_integrity(self):
+        p = Path(self.file_path)
+        if p.is_file():
+            if checksum(self.file_path) == self.file_hash:
+                return True
+        return False
+
+
+
 class Solar_Event(BaseModel):
 
     event_id = pw.CharField(default="NA", unique=True)
@@ -53,7 +85,7 @@ class Solar_Event(BaseModel):
         return f""" {self.event_id}: {self.description}"""
 
 
-class Fits_File(BaseModel):
+class Fits_File(File_Model):
 
     event = pw.ForeignKeyField(Solar_Event, backref="fits_files")
 
@@ -101,33 +133,13 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-        self.file_path = dbs.format_string(
-            Config["fits_file_name_format"], self, file_type="FITS"
-        )
-        self.file_path = self.file_path.replace(":", "-")
-        self.save()
+            self.file_path = dbs.format_string(
+                Config[f"fits_file_name_format"], self, file_type="FITS"
+            )
+            self.file_path = self.file_path.replace(":", "-")
+            self.save()
 
-    @staticmethod
-    def correct_path_database():
-        for f in Fits_File.select():
-            f.correct_file_path()
-
-    def get_hash(self):
-        try:
-            self.file_hash = checksum(self.file_path)
-        except IOError as e:
-            print(f"Could not get hash: {e}")
-            self.file_hash = "NA"
-        self.save()
-        return self.file_hash
-
-    def check_integrity(self):
-        p = Path(self.file_path)
-        if p.is_file():
-            if checksum(self.file_path) == self.file_hash:
-                return True
-        return False
-
+    
     @staticmethod
     def update_database():
         bad_files = [x for x in Fits_File.select() if not x.check_integrity()]
@@ -176,12 +188,26 @@ Hash            = {self.file_hash}
             self.save()
 
 
-class Image_File(BaseModel):
+class Image_File(File_Model):
 
     fits_file = pw.ForeignKeyField(Fits_File, backref="image_file")
 
+    image_type = pw.CharField(default='png')
+
     file_path = pw.CharField(default="NA")
     file_hash = pw.CharField(default="NA")
+
+    description = pw.CharField(default="NA")
+
+    frame = pw.BooleanField(default=False)
+     
+    def correct_file_path(self):
+            self.file_path = dbs.format_string(
+                Config[f"img_file_name_format"], self, file_type="FITS"
+            )
+            self.file_path = self.file_path.replace(":", "-")
+            self.save()
+     
 
 
 TABLES = [Solar_Event, Fits_File]

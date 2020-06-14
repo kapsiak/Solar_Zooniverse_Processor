@@ -1,6 +1,7 @@
 import sunpy.map as sm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from solar.database.tables import Fits_File, Image_File
 
 
 def get_data(filename):
@@ -43,3 +44,7 @@ def make_pcolor_image(filename, save_file):
     plt.set_cmap("hot")
     ax.pcolor(m.data, aspect="equal")
     plt.savefig(save_file, dpi=300)
+
+
+
+def basic_image_file(fits)
