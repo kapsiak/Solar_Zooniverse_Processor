@@ -1,5 +1,6 @@
 import peewee as pw
-from solar.database import database, fits_file_name_format
+from solar.database import database
+from solar.common.config import Config
 import solar.database.string as dbs
 from datetime import datetime
 from solar.retrieval.downloads import multi_downloader
@@ -11,8 +12,8 @@ from solar.common.time_format import TIME_FORMAT_HIGH_PREC
 
 class BaseModel(pw.Model):
     @classmethod
-    def new(cls, ref_dict, **kwargs):
-        return cls(**ref_dic, **kwargs)
+    def new(cls, param_dict, **kwargs):
+        return cls(**param_dict, **kwargs)
 
     class Meta:
         database = database
@@ -89,7 +90,7 @@ class Fits_File(BaseModel):
     im_dim_2 = pw.IntegerField(default=-1)
 
     def __repr__(self):
-        return f"""Fits: {self.file_path}"""
+        return f"""<fits_instance:{self.sol_standard}|{self.file_path}"""
 
     def __str__(self):
         return f""" 
@@ -101,7 +102,7 @@ Hash            = {self.file_hash}
 
     def correct_file_path(self):
         self.file_path = dbs.format_string(
-            fits_file_name_format, self, file_type="FITS"
+            Config["fits_file_name_format"], self, file_type="FITS"
         )
         self.file_path = self.file_path.replace(":", "-")
         self.save()

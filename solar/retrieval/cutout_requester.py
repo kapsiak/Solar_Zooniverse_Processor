@@ -6,6 +6,7 @@ from pathlib import Path
 import time
 import sys
 from solar.common.time_format import TIME_FORMAT
+from solar.common.config import Config
 import solar.database.string as dbs
 from solar.database import database_storage_dir, fits_file_name_format
 from solar.database.tables import Solar_Event, Fits_File
@@ -134,7 +135,7 @@ class Cutout_Request:
             )
 
             f.file_path = Path(database_storage_dir) / dbs.format_string(
-                fits_file_name_format, f, file_type="FITS"
+                Config["fits_file_name_format"], f, file_type="FITS"
             )
             ret.append(f)
         return ret
