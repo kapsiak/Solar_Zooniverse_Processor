@@ -10,7 +10,5 @@ def checksum(string, hash_factory=hashlib.md5, chunk_num_blocks=128):
                 h.update(chunk)
         return h.hexdigest()
     else:
-        h.update(string.encode('utf-8'))
+        h.update(string.encode("utf-8"))
         return h.hexdigest()
-
-

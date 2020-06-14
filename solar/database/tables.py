@@ -9,9 +9,6 @@ from solar.common.utils import checksum
 from sunpy.map import Map
 
 
-
-
-
 class BaseModel(pw.Model):
     @classmethod
     def update_table(cls):
@@ -233,6 +230,7 @@ class Image_File(File_Model):
 
 
 TABLES = [Solar_Event, Fits_File]
+
 
 def create_tables():
     with db:

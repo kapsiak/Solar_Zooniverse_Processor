@@ -13,27 +13,28 @@ import tqdm
 
 
 class Already_Exists(Exception):
-    def __init__(self,table, event):
+    def __init__(self, table, event):
         self.table = table
         self.event = event
 
     def __str__(self):
-        return f"Duplication_Error: Event {self.event} is already in the table {self.table}. TO avoid the error and proceed, you may set allow_dulicate to True"
+        return f"Event {self.event} is already in the table {self.table}. TO avoid the error and proceed, you may set allow_dulicate to True"
+
 
 class Does_Not_Exists(Exception):
-    def __init__(self,event):
+    def __init__(self, event):
         self.event = event
 
     def __str__(self):
-        return f"Does_not_exist: Event {self.event}"
+        return f"Event {self.event}"
+
 
 class Query_Error(Exception):
-    def __init__(self,query):
+    def __init__(self, query):
         self.query = query
 
     def __str__(self):
         return f"Multiple Events found for query: Event {self.query}"
-
 
 
 class Cutout_Request:
@@ -43,7 +44,7 @@ class Cutout_Request:
 
     def __init__(self, event, allow_duplicate=False):
 
-        if isinstance(event,str):
+        if isinstance(event, str):
             self.event = Solar_Event.select().where(Solar_Event.event_id == event)
             if not self.event:
                 raise Does_Not_Exists(event)
@@ -58,11 +59,6 @@ class Cutout_Request:
         self.existing_event = Fits_File.select().where(Fits_File.event == self.event)
         if self.existing_event and not allow_duplicate:
             raise Already_Exists("Fits_Files", self.event)
-            
-
-
-        
-
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
