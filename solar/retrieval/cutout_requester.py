@@ -4,8 +4,6 @@ from requests.exceptions import HTTPError
 import re
 from pathlib import Path
 import time
-import sys
-from solar.common.time_format import TIME_FORMAT
 from solar.common.config import Config
 import solar.database.string as dbs
 from solar.database import database_storage_dir, fits_file_name_format
@@ -68,8 +66,12 @@ class Cutout_Request:
                 self.response = requests.get(
                     self.base_url,
                     params={
-                        "starttime": self.event.start_time.strftime(TIME_FORMAT),
-                        "endtime": self.event.end_time.strftime(TIME_FORMAT),
+                        "starttime": self.event.start_time.strftime(
+                            Config["time_format_hek"]
+                        ),
+                        "endtime": self.event.end_time.strftime(
+                            Config["time_format_hek"]
+                        ),
                         "instrume": "aia",
                         "xcen": self.event.hpc_x,
                         "ycen": self.event.hpc_y,
@@ -138,7 +140,7 @@ class Cutout_Request:
                 Config["fits_file_name_format"], f, file_type="FITS"
             )
             ret.append(f)
-        return ret
+        return [x for x in y for y in ret]
 
 
 def make_cutout_request(c):

@@ -44,7 +44,3 @@ def make_pcolor_image(filename, save_file):
     plt.set_cmap("hot")
     ax.pcolor(m.data, aspect="equal")
     plt.savefig(save_file, dpi=300)
-
-
-
-def basic_image_file(fits)

@@ -7,13 +7,17 @@ from solar.retrieval.downloads import multi_downloader
 from pathlib import Path
 from solar.common.utils import checksum
 from sunpy.map import Map
-from solar.common.time_format import TIME_FORMAT_HIGH_PREC
+
+
+def create_tables(database, tables):
+    with database:
+        database.create_tables(tables)
 
 
 class BaseModel(pw.Model):
     @classmethod
-    def new(cls, param_dict, **kwargs):
-        return cls(**param_dict, **kwargs)
+    def update_table(cls):
+        pass
 
     class Meta:
         database = database
@@ -23,7 +27,6 @@ class File_Model(BaseModel):
 
     file_path = pw.CharField(default="NA")
     file_hash = pw.CharField(default="NA")
-
 
     def correct_file_path(self):
         pass
@@ -48,7 +51,6 @@ class File_Model(BaseModel):
             if checksum(self.file_path) == self.file_hash:
                 return True
         return False
-
 
 
 class Solar_Event(BaseModel):
@@ -80,6 +82,30 @@ class Solar_Event(BaseModel):
     search_frm_name = pw.CharField(default="NA")
 
     description = pw.CharField(default="NA")
+
+    @staticmethod
+    def from_hek(h, source):
+        return Solar_Event(
+            event_id=h["SOL_standard"],
+            sol_standard=h["SOL_standard"],
+            start_time=datetime.strptime(
+                h["event_starttime"], Config["time_format_hek"]
+            ),
+            end_time=datetime.strptime(h["event_endtime"], Config["time_format_hek"]),
+            coord_unit=h["event_coordunit"],
+            x_min=h["boundbox_c1ll"],
+            x_max=h["boundbox_c1ur"],
+            y_min=h["boundbox_c2ll"],
+            y_max=h["boundbox_c2ur"],
+            hgc_x=h["hgc_x"],
+            hgc_y=h["hgc_y"],
+            hpc_x=h["hpc_x"],
+            hpc_y=h["hpc_y"],
+            frm_identifier=h["frm_identifier"],
+            search_frm_name=h["search_frm_name"],
+            description=h["event_description"],
+            source=source,
+        )
 
     def __repr__(self):
         return f""" {self.event_id}: {self.description}"""
@@ -133,15 +159,14 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-            self.file_path = dbs.format_string(
-                Config[f"fits_file_name_format"], self, file_type="FITS"
-            )
-            self.file_path = self.file_path.replace(":", "-")
-            self.save()
+        self.file_path = dbs.format_string(
+            Config[f"fits_file_name_format"], self, file_type="FITS"
+        )
+        self.file_path = self.file_path.replace(":", "-")
+        self.save()
 
-    
     @staticmethod
-    def update_database():
+    def update_table():
         bad_files = [x for x in Fits_File.select() if not x.check_integrity()]
         needed = None
         with database:
@@ -165,7 +190,7 @@ Hash            = {self.file_hash}
             self.channel = header["wavelnth"]
 
             self.image_time = datetime.strptime(
-                header.date - obs, TIME_FORMAT_HIGH_PREC
+                header.date - obs, Config["time_format_from_fits"]
             )
 
             self.unit_1 = header["cunit1"]
@@ -192,7 +217,7 @@ class Image_File(File_Model):
 
     fits_file = pw.ForeignKeyField(Fits_File, backref="image_file")
 
-    image_type = pw.CharField(default='png')
+    image_type = pw.CharField(default="png")
 
     file_path = pw.CharField(default="NA")
     file_hash = pw.CharField(default="NA")
@@ -200,14 +225,15 @@ class Image_File(File_Model):
     description = pw.CharField(default="NA")
 
     frame = pw.BooleanField(default=False)
-     
+
     def correct_file_path(self):
-            self.file_path = dbs.format_string(
-                Config[f"img_file_name_format"], self, file_type="FITS"
-            )
-            self.file_path = self.file_path.replace(":", "-")
-            self.save()
-     
+        self.file_path = dbs.format_string(
+            Config[f"img_file_name_format"], self, file_type="FITS"
+        )
+        self.file_path = self.file_path.replace(":", "-")
+        self.save()
 
 
 TABLES = [Solar_Event, Fits_File]
+
+create_tables(database, TABLES)
