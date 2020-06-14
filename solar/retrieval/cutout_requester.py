@@ -6,11 +6,34 @@ from pathlib import Path
 import time
 from solar.common.config import Config
 import solar.database.string as dbs
-from solar.database import database_storage_dir, fits_file_name_format
 from solar.database.tables import Solar_Event, Fits_File
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
+
+
+class Already_Exists(Exception):
+    def __init__(self,table, event):
+        self.table = table
+        self.event = event
+
+    def __str__(self):
+        return f"Duplication_Error: Event {self.event} is already in the table {self.table}. TO avoid the error and proceed, you may set allow_dulicate to True"
+
+class Does_Not_Exists(Exception):
+    def __init__(self,event):
+        self.event = event
+
+    def __str__(self):
+        return f"Does_not_exist: Event {self.event}"
+
+class Query_Error(Exception):
+    def __init__(self,query):
+        self.query = query
+
+    def __str__(self):
+        return f"Multiple Events found for query: Event {self.query}"
+
 
 
 class Cutout_Request:
@@ -18,14 +41,28 @@ class Cutout_Request:
     base_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
 
-    def __init__(self, event):
+    def __init__(self, event, allow_duplicate=False):
 
-        if type(event) == str:
-            self.event = Solar_Event.select().where(Solar_Event.event_id == event).get()
+        if isinstance(event,str):
+            self.event = Solar_Event.select().where(Solar_Event.event_id == event)
+            if not self.event:
+                raise Does_Not_Exists(event)
+            elif len(self.event) > 1:
+                raise Query_Error(event)
+
         else:
             self.event = event
 
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
+
+        self.existing_event = Fits_File.select().where(Fits_File.event == self.event)
+        if self.existing_event and not allow_duplicate:
+            raise Already_Exists("Fits_Files", self.event)
+            
+
+
+        
+
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
@@ -35,9 +72,6 @@ class Cutout_Request:
         self.reponse = None  # The requests response
         self.data = None  # The text from the response
         self.job_id = None  # The SSW job ID
-
-        if self.event.fits_files.get():
-            self.job_id = self.event.fits_files.get().ssw_cutout_id
 
         # The is the template for the URL where the job will be located when it completes
 
@@ -102,13 +136,19 @@ class Cutout_Request:
         )
         data_acquired = False
         while not data_acquired:
-            self.data_response = requests.get(self.data_response_url)
-            if re.search("Per-Wave file lists", self.data_response.text):
-                data_acquired = True
+            try:
+                self.data_response = requests.get(self.data_response_url)
+            except HTTPError as http_err:
+                print(f"HTTP error occurred: {http_err}")  # Python 3.6
+            except Exception as err:
+                print(f"Other error occurred: {err}")  # Python 3.6
             else:
-                print("Data not available")
-                time.sleep(self.delay_time)
-            print(f"Attempting to fetch data from {self.data_response_url}")
+                if re.search("Per-Wave file lists", self.data_response.text):
+                    data_acquired = True
+                else:
+                    print("Data not available")
+                    time.sleep(self.delay_time)
+                    print(f"Attempting to fetch data from {self.data_response_url}")
         print("Data now available")
         if data_acquired:
             fits_list_url = re.search(
@@ -136,11 +176,11 @@ class Cutout_Request:
                 server_full_path=self.data_response_url + fits_server_file,
             )
 
-            f.file_path = Path(database_storage_dir) / dbs.format_string(
+            f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
                 Config["fits_file_name_format"], f, file_type="FITS"
             )
             ret.append(f)
-        return [x for x in y for y in ret]
+        return ret
 
 
 def make_cutout_request(c):

@@ -1,5 +1,5 @@
 import peewee as pw
-from solar.database import database
+from solar.database import database as db
 from solar.common.config import Config
 import solar.database.string as dbs
 from datetime import datetime
@@ -9,9 +9,7 @@ from solar.common.utils import checksum
 from sunpy.map import Map
 
 
-def create_tables(database, tables):
-    with database:
-        database.create_tables(tables)
+
 
 
 class BaseModel(pw.Model):
@@ -20,7 +18,7 @@ class BaseModel(pw.Model):
         pass
 
     class Meta:
-        database = database
+        database = db
 
 
 class File_Model(BaseModel):
@@ -236,4 +234,6 @@ class Image_File(File_Model):
 
 TABLES = [Solar_Event, Fits_File]
 
-create_tables(database, TABLES)
+def create_tables():
+    with db:
+        db.create_tables(TABLES)
