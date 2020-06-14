@@ -37,6 +37,9 @@ class Cutout_Request:
         self.data = None  # The text from the response
         self.job_id = None  # The SSW job ID
 
+        if self.event.fits_files.get():
+            self.job_id = self.event.fits_files.get().ssw_cutout_id
+
         # The is the template for the URL where the job will be located when it completes
 
         # The data_response url after the job id has been subsitituted in
@@ -59,33 +62,36 @@ class Cutout_Request:
             self.job_id -> The job id of the ssw_process
          
         """
-        try:
-            self.response = requests.get(
-                self.base_url,
-                params={
-                    "starttime": self.event.start_time.strftime(TIME_FORMAT),
-                    "endtime": self.event.end_time.strftime(TIME_FORMAT),
-                    "instrume": "aia",
-                    "xcen": self.event.hpc_x,
-                    "ycen": self.event.hpc_y,
-                    "fovx": self.fovx,
-                    "fovy": self.fovy,
-                    "max_frames": 10,
-                    "waves": 304,
-                    "queue_job": 1,
-                },
-            )
-        except HTTPError as http_err:
-            print(f"HTTP error occurred: {http_err}")  # Python 3.6
-        except Exception as err:
-            print(f"Other error occurred: {err}")  # Python 3.6
-        else:
-            print(f"Successfully submitted request ")
-            self.data = self.response.text
-            self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[1]
-            self.data_response_url = Cutout_Request.data_response_url_template.format(
-                ssw_id=self.job_id
-            )
+        if not self.job_id:
+            try:
+                self.response = requests.get(
+                    self.base_url,
+                    params={
+                        "starttime": self.event.start_time.strftime(TIME_FORMAT),
+                        "endtime": self.event.end_time.strftime(TIME_FORMAT),
+                        "instrume": "aia",
+                        "xcen": self.event.hpc_x,
+                        "ycen": self.event.hpc_y,
+                        "fovx": self.fovx,
+                        "fovy": self.fovy,
+                        "max_frames": 10,
+                        "waves": 304,
+                        "queue_job": 1,
+                    },
+                )
+            except HTTPError as http_err:
+                print(f"HTTP error occurred: {http_err}")  # Python 3.6
+            except Exception as err:
+                print(f"Other error occurred: {err}")  # Python 3.6
+            else:
+                print(f"Successfully submitted request ")
+                self.data = self.response.text
+                self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[
+                    1
+                ]
+        self.data_response_url = Cutout_Request.data_response_url_template.format(
+            ssw_id=self.job_id
+        )
 
     def get_data_file_list(self):
         self.data_response_url = Cutout_Request.data_response_url_template.format(

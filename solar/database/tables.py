@@ -10,6 +10,10 @@ from solar.common.time_format import TIME_FORMAT_HIGH_PREC
 
 
 class BaseModel(pw.Model):
+    @classmethod
+    def new(cls, ref_dict, **kwargs):
+        return cls(**ref_dic, **kwargs)
+
     class Meta:
         database = database
 
@@ -70,8 +74,8 @@ class Fits_File(BaseModel):
 
     image_time = pw.DateTimeField(default=datetime.now())
 
-    unit_1 = pw.CharField(default='arcsec')
-    unit_2 = pw.CharField(default='arcsec')
+    unit_1 = pw.CharField(default="arcsec")
+    unit_2 = pw.CharField(default="arcsec")
 
     reference_pixel_1 = pw.FloatField(default=-1)
     reference_pixel_2 = pw.FloatField(default=-1)
@@ -96,7 +100,9 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-        self.file_path = dbs.format_string(fits_file_name_format, self, file_type="FITS")
+        self.file_path = dbs.format_string(
+            fits_file_name_format, self, file_type="FITS"
+        )
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
@@ -131,41 +137,42 @@ Hash            = {self.file_hash}
         multi_downloader(needed)
         for f in bad_files:
             f.get_hash()
-        
+
         for f in Fits_File.select():
             f.extract_fits_data()
 
         print(f"Update complete")
 
     def extract_fits_data(self):
-        m = Map(self.file_path)
-        header = m.meta
-        
-        self.instrument = header.instrume
-        self.channel =  header.wavelnth
+        if Path(self.file_path).isfile():
+            m = Map(self.file_path)
+            header = m.meta
 
-        self.image_time = datetime.strptime(header.date-obs, TIME_FORMAT_HIGH_PREC)
+            self.instrument = header["instrume"]
+            self.channel = header["wavelnth"]
 
-        self.unit_1 = header.cunit1
-        self.unit_2 = header.cunit2
+            self.image_time = datetime.strptime(
+                header.date - obs, TIME_FORMAT_HIGH_PREC
+            )
 
-        self.reference_pixel_1 = header.crpix1
-        self.reference_pixel_2 = header.crpix2
-        self.reference_pixel_wcs_1 = header.crval1
-        self.reference_pixel_wcs_2 = header.crval2
+            self.unit_1 = header["cunit1"]
+            self.unit_2 = header["cunit2"]
 
-        self.pixel_size_1 = header.cdel1
-        self.pixel_size_2 = header.cdel2
+            self.reference_pixel_1 = header["crpix1"]
+            self.reference_pixel_2 = header["crpix2"]
+            self.reference_pixel_wcs_1 = header["crval1"]
+            self.reference_pixel_wcs_2 = header["crval2"]
 
-        self.im_dim_1 = header.naxis1
-        self.im_dim_2 = header.naxis2
+            self.pixel_size_1 = header["cdel1"]
+            self.pixel_size_2 = header["cdel2"]
 
-        self.coord_sys_1 = header.ctype1
-        self.coord_sys_2 = header.ctype2
+            self.im_dim_1 = header["naxis1"]
+            self.im_dim_2 = header["naxis2"]
 
-        self.save()
+            self.coord_sys_1 = header["ctype1"]
+            self.coord_sys_2 = header["ctype2"]
 
-
+            self.save()
 
 
 class Image_File(BaseModel):
@@ -174,12 +181,6 @@ class Image_File(BaseModel):
 
     file_path = pw.CharField(default="NA")
     file_hash = pw.CharField(default="NA")
-
-
-
-
-
-
 
 
 TABLES = [Solar_Event, Fits_File]

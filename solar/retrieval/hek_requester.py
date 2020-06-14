@@ -71,7 +71,7 @@ class Hek_Request:
             print(f"Successfully retrieved events")
             self.json_data = json.loads(self.response.text)
             self.events = [
-                db.create_solar_event(x, "HEK") for x in self.json_data["result"]
+                Solar_Event.new(x, source="HEK") for x in self.json_data["result"]
             ]
 
     def print_to_file(self, filename="data.json"):

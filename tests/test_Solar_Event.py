@@ -48,10 +48,8 @@ class TestSolarEvent(unittest.TestCase):
             "NO_REQUEST",
         ]
         s = solar_event.Solar_Event(*data)
-        self.assertEqual(len(s) ,12, "Incorrect Size")
+        self.assertEqual(len(s), 12, "Incorrect Size")
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-
