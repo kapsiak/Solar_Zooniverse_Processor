@@ -6,7 +6,7 @@ class ConfMeta(type):
 class Config(metaclass=ConfMeta):
     database_path = "test.db"
     file_save_path = "files"
-    fits_file_name_format = "{sol_standard}/{server_file_name}"
+    fits_file_name_format = "fits/{sol_standard}/{server_file_name}"
     img_file_name_format = "{sol_standard}/{file_name}"
     time_format_hek = "%Y-%m-%dT%H:%M:%S"
-    time_format_from_fits = "%Y-%m-%dT%H:%M:%S.000"
+    time_format_from_fits = "%Y-%m-%dT%H:%M:%S.%f"

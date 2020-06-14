@@ -9,6 +9,9 @@ from solar.common.utils import checksum
 from sunpy.map import Map
 
 
+def prepend_root(path):
+    return str(Path(Config["file_save_path"] ) / path)
+
 class BaseModel(pw.Model):
     @classmethod
     def update_table(cls):
@@ -70,7 +73,7 @@ class Solar_Event(BaseModel):
     hgc_x = pw.FloatField(default=-1)
     hgc_y = pw.FloatField(default=-1)
 
-    source = pw.CharField(default="NA")
+
 
     frm_identifier = pw.CharField(default="NA")
 
@@ -142,6 +145,8 @@ class Fits_File(File_Model):
     im_dim_1 = pw.IntegerField(default=-1)
     im_dim_2 = pw.IntegerField(default=-1)
 
+    telescope =pw.CharField(default="NA")
+
     def __repr__(self):
         return f"""<fits_instance:{self.sol_standard}|{self.file_path}"""
 
@@ -154,17 +159,18 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-        self.file_path = dbs.format_string(
+        self.file_path = prepend_root(dbs.format_string(
             Config[f"fits_file_name_format"], self, file_type="FITS"
-        )
+        ))
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
     @staticmethod
     def update_table():
+        Fits_File.correct_path_database()
         bad_files = [x for x in Fits_File.select() if not x.check_integrity()]
         needed = None
-        with database:
+        with db:
             needed = {f.server_full_path: f.file_path for f in bad_files}
         print(f"Found {len(bad_files)} missing/corrupted files")
         multi_downloader(needed)
@@ -177,7 +183,7 @@ Hash            = {self.file_hash}
         print(f"Update complete")
 
     def extract_fits_data(self):
-        if Path(self.file_path).isfile():
+        if Path(self.file_path).is_file():
             m = Map(self.file_path)
             header = m.meta
 
@@ -185,7 +191,7 @@ Hash            = {self.file_hash}
             self.channel = header["wavelnth"]
 
             self.image_time = datetime.strptime(
-                header.date - obs, Config["time_format_from_fits"]
+                header['date-obs'], Config["time_format_from_fits"]
             )
 
             self.unit_1 = header["cunit1"]
@@ -196,14 +202,16 @@ Hash            = {self.file_hash}
             self.reference_pixel_wcs_1 = header["crval1"]
             self.reference_pixel_wcs_2 = header["crval2"]
 
-            self.pixel_size_1 = header["cdel1"]
-            self.pixel_size_2 = header["cdel2"]
+            self.pixel_size_1 = header["cdelt1"]
+            self.pixel_size_2 = header["cdelt2"]
 
             self.im_dim_1 = header["naxis1"]
             self.im_dim_2 = header["naxis2"]
 
             self.coord_sys_1 = header["ctype1"]
             self.coord_sys_2 = header["ctype2"]
+                
+            self.telescope = header["telescop"]
 
             self.save()
 
