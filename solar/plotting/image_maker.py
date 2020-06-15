@@ -53,11 +53,7 @@ class Basic_Image(Image_Maker):
     def create(self,file_path, cmap = 'hot', size = 3):    
         self.map = sm.Map(file_path)
         self.fig = plt.figure()
-        self.fig.set_size_inches(x / larger * size, y / larger * size)
-        self.ax = plt.Axes(self.fig, [0.0, 0.0, 1.0, 1.0])
-        self.ax.set_axis_off()
-        self.fig.add_axes(self.ax)
-        plt.set_cmap(cmap)
-        self.ax.imshow(self.map.data, aspect="equal")
+        self.map.plot()
+          
 
 
