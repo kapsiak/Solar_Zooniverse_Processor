@@ -5,12 +5,16 @@ import solar.database.string as dbs
 from datetime import datetime
 from solar.retrieval.downloads import multi_downloader
 from pathlib import Path
-from solar.common.utils import checksum
+from solar.common.utils import checksum, into_number
 from sunpy.map import Map
+import astropy.units as u
+from sunpy.io.header import FileHeader
+import numpy as np
 
 
 def prepend_root(path):
-    return str(Path(Config["file_save_path"] ) / path)
+    return str(Path(Config["file_save_path"]) / path)
+
 
 class BaseModel(pw.Model):
     @classmethod
@@ -25,6 +29,7 @@ class File_Model(BaseModel):
 
     file_path = pw.CharField(default="NA")
     file_hash = pw.CharField(default="NA")
+    file_name = pw.CharField(defailt="NA")
 
     def correct_file_path(self):
         pass
@@ -73,8 +78,6 @@ class Solar_Event(BaseModel):
     hgc_x = pw.FloatField(default=-1)
     hgc_y = pw.FloatField(default=-1)
 
-
-
     frm_identifier = pw.CharField(default="NA")
 
     search_frm_name = pw.CharField(default="NA")
@@ -118,34 +121,9 @@ class Fits_File(File_Model):
     server_file_name = pw.CharField(default="NA")
     server_full_path = pw.CharField(default="NA")
 
-    file_path = pw.CharField(default="NA")
-    file_hash = pw.CharField(default="NA")
-
-    instrument = pw.CharField(default="NA")
-    channel = pw.CharField(default="NA")
-
-    coord_sys_1 = pw.CharField(default="NA")
-    coord_sys_2 = pw.CharField(default="NA")
-
     ssw_cutout_id = pw.CharField(default="NA")
 
     image_time = pw.DateTimeField(default=datetime.now())
-
-    unit_1 = pw.CharField(default="arcsec")
-    unit_2 = pw.CharField(default="arcsec")
-
-    reference_pixel_1 = pw.FloatField(default=-1)
-    reference_pixel_2 = pw.FloatField(default=-1)
-    reference_pixel_wcs_1 = pw.FloatField(default=-1)
-    reference_pixel_wcs_2 = pw.FloatField(default=-1)
-
-    pixel_size_1 = pw.FloatField(default=-1)
-    pixel_size_2 = pw.FloatField(default=-1)
-
-    im_dim_1 = pw.IntegerField(default=-1)
-    im_dim_2 = pw.IntegerField(default=-1)
-
-    telescope =pw.CharField(default="NA")
 
     def __repr__(self):
         return f"""<fits_instance:{self.sol_standard}|{self.file_path}"""
@@ -159,9 +137,9 @@ Hash            = {self.file_hash}
             """
 
     def correct_file_path(self):
-        self.file_path = prepend_root(dbs.format_string(
-            Config[f"fits_file_name_format"], self, file_type="FITS"
-        ))
+        self.file_path = prepend_root(
+            dbs.format_string(Config[f"fits_file_name_format"], self, file_type="FITS")
+        )
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
@@ -179,41 +157,37 @@ Hash            = {self.file_hash}
 
         for f in Fits_File.select():
             f.extract_fits_data()
+            f.image_time = datetime.strptime(
+                f["date-obs"], Config["time_format_from_fits"]
+            )
 
         print(f"Update complete")
 
     def extract_fits_data(self):
         if Path(self.file_path).is_file():
+            print(f"Extracting data from {self.id}")
             m = Map(self.file_path)
             header = m.meta
-
-            self.instrument = header["instrume"]
-            self.channel = header["wavelnth"]
-
-            self.image_time = datetime.strptime(
-                header['date-obs'], Config["time_format_from_fits"]
-            )
-
-            self.unit_1 = header["cunit1"]
-            self.unit_2 = header["cunit2"]
-
-            self.reference_pixel_1 = header["crpix1"]
-            self.reference_pixel_2 = header["crpix2"]
-            self.reference_pixel_wcs_1 = header["crval1"]
-            self.reference_pixel_wcs_2 = header["crval2"]
-
-            self.pixel_size_1 = header["cdelt1"]
-            self.pixel_size_2 = header["cdelt2"]
-
-            self.im_dim_1 = header["naxis1"]
-            self.im_dim_2 = header["naxis2"]
-
-            self.coord_sys_1 = header["ctype1"]
-            self.coord_sys_2 = header["ctype2"]
-                
-            self.telescope = header["telescop"]
-
+            for h_key in header:
+                f = self.fits_keys.where(Fits_Header_Elem.key == h_key)
+                if not f:
+                    f = Fits_Header_Elem.create(
+                        fits_file=self, key=h_key, value=header[h_key]
+                    )
+                else:
+                    f = f.get()
+                    f.key = h_key
+                    f.value = header[h_key]
+                    f.save()
             self.save()
+
+    def __getitem__(self, key):
+        return into_number(
+            self.fits_keys.where(Fits_Header_Elem.key == key).get().value
+        )
+
+    def get_header_as_dict(self):
+        return {x.key: into_number(x.value) for x in self.fits_keys}
 
 
 class Image_File(File_Model):
@@ -222,22 +196,60 @@ class Image_File(File_Model):
 
     image_type = pw.CharField(default="png")
 
-    file_path = pw.CharField(default="NA")
-    file_hash = pw.CharField(default="NA")
-
     description = pw.CharField(default="NA")
 
     frame = pw.BooleanField(default=False)
 
+    ref_pixel_x = pw.IntegerField(default=0)
+    ref_pixel_y = pw.IntegerField(default=0)
+
+    @staticmethod
+    def create_new_image(fits_file, image_maker, file_name=None, desc=""):
+        if not file_name:
+            file_name = fits_file.file_name
+        file_path = prepend_root(
+            Config["img_file_name_format"].format(
+                image_type=image_maker.file_type,
+                sol_standard=fits_file.sol_standard,
+                file_name=file_name,
+            )
+        )
+        image_maker.create(file_path)
+        return Image_File.create(
+            fits_file=fits_file,
+            image_type=image_maker.image_type,
+            description=desc,
+            frame=image_maker.frame,
+            ref_pixel_x=image_maker.ref_pixel_x,
+            ref_pixel_y=image_maker.ref_pixel_y,
+        )
+
     def correct_file_path(self):
-        self.file_path = dbs.format_string(
-            Config[f"img_file_name_format"], self, file_type="FITS"
+        self.file_path = prepend_root(
+            dbs.format_string(Config[f"img_file_name_format"], self, file_type="FITS")
         )
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
+    def get_world_from_pixels(self, x, y):
+        header_dict = FileHeader(self.fits_file.get_header_as_dict())
+        fake_map = Map(np.zero((1, 1)), header_dict)
+        return fake_map.pixel_to_world(x * u.pix, y * u.pix)
 
-TABLES = [Solar_Event, Fits_File]
+
+class Fits_Header_Elem(BaseModel):
+    fits_file = pw.ForeignKeyField(Fits_File, backref="fits_keys")
+    key = pw.CharField(default="NA")
+    value = pw.CharField(default="NA")
+
+    def __repr__(self):
+        return f"<Header {self.key}:{self.value}>"
+
+    def __str__(self):
+        return f"{self.key}: {self.value}"
+
+
+TABLES = [Solar_Event, Fits_File, Fits_Header_Elem, Image_File]
 
 
 def create_tables():
