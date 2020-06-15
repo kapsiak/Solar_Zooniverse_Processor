@@ -12,31 +12,6 @@ import concurrent.futures
 import tqdm
 
 
-class Already_Exists(Exception):
-    def __init__(self, table, event):
-        self.table = table
-        self.event = event
-
-    def __str__(self):
-        return f"Event {self.event} is already in the table {self.table}. TO avoid the error and proceed, you may set allow_dulicate to True"
-
-
-class Does_Not_Exists(Exception):
-    def __init__(self, event):
-        self.event = event
-
-    def __str__(self):
-        return f"Event {self.event}"
-
-
-class Query_Error(Exception):
-    def __init__(self, query):
-        self.query = query
-
-    def __str__(self):
-        return f"Multiple Events found for query: Event {self.query}"
-
-
 class Cutout_Request:
     # The base url for the ssw response, a response from this returns, most importatnyl, the job ID associated with this cuttout request
     base_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
@@ -46,19 +21,11 @@ class Cutout_Request:
 
         if isinstance(event, str):
             self.event = Solar_Event.select().where(Solar_Event.event_id == event)
-            if not self.event:
-                raise Does_Not_Exists(event)
-            elif len(self.event) > 1:
-                raise Query_Error(event)
-
         else:
             self.event = event
 
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
 
-        self.existing_event = Fits_File.select().where(Fits_File.event == self.event)
-        if self.existing_event and not allow_duplicate:
-            raise Already_Exists("Fits_Files", self.event)
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
@@ -83,6 +50,17 @@ class Cutout_Request:
         # A list of the fits files
         self.file_list = []
 
+    def get_existing(self):
+        """
+        This function is responsible to making sure we do not make unecessary requests. It does the following:
+        1. Check if there are any fits_files in the database already related to this event 
+        IN PROGRESS
+        """
+        existing_req = Fits_File.select().where(Fits_File.event == self.event)
+        if existing_req.exists():
+            print("Looks like there is already a fits file using this event")
+
+
     def request(self):
         """
         Make a request to the SSW server in order to begin processing
@@ -91,6 +69,7 @@ class Cutout_Request:
             self.job_id -> The job id of the ssw_process
          
         """
+        self.get_existing()
         if not self.job_id:
             try:
                 self.response = requests.get(
@@ -164,23 +143,26 @@ class Cutout_Request:
     def as_fits(self):
         ret = []
         for fits_server_file in self.file_list:
-            f = Fits_File(
+            f = Fits_File.create(
                 event=self.event,
                 sol_standard=self.event.sol_standard,
                 ssw_cutout_id=self.job_id,
                 server_file_name=fits_server_file,
                 server_full_path=self.data_response_url + fits_server_file,
+                file_name = fits_server_file
             )
 
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
                 Config["fits_file_name_format"], f, file_type="FITS"
             )
+            f.save()
             ret.append(f)
         return ret
 
 
 def make_cutout_request(c):
     c.complete_execution()
+    c.as_fits()
     return c
 
 
@@ -188,4 +170,4 @@ def multi_cutout(list_of_reqs):
     with ThreadPoolExecutor(max_workers=1000) as executor:
         cmap = {executor.submit(make_cutout_request, c): c for c in list_of_reqs}
         ret = [future.result() for future in concurrent.futures.as_completed(cmap)]
-    return ret
+    return [item for sublist in ret for item in sublist]
