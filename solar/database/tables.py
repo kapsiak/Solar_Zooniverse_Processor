@@ -207,16 +207,21 @@ class Image_File(File_Model):
     def create_new_image(fits_file, image_maker, file_name=None, desc=""):
         if not file_name:
             file_name = fits_file.file_name
-        file_path = prepend_root(
-            Config["img_file_name_format"].format(
-                image_type=image_maker.file_type,
-                sol_standard=fits_file.sol_standard,
-                file_name=file_name,
-            )
+            file_name = Path(file_name).stem
+        file_path = str(
+            Path(
+                prepend_root(
+                    Config["img_file_name_format"].format(
+                        image_type=image_maker.file_type,
+                        sol_standard=fits_file.sol_standard,
+                        file_name=file_name,
+                    )
+                )
+            ).with_suffix("." + image_maker.image_type)
         )
         image_maker.create()
         image_maker.save(file_path)
-          
+
         im = Image_File.create(
             fits_file=fits_file,
             image_type=image_maker.image_type,
