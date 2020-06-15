@@ -214,8 +214,10 @@ class Image_File(File_Model):
                 file_name=file_name,
             )
         )
-        image_maker.create(file_path)
-        return Image_File.create(
+        image_maker.create()
+        image_maker.save(file_path)
+          
+        im = Image_File.create(
             fits_file=fits_file,
             image_type=image_maker.image_type,
             description=desc,
@@ -223,6 +225,9 @@ class Image_File(File_Model):
             ref_pixel_x=image_maker.ref_pixel_x,
             ref_pixel_y=image_maker.ref_pixel_y,
         )
+
+        im.get_hash()
+        return im
 
     def correct_file_path(self):
         self.file_path = prepend_root(
