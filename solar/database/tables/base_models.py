@@ -5,6 +5,10 @@ from solar.common.utils import checksum
 
 
 class Base_Model(pw.Model):
+    """
+    Base class for database models
+    """
+
     @classmethod
     def update_table(cls):
         pass
@@ -22,10 +26,14 @@ class Base_Model(pw.Model):
 
 
 class File_Model(Base_Model):
+    """
+    A wrapper class for files. Includes methods to hash the contents of file, and then later verify its integrity.
 
-    file_path = pw.CharField(default="NA")
-    file_hash = pw.CharField(default="NA")
-    file_name = pw.CharField(default="NA")
+    """
+
+    file_path = pw.CharField(default="NA")  # The location of the file on the disk
+    file_name = pw.CharField(default="NA")  # The name of the file
+    file_hash = pw.CharField(default="NA")  # The file checksum
 
     def correct_file_path(self):
         pass

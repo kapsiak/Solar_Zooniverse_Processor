@@ -6,4 +6,3 @@ from .database import database as db
 
 def create_tables():
     db.create_tables([Fits_File, Fits_Header_Elem, Image_File, Solar_Event])
-

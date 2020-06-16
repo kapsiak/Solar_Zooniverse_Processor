@@ -6,7 +6,7 @@ from sunpy.map import Map
 import astropy.units as u
 from sunpy.io.header import FileHeader
 import numpy as np
-from .base_models import File_Model
+from .base_models import File_Model, Base_Model
 from .fits_file import Fits_File
 
 
@@ -27,7 +27,7 @@ class Image_File(File_Model):
     ref_pixel_y = pw.IntegerField(default=0)
 
     @staticmethod
-    def create_new_image(fits_file, image_maker, file_name=None, desc=""):
+    def create_new_image(fits_file, image_maker, file_name=None, desc="", **kwargs):
         if not file_name:
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
@@ -43,24 +43,28 @@ class Image_File(File_Model):
                 )
             )
         )
-        image_maker.create(fits_file.file_path)
-        image_maker.save_image(file_path)
+        if image_maker.create(fits_file.file_path, **kwargs):
+            image_maker.save_image(file_path)
 
-        im = Image_File.create(
-            fits_file=fits_file,
-            file_path=file_path,
-            file_name=file_name,
-            image_type=image_maker.image_type,
-            description=desc,
-            frame=image_maker.frame,
-            ref_pixel_x=image_maker.ref_pixel_x,
-            ref_pixel_y=image_maker.ref_pixel_y,
-            # width  = fits_file["naxis1"],
-            # height  = fits_file["naxis2"]
-        )
+            im = Image_File.create(
+                fits_file=fits_file,
+                file_path=file_path,
+                file_name=file_name,
+                image_type=image_maker.image_type,
+                description=desc,
+                frame=image_maker.frame,
+                ref_pixel_x=image_maker.ref_pixel_x,
+                ref_pixel_y=image_maker.ref_pixel_y,
+                # width  = fits_file["naxis1"],
+                # height  = fits_file["naxis2"]
+            )
+            for arg in kwargs:
+                Image_Param.create(key=arg, value=kwargs[arg])
 
-        im.get_hash()
-        return im
+            im.get_hash()
+            return im
+        else:
+            return None
 
     def correct_file_path(self):
         self.file_path = prepend_root(
@@ -88,3 +92,9 @@ Type            = {self.image_type}
 File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
+
+
+class Image_Param(Base_Model):
+    image = pw.ForeignKeyField(Image_File, backref="image_param")
+    key = pw.CharField()
+    value = pw.CharField()

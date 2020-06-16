@@ -9,7 +9,7 @@ from sunpy.map import Map
 import astropy.units as u
 from sunpy.io.header import FileHeader
 import numpy as np
-from .base_models import File_Model,Base_Model
+from .base_models import File_Model, Base_Model
 from .solar_event import Solar_Event
 
 
@@ -89,6 +89,7 @@ Hash            = {self.file_hash}
 
     def get_header_as_dict(self):
         return {x.key: into_number(x.value) for x in self.fits_keys}
+
 
 class Fits_Header_Elem(Base_Model):
     fits_file = pw.ForeignKeyField(Fits_File, backref="fits_keys")

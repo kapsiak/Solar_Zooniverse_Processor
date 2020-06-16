@@ -80,13 +80,13 @@ class Hek_Request:
         except Exception as err:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            #print(f"Successfully retrieved events")
+            # print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
             with Hek_Request.event_adder_lock:
                 self.events.extend(
                     [Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]]
                 )
-              #  print(f"In thisiteration there are {len(self.events)}")
+            #  print(f"In thisiteration there are {len(self.events)}")
 
     def request(self):
         ret = []
@@ -96,26 +96,13 @@ class Hek_Request:
                 executor.submit(self.request_one_interval, *interval)
                 for interval in self.time_intervals
             ]
-            for _ in tqdm(cf.as_completed(ret)):
+            for _ in tqdm(
+                cf.as_completed(ret),
+                total=len(self.time_intervals),
+                description="Requesting Events from HEK",
+            ):
                 pass
-
-    def print_to_file(self, filename="data.json"):
-        with open(filename, "w") as f:
-            print(f"Writing results to {filename}")
-            f.write(json.dumps([e._asdict() for e in self.events], indent=4))
 
     def get_events(self):
         return self.events
 
-
-def solar_requester_wrapper(start_time, end_time):
-    s = Hek_Request(["cj"], start_time, end_time)
-    s.request()
-    s.save_to_database("test.db")
-    return (s.events, s.found_count)
-
-
-if __name__ == "__main__":
-    h = Hek_Request("2010-06-01T00:00:00", "2011-06-10T00:00:00", event_types=["cj"])
-    h.request()
-    h.save_to_database()
