@@ -29,8 +29,7 @@ class Cutout_Request:
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
         self.job_id = None  # The SSW job ID
 
-
-        # We want to avoid making unnecessary requests. 
+        # We want to avoid making unnecessary requests.
         # If allow similar is false (default) then Cutout_Request first checks database for any fits files with this event as an id.
         # If it finds such an event, it sets this request's job_id to the job id of the first item it finds (if there are many).
         # This causes the request step to skip (since a request has already been made, and we now have the job id of that request)
@@ -41,10 +40,12 @@ class Cutout_Request:
                 pass
             else:
                 self.job_id = existing_file.ssw_cutout_id
-                print(f"I found a similar query, and I am going to use the job id {self.job_id}")
-                print(f"If you do not want this behavior, please set allow_similar=True")
-                
-
+                print(
+                    f"I found a similar query, and I am going to use the job id {self.job_id}"
+                )
+                print(
+                    f"If you do not want this behavior, please set allow_similar=True"
+                )
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
@@ -178,7 +179,6 @@ class Cutout_Request:
                     server_full_path=self.data_response_url + fits_server_file,
                     file_name=fits_server_file,
                 )
-
 
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
                 Config["fits_file_name_format"], f, file_type="FITS"

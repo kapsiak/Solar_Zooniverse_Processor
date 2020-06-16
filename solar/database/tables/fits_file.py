@@ -1,6 +1,6 @@
 import peewee as pw
 from solar.database import database as db
-from solar.database.utils import prepend_root,format_string
+from solar.database.utils import prepend_root, format_string
 from solar.common.config import Config
 from datetime import datetime
 from solar.retrieval.downloads import multi_downloader
@@ -47,7 +47,7 @@ Hash            = {self.file_hash}
         self.save()
 
     @staticmethod
-    def update_table(update_headers = True):
+    def update_table(update_headers=True):
         Fits_File.correct_path_database()
         bad_files = [x for x in Fits_File.select() if not x.check_integrity()]
         needed = {f.server_full_path: f.file_path for f in bad_files}
@@ -55,11 +55,11 @@ Hash            = {self.file_hash}
         multi_downloader(needed)
         for f in bad_files:
             f.get_hash()
-        
+
         num_rows = Fits_File.select().count()
         if update_headers:
             print(f"Updating headers on {num_rows} files")
-            for f in tqdm(bad_files ,total= len(bad_files) , desc="Extracting Data"):
+            for f in tqdm(bad_files, total=len(bad_files), desc="Extracting Data"):
                 f.extract_fits_data()
                 f.image_time = datetime.strptime(
                     f["date-obs"], Config["time_format_from_fits"]
