@@ -2,6 +2,7 @@ import peewee as pw
 from solar.common.config import Config
 from datetime import datetime
 from .base_models import Base_Model
+from typing import Any, Dict
 
 
 class Solar_Event(Base_Model):
@@ -32,36 +33,47 @@ class Solar_Event(Base_Model):
 
     description = pw.CharField(default="NA")
 
-    @staticmethod
-    def from_hek(h, source):
-        return Solar_Event.create(
-            event_id=h["SOL_standard"],
-            sol_standard=h["SOL_standard"],
-            start_time=datetime.strptime(
-                h["event_starttime"], Config["time_format_hek"]
-            ),
-            end_time=datetime.strptime(h["event_endtime"], Config["time_format_hek"]),
-            coord_unit=h["event_coordunit"],
-            x_min=h["boundbox_c1ll"],
-            x_max=h["boundbox_c1ur"],
-            y_min=h["boundbox_c2ll"],
-            y_max=h["boundbox_c2ur"],
-            hgc_x=h["hgc_x"],
-            hgc_y=h["hgc_y"],
-            hpc_x=h["hpc_x"],
-            hpc_y=h["hpc_y"],
-            frm_identifier=h["frm_identifier"],
-            search_frm_name=h["search_frm_name"],
-            description=h["event_description"],
-            source=source,
-        )
+    source = pw.CharField(default='HEK')
 
-    def __repr__(self):
+    @staticmethod
+    def from_hek(h: Dict[str, Any], source: str) -> None:
+        params = dict( event_id=h["SOL_standard"],
+                sol_standard=h["SOL_standard"],
+                start_time=datetime.strptime(
+                    h["event_starttime"], Config["time_format_hek"]
+                ),
+                end_time=datetime.strptime(h["event_endtime"], Config["time_format_hek"]),
+                coord_unit=h["event_coordunit"],
+                x_min=h["boundbox_c1ll"],
+                x_max=h["boundbox_c1ur"],
+                y_min=h["boundbox_c2ll"],
+                y_max=h["boundbox_c2ur"],
+                hgc_x=h["hgc_x"],
+                hgc_y=h["hgc_y"],
+                hpc_x=h["hpc_x"],
+                hpc_y=h["hpc_y"],
+                frm_identifier=h["frm_identifier"],
+                search_frm_name=h["search_frm_name"],
+                description=h["event_description"],
+                source=source)
+        try:
+            return Solar_Event.create(
+                  **params 
+                )
+        except Exception:
+            return Solar_Event.get(Solar_Event.event_id == params['sol_standard'])
+
+
+
+    def __repr__(self) -> str:
         return f""" <Solar_Event: {self.event_id}>"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f""" 
 sol         =  {self.sol_standard}
 coord(hpc)  = {self.hpc_x,self.hpc_y}
 rec (ll ,ur)= {self.x_min, self.y_min} -- {self.x_max,self.y_max}
             """
+
+    def __eq__(self,other):
+        return self.event_id == other.event_id

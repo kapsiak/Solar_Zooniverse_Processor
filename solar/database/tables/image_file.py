@@ -8,6 +8,7 @@ from sunpy.io.header import FileHeader
 import numpy as np
 from .base_models import File_Model, Base_Model
 from .fits_file import Fits_File
+from typing import Union, Any, List
 
 
 class Image_File(File_Model):
@@ -27,7 +28,16 @@ class Image_File(File_Model):
     ref_pixel_y = pw.IntegerField(default=0)
 
     @staticmethod
-    def create_new_image(fits_file, image_maker, file_name=None, desc="", **kwargs):
+    def create_new_image(
+        fits_file: Union[Path, str],
+        image_maker: Any,
+        file_name: str = None,
+        desc: str = "",
+        overwrite = True,
+        **kwargs,
+    ):
+        # TODO: This whole thing is a bit of a mess #
+        # TODO: Need to work on dealing with extension: <16-06-20> #
         if not file_name:
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
@@ -43,30 +53,44 @@ class Image_File(File_Model):
                 )
             )
         )
-        if image_maker.create(fits_file.file_path, **kwargs):
-            image_maker.save_image(file_path)
+        params = kwargs
+        add_data_stamp = kwargs.get('add_data_stamp',False)
+        if add_data_stamp:
+            try:
+                params['data_stamp'] = "{}: {}\nhpc=({},{})\nWav={}".format(fits_file["instrume"] , fits_file['date-obs'], fits_file.event.hpc_x, fits_file.event.hpc_y,fits_file["wavelnth"])
+            except Exception as e:
+                params['data_stamp'] = 'NA'
 
-            im = Image_File.create(
-                fits_file=fits_file,
-                file_path=file_path,
-                file_name=file_name,
-                image_type=image_maker.image_type,
-                description=desc,
-                frame=image_maker.frame,
-                ref_pixel_x=image_maker.ref_pixel_x,
-                ref_pixel_y=image_maker.ref_pixel_y,
-                # width  = fits_file["naxis1"],
-                # height  = fits_file["naxis2"]
-            )
-            for arg in kwargs:
-                Image_Param.create(key=arg, value=kwargs[arg])
-
+        if image_maker.create(fits_file.file_path, **params):
+            try:
+                im = Image_File.create(
+                    fits_file=fits_file,
+                    file_path=file_path,
+                    file_name=file_name,
+                    image_type=image_maker.image_type,
+                    description=desc,
+                    frame=image_maker.frame,
+                    ref_pixel_x=image_maker.ref_pixel_x,
+                    ref_pixel_y=image_maker.ref_pixel_y,
+                    # width  = fits_file["naxis1"],
+                    # height  = fits_file["naxis2"]
+                )
+            except pw.IntegrityError:
+                #print("Looked like there is already an image with file path:")
+                #print(file_path)
+                im = Image_File.get(Image_File.file_path == file_path)
+                if overwrite:
+                   # print("Since you have set overwrite, I am going to replace the old image with a new one")
+                    image_maker.save_image(file_path)
+                   #print("Since you have not set overwrite, I am going to throw away the new image")
+            #for arg in kwargs:
+            #    Image_Param.create(key=arg, value=kwargs[arg])
             im.get_hash()
             return im
         else:
             return None
 
-    def correct_file_path(self):
+    def correct_file_path(self) -> None:
         self.file_path = prepend_root(
             format_string(
                 Config[f"img_file_name_format"],
@@ -78,15 +102,15 @@ class Image_File(File_Model):
         self.file_path = self.file_path.replace(":", "-")
         self.save()
 
-    def get_world_from_pixels(self, x, y):
+    def get_world_from_pixels(self, x: int, y: int) -> Any:
         header_dict = FileHeader(self.fits_file.get_header_as_dict())
         fake_map = Map(np.zeros((1, 1)), header_dict)
         return fake_map.pixel_to_world(x * u.pix, y * u.pix)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"""<image:{self.type}|{self.file_path}"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f""" 
 Type            = {self.image_type}
 File_Path       = {self.file_path}

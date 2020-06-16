@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import List, Dict, Any
 import requests
 from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
@@ -19,7 +21,19 @@ class Hek_Request:
     attribute_list = []
     event_adder_lock = Lock()
 
-    def __init__(self, start_time, end_time, **kwargs):
+    def __init__(self, start_time: str, end_time: str, **kwargs) -> None:
+        """
+        Initialize the request
+
+        :param start_time: The time to start the search
+        :type start_time: str
+        :param end_time: The time to end the search
+        :type end_time: str
+        :param kwargs: kwargs to pass to the hek quer;w
+        :type kwargs: Any
+        :return: None
+        :rtype: None
+        """
 
         self.x1 = Att("x1", kwargs.get("x1", -1200))
         self.x2 = Att("x2", kwargs.get("x2", 1200))
@@ -43,8 +57,16 @@ class Hek_Request:
 
         self.events = []
 
-    def break_into_intervals(self):
-        interval = timedelta(days=60)
+    def break_into_intervals(self, days: int = 60) -> None:
+        """
+        Break the time interval into subintervals, to avoid reaching the HEK response limit
+
+        :param days: Interval length in days, defaults to 60
+        :type days: int, optional
+        :return: None
+        :rtype: None
+        """
+        interval = timedelta(days=days)
         current_time = self.start_time
         while current_time < self.end_time:
             next_time = current_time + interval
@@ -54,7 +76,17 @@ class Hek_Request:
                 self.time_intervals.append((current_time, self.end_time))
             current_time = next_time
 
-    def request_one_interval(self, start_time, end_time):
+    def request_one_interval(self, start_time: datetime.datetime, end_time: datetime.datetime) -> None:
+        """
+        Make a request to the HEK server for a single time interval
+
+        :param start_time: Start time
+        :type start_time: datetime.datetime
+        :param end_time: End time
+        :type end_time: datetime.datetime
+        :return: None   
+        :rtype: None
+        """
         to_pass = {
             p.query_name: p.get_value()
             for p in [
@@ -80,28 +112,50 @@ class Hek_Request:
         except Exception as err:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            # print(f"Successfully retrieved events")
+            #print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
             with Hek_Request.event_adder_lock:
-                self.events.extend(
-                    [Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]]
-                )
-            #  print(f"In thisiteration there are {len(self.events)}")
+                events = [Solar_Event.from_hek(x, source="HEK")  for x in json_data["result"]]
+                for e in events:
+                    if not e in self.events:
+                        self.events.append(e)
+            #print(f"In thisiteration there are {len(self.events)}")
 
-    def request(self):
-        ret = []
+    def request(self) -> None:
+        """
+        Request all time intervals
+
+        :return: None
+        :rtype: None
+        """
         self.break_into_intervals()
         with cf.ThreadPoolExecutor(max_workers=5) as executor:
             ret = [
-                executor.submit(self.request_one_interval, *interval)
-                for interval in self.time_intervals
-            ]
+                    executor.submit(self.request_one_interval, *interval)
+                    for interval in self.time_intervals
+                ]
             for _ in tqdm(
                 cf.as_completed(ret),
                 total=len(self.time_intervals),
-                description="Requesting Events from HEK",
+                desc="Requesting Events from HEK"
             ):
                 pass
+        print(f"Found {len(self.events)} new events")
+        if len(self.events) == 0:
+            print(":(")
 
-    def get_events(self):
+    def get_events(self) -> List[Solar_Event]:
+        """
+        Return a list of the found events
+
+        :return: List of events found by the hek search
+        :rtype: List[Solar_Event]
+        """
         return self.events
+
+    def save_events(self) -> None:
+        for e in self.events:
+            try:
+                e.save()
+            except IntegrityError as e:
+                print(f"Could not save: {e}")
