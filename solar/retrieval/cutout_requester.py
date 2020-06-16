@@ -5,8 +5,8 @@ import re
 from pathlib import Path
 import time
 from solar.common.config import Config
-import solar.database.string as dbs
-from solar.database.tables import Solar_Event, Fits_File
+import solar.database.utils as dbs
+from solar.database import Solar_Event, Fits_File
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
@@ -20,12 +20,11 @@ class Cutout_Request:
     def __init__(self, event, allow_duplicate=False):
 
         if isinstance(event, str):
-            self.event = Solar_Event.select().where(Solar_Event.event_id == event)
+            self.event = Solar_Event.select().where(Solar_Event.event_id == event).get()
         else:
             self.event = event
 
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
-
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
@@ -45,8 +44,6 @@ class Cutout_Request:
         # How long in seconds to wait between making requests (to avoid overwhelming the server)
         self.delay_time = 60
 
-        # The text from the site where the files are lists
-        self.files_list_raw = None
         # A list of the fits files
         self.file_list = []
 
@@ -59,7 +56,6 @@ class Cutout_Request:
         existing_req = Fits_File.select().where(Fits_File.event == self.event)
         if existing_req.exists():
             print("Looks like there is already a fits file using this event")
-
 
     def request(self):
         """
@@ -149,7 +145,7 @@ class Cutout_Request:
                 ssw_cutout_id=self.job_id,
                 server_file_name=fits_server_file,
                 server_full_path=self.data_response_url + fits_server_file,
-                file_name = fits_server_file
+                file_name=fits_server_file,
             )
 
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
@@ -170,4 +166,4 @@ def multi_cutout(list_of_reqs):
     with ThreadPoolExecutor(max_workers=1000) as executor:
         cmap = {executor.submit(make_cutout_request, c): c for c in list_of_reqs}
         ret = [future.result() for future in concurrent.futures.as_completed(cmap)]
-    return [item for sublist in ret for item in sublist]
+    return ret

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
-from solar.database.tables import Solar_Event
+from solar.database import Solar_Event
 from solar.retrieval.attribute import Attribute as Att
 from solar.common.config import Config
 from threading import Lock
@@ -80,23 +80,13 @@ class Hek_Request:
         except Exception as err:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            print(f"Successfully retrieved events")
+            #print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
             with Hek_Request.event_adder_lock:
-                print(
-                    "Acquiring lock with time interval {} -- {}".format(
-                        start_time, end_time
-                    )
-                )
                 self.events.extend(
                     [Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]]
                 )
-                print(
-                    "Releasing lock with time interval {} -- {}".format(
-                        start_time, end_time
-                    )
-                )
-                print(f"In thisiteration there are {len(self.events)}")
+              #  print(f"In thisiteration there are {len(self.events)}")
 
     def request(self):
         ret = []

@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from pathlib import Path
 
-class Image_Maker:
 
+class Image_Maker:
     def __init__(self, im_type):
         self.image_type = im_type
         self.ref_pixel_x = 0
@@ -21,7 +21,7 @@ class Image_Maker:
         p.parent.mkdir(parents=True, exist_ok=True)
         self.fig.savefig(save_path, transparent=False, dpi=300)
 
-    def create(self,file_path):
+    def create(self, file_path):
         pass
 
 
@@ -32,7 +32,7 @@ class Unframed_Image(Image_Maker):
         print(self.image_type)
         self.frame = False
 
-    def create(self,file_path, cmap = 'hot', size = 3):    
+    def create(self, file_path, cmap="hot", size=3):
         self.map = sm.Map(file_path)
         x = self.map.meta["naxis1"]
         y = self.map.meta["naxis2"]
@@ -45,15 +45,13 @@ class Unframed_Image(Image_Maker):
         plt.set_cmap(cmap)
         self.ax.imshow(self.map.data, aspect="equal")
 
+
 class Basic_Image(Image_Maker):
     def __init__(self, im_type):
         super().__init__(im_type)
         self.frame = False
 
-    def create(self,file_path, cmap = 'hot', size = 3):    
+    def create(self, file_path, cmap="hot", size=3):
         self.map = sm.Map(file_path)
         self.fig = plt.figure()
         self.map.plot()
-          
-
-
