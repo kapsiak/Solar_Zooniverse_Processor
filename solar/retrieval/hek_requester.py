@@ -105,4 +105,3 @@ class Hek_Request:
 
     def get_events(self):
         return self.events
-

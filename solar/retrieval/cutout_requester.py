@@ -10,6 +10,7 @@ from solar.database import Solar_Event, Fits_File
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
+from peewee import DoesNotExist
 
 
 class Cutout_Request:
@@ -17,14 +18,33 @@ class Cutout_Request:
     base_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
 
-    def __init__(self, event, allow_duplicate=False):
+    def __init__(self, event, allow_similar=False):
 
         if isinstance(event, str):
             self.event = Solar_Event.select().where(Solar_Event.event_id == event).get()
+            # If user attempts to use an event that does not exist in the database, raise DoesNotExist
         else:
             self.event = event
 
         # Information associated with the event. The event id is the SOL, and be default the fits data will be saved to ./fits/EVENT_ID/
+        self.job_id = None  # The SSW job ID
+
+
+        # We want to avoid making unnecessary requests. 
+        # If allow similar is false (default) then Cutout_Request first checks database for any fits files with this event as an id.
+        # If it finds such an event, it sets this request's job_id to the job id of the first item it finds (if there are many).
+        # This causes the request step to skip (since a request has already been made, and we now have the job id of that request)
+        if not allow_similar:
+            try:
+                existing_file = self.event.fits_files.get()
+            except DoesNotExist:
+                pass
+            else:
+                self.job_id = existing_file.ssw_cutout_id
+                print(f"I found a similar query, and I am going to use the job id {self.job_id}")
+                print(f"If you do not want this behavior, please set allow_similar=True")
+                
+
 
         # Information associated with the cuttout request
         self.fovx = abs(self.event.x_max - self.event.x_min)
@@ -33,7 +53,6 @@ class Cutout_Request:
 
         self.reponse = None  # The requests response
         self.data = None  # The text from the response
-        self.job_id = None  # The SSW job ID
 
         # The is the template for the URL where the job will be located when it completes
 
@@ -101,10 +120,11 @@ class Cutout_Request:
             ssw_id=self.job_id
         )
 
-    def get_data_file_list(self):
-        self.data_response_url = Cutout_Request.data_response_url_template.format(
-            ssw_id=self.job_id
-        )
+    def fetch_data_file_list(self):
+        if not self.data_response_url:
+            self.data_response_url = Cutout_Request.data_response_url_template.format(
+                ssw_id=self.job_id
+            )
         data_acquired = False
         while not data_acquired:
             try:
@@ -139,14 +159,26 @@ class Cutout_Request:
     def as_fits(self):
         ret = []
         for fits_server_file in self.file_list:
-            f = Fits_File.create(
-                event=self.event,
-                sol_standard=self.event.sol_standard,
-                ssw_cutout_id=self.job_id,
-                server_file_name=fits_server_file,
-                server_full_path=self.data_response_url + fits_server_file,
-                file_name=fits_server_file,
-            )
+            try:
+                f = Fits_File.get(
+                    event=self.event,
+                    sol_standard=self.event.sol_standard,
+                    ssw_cutout_id=self.job_id,
+                    server_file_name=fits_server_file,
+                    server_full_path=self.data_response_url + fits_server_file,
+                    file_name=fits_server_file,
+                )
+
+            except Fits_File.DoesNotExist:
+                f = Fits_File.create(
+                    event=self.event,
+                    sol_standard=self.event.sol_standard,
+                    ssw_cutout_id=self.job_id,
+                    server_file_name=fits_server_file,
+                    server_full_path=self.data_response_url + fits_server_file,
+                    file_name=fits_server_file,
+                )
+
 
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
                 Config["fits_file_name_format"], f, file_type="FITS"
