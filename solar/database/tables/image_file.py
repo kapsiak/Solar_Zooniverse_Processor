@@ -79,7 +79,7 @@ class Image_File(File_Model):
                 #print("Looked like there is already an image with file path:")
                 #print(file_path)
                 im = Image_File.get(Image_File.file_path == file_path)
-                if overwrite:
+                if overwrite or not im.check_integrity():
                    # print("Since you have set overwrite, I am going to replace the old image with a new one")
                     image_maker.save_image(file_path)
                    #print("Since you have not set overwrite, I am going to throw away the new image")

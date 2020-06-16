@@ -114,11 +114,14 @@ class Hek_Request:
         else:
             #print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
+            with open('test.json','w') as f:
+                f.write(json.dumps(json_data,indent=4))
             with Hek_Request.event_adder_lock:
                 events = [Solar_Event.from_hek(x, source="HEK")  for x in json_data["result"]]
                 for e in events:
                     if not e in self.events:
                         self.events.append(e)
+                print(self.events)
             #print(f"In thisiteration there are {len(self.events)}")
 
     def request(self) -> None:

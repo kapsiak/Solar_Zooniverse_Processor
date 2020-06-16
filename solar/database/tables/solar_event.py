@@ -60,8 +60,10 @@ class Solar_Event(Base_Model):
             return Solar_Event.create(
                   **params 
                 )
-        except Exception:
+        except pw.IntegrityError:
             return Solar_Event.get(Solar_Event.event_id == params['sol_standard'])
+        else:
+            return None
 
 
 
