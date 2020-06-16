@@ -1,5 +1,5 @@
 import requests
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import tqdm
 from pathlib import Path
 
@@ -22,3 +22,5 @@ def multi_downloader(download_struct):
             executor.submit(download_single_file, url, download_struct[url])
             for url in download_struct
         ]
+        for _ in tqdm.tqdm(as_completed(futures), total = len(futures), desc = "Downloading fits files"):
+            pass
