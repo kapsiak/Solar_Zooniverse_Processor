@@ -115,7 +115,7 @@ todo
             except Exception as err:
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
-                #print(f"Successfully submitted request ")
+                # print(f"Successfully submitted request ")
                 self.data = self.response.text
                 self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[
                     1
@@ -151,17 +151,17 @@ todo
                 if re.search("Per-Wave file lists", self.data_response.text):
                     data_acquired = True
                 else:
-                    #print("Data not available")
+                    # print("Data not available")
                     time.sleep(self.delay_time)
-                    #print(f"Attempting to fetch data from {self.data_response_url}")
-        #print("Data now available")
+                    # print(f"Attempting to fetch data from {self.data_response_url}")
+        # print("Data now available")
         # Once the response has been processed we need to extract the list of fits files
         if data_acquired:
             fits_list_url = re.search(
                 '<p><a href="(.*)">.*</a>', self.data_response.text
             )[1]
             if not fits_list_url:
-                #print(f"Looks like there are no cut out files available")
+                # print(f"Looks like there are no cut out files available")
                 return False
 
             # List_files_raw contains the pure text from the page listing the urls
@@ -249,15 +249,21 @@ def multi_cutout(list_of_reqs: List[Cutout_Request]) -> List[Cutout_Request]:
     """
     with ThreadPoolExecutor(max_workers=1000) as executor:
         total_jobs = len(list_of_reqs)
-        completed = 0 
+        completed = 0
         print("Starting Requests")
-        print(f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches", end = '\r')
+        print(
+            f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
+            end="\r",
+        )
         cmap = {executor.submit(make_cutout_request, c): c for c in list_of_reqs}
         ret = []
 
         for future in concurrent.futures.as_completed(cmap):
             ret.append(future.result())
             completed += 1
-            print(f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches", end='\r')
+            print(
+                f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
+                end="\r",
+            )
         print("\nDone")
     return ret

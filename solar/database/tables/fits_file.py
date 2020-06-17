@@ -14,6 +14,8 @@ from .base_models import File_Model, Base_Model
 from .solar_event import Solar_Event
 from tqdm import tqdm
 from typing import Any, Dict
+from .service_request import Service_Request
+import shutil
 
 
 class Fits_File(File_Model):
@@ -22,14 +24,15 @@ class Fits_File(File_Model):
     =============
     """
 
-    event = pw.ForeignKeyField(Solar_Event, backref="fits_files")
+    event = pw.ForeignKeyField(Solar_Event, backref="fits_files", null=True)
+    request = pw.ForeignKeyField(Service_Request, backref="fits_files", null=True)
 
-    sol_standard = pw.CharField(default="NA")
+    sol_standard = pw.CharField(null=True)
 
-    server_file_name = pw.CharField(default="NA")
-    server_full_path = pw.CharField(default="NA")
+    server_file_name = pw.CharField(null=True)
+    server_full_path = pw.CharField(null=True)
 
-    ssw_cutout_id = pw.CharField(default="NA")
+    ssw_cutout_id = pw.CharField(null=True)
 
     image_time = pw.DateTimeField(default=None, null=True)
 
@@ -44,30 +47,41 @@ File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
 
-    def correct_file_path(self) -> None:
-        self.file_path = prepend_root(
-            format_string(Config[f"fits_file_name_format"], self, file_type="FITS")
-        )
-        self.file_path = self.file_path.replace(":", "-")
-        self.save()
+    @staticmethod
+    def from_file(file_path, file_name):
+        new_path = Config["fits_unkown_name_format"].format(file_name=file_name)
+        try:
+            fits = Fits_File.create(full_path=new_path, file_name=file_name)
+        except pw.IntegrityError:
+            print("Already in database")
+            return Fits_File.get(Fits_File.full_path == new_path)
+        except Exception as e:
+            print(e)
+            return None
+        else:
+            shutil.copy(file_path, new_path)
+            fits.get_hash()
+            return fits
 
     @staticmethod
-    def update_table(update_headers: bool = True) -> None:
+    def update_table(update_headers: bool = True):
         """
         Update the database. 
-        Repairs incorrect paths, extract data from the fits files.
 
         :param update_headers: whether to update headers, defaults to True
         :type update_headers: bool, optional
         :return: None      
         :rtype: None
         """
-        Fits_File.correct_path_database()
-        # Get a list of the files whose hashes do not match
         bad_files = [x for x in Fits_File.select() if not x.check_integrity()]
-        needed = {f.server_full_path: f.file_path for f in bad_files}
+        gettable = [x for x in bad_files if x.server_full_path]
+        gettable_urls = {f.server_full_path: f.file_path for f in gettable}
         print(f"Found {len(bad_files)} missing/corrupted files")
-        multi_downloader(needed)
+        print(f"I am able to redownload {len(gettable)} of these")
+        print(
+            f"The remaining {len(bad_files) - len(gettable)} files cannot be retrieved automatically"
+        )
+        multi_downloader(gettable_urls)
         for f in bad_files:
             f.get_hash()
 

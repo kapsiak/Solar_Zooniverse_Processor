@@ -18,7 +18,7 @@ class Image_Maker:
         self.map = None
         self.dpi = 300
 
-    def save_image(self, save_path, clear_after = True):
+    def save_image(self, save_path, clear_after=True):
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self.fig.savefig(save_path, transparent=False, dpi=300)
@@ -48,11 +48,11 @@ class Unframed_Image(Image_Maker):
         self.fig.add_axes(self.ax)
         plt.set_cmap(cmap)
 
-        data_stamp = kwargs.get('data_stamp', None)
+        data_stamp = kwargs.get("data_stamp", None)
         if data_stamp:
-            self.ax.text(0.1,0.1,data_stamp, fontsize = 4,color='white')
+            self.ax.text(0.1, 0.1, data_stamp, fontsize=4, color="white")
 
-        self.ax.imshow(self.map.data, aspect="equal", origin='lower')
+        self.ax.imshow(self.map.data, aspect="equal", origin="lower")
         return True
 
 
