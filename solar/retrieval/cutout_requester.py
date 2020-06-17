@@ -12,7 +12,8 @@ from solar.database import Solar_Event, Fits_File
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
-from peewee import DoesNotExist
+from peewee import DoesNotExist, IntegrityError
+from solar.database.database import database as db
 
 
 class Cutout_Request:
@@ -101,8 +102,8 @@ todo
                             Config["time_format_hek"]
                         ),
                         "instrume": "aia",
-                        "xcen": self.event.hgc_x,
-                        "ycen": self.event.hgc_y,
+                        "xcen": self.event.hpc_x,
+                        "ycen": self.event.hpc_y,
                         "fovx": self.fovx,
                         "fovy": self.fovy,
                         "max_frames": 10,
@@ -115,7 +116,7 @@ todo
             except Exception as err:
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
-                #print(f"Successfully submitted request ")
+                # print(f"Successfully submitted request ")
                 self.data = self.response.text
                 self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[
                     1
@@ -151,17 +152,17 @@ todo
                 if re.search("Per-Wave file lists", self.data_response.text):
                     data_acquired = True
                 else:
-                    #print("Data not available")
+                    # print("Data not available")
                     time.sleep(self.delay_time)
-                    #print(f"Attempting to fetch data from {self.data_response_url}")
-        #print("Data now available")
+                    # print(f"Attempting to fetch data from {self.data_response_url}")
+        # print("Data now available")
         # Once the response has been processed we need to extract the list of fits files
         if data_acquired:
             fits_list_url = re.search(
                 '<p><a href="(.*)">.*</a>', self.data_response.text
             )[1]
             if not fits_list_url:
-                #print(f"Looks like there are no cut out files available")
+                # print(f"Looks like there are no cut out files available")
                 return False
 
             # List_files_raw contains the pure text from the page listing the urls
@@ -192,16 +193,25 @@ todo
         """
         ret = []
         for fits_server_file in self.file_list:
+            file_path = str(
+                Path(Config["file_save_path"])
+                / Config["fits_file_name_format"].format(
+                    server_file_name=fits_server_file,
+                    sol_standard=self.event.sol_standard,
+                )
+            )
+            file_path = file_path.replace(":", "-")
             try:
                 f = Fits_File.get(
-                    event=self.event,
-                    sol_standard=self.event.sol_standard,
-                    ssw_cutout_id=self.job_id,
-                    server_file_name=fits_server_file,
-                    server_full_path=self.data_response_url + fits_server_file,
-                    file_name=fits_server_file,
+                    Fits_File.event == self.event,
+                    Fits_File.sol_standard == self.event.sol_standard,
+                    Fits_File.ssw_cutout_id == self.job_id,
+                    Fits_File.server_file_name == fits_server_file,
+                    Fits_File.server_full_path
+                    == self.data_response_url + fits_server_file,
+                    Fits_File.file_name == fits_server_file,
+                    Fits_File.file_path == file_path,
                 )
-
             except DoesNotExist:
                 f = Fits_File.create(
                     event=self.event,
@@ -210,11 +220,9 @@ todo
                     server_file_name=fits_server_file,
                     server_full_path=self.data_response_url + fits_server_file,
                     file_name=fits_server_file,
+                    file_path=file_path,
                 )
 
-            f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
-                Config["fits_file_name_format"], f, file_type="FITS"
-            )
             f.save()
             ret.append(f)
         return ret
@@ -230,7 +238,7 @@ def make_cutout_request(c: Cutout_Request) -> Cutout_Request:
     :rtype: Cutout_Request
     """
     c.complete_execution()
-    c.as_fits()
+    # c.as_fits()
     return c
 
 
@@ -249,15 +257,21 @@ def multi_cutout(list_of_reqs: List[Cutout_Request]) -> List[Cutout_Request]:
     """
     with ThreadPoolExecutor(max_workers=1000) as executor:
         total_jobs = len(list_of_reqs)
-        completed = 0 
+        completed = 0
         print("Starting Requests")
-        print(f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches", end = '\r')
+        print(
+            f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
+            end="\r",
+        )
         cmap = {executor.submit(make_cutout_request, c): c for c in list_of_reqs}
         ret = []
 
         for future in concurrent.futures.as_completed(cmap):
             ret.append(future.result())
             completed += 1
-            print(f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches", end='\r')
+            print(
+                f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
+                end="\r",
+            )
         print("\nDone")
     return ret

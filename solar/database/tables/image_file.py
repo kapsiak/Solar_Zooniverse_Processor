@@ -33,7 +33,7 @@ class Image_File(File_Model):
         image_maker: Any,
         file_name: str = None,
         desc: str = "",
-        overwrite = True,
+        overwrite=True,
         **kwargs,
     ):
         # TODO: This whole thing is a bit of a mess #
@@ -54,12 +54,18 @@ class Image_File(File_Model):
             )
         )
         params = kwargs
-        add_data_stamp = kwargs.get('add_data_stamp',False)
+        add_data_stamp = kwargs.get("add_data_stamp", False)
         if add_data_stamp:
             try:
-                params['data_stamp'] = "{}: {}\nhpc=({},{})\nWav={}".format(fits_file["instrume"] , fits_file['date-obs'], fits_file.event.hpc_x, fits_file.event.hpc_y,fits_file["wavelnth"])
+                params["data_stamp"] = "{}: {}\nhpc=({},{})\nWav={}".format(
+                    fits_file["instrume"],
+                    fits_file["date-obs"],
+                    fits_file.event.hpc_x,
+                    fits_file.event.hpc_y,
+                    fits_file["wavelnth"],
+                )
             except Exception as e:
-                params['data_stamp'] = 'NA'
+                params["data_stamp"] = "NA"
 
         if image_maker.create(fits_file.file_path, **params):
             try:
@@ -76,14 +82,14 @@ class Image_File(File_Model):
                     # height  = fits_file["naxis2"]
                 )
             except pw.IntegrityError:
-                #print("Looked like there is already an image with file path:")
-                #print(file_path)
+                # print("Looked like there is already an image with file path:")
+                # print(file_path)
                 im = Image_File.get(Image_File.file_path == file_path)
                 if overwrite or not im.check_integrity():
-                   # print("Since you have set overwrite, I am going to replace the old image with a new one")
+                    # print("Since you have set overwrite, I am going to replace the old image with a new one")
                     image_maker.save_image(file_path)
-                   #print("Since you have not set overwrite, I am going to throw away the new image")
-            #for arg in kwargs:
+                # print("Since you have not set overwrite, I am going to throw away the new image")
+            # for arg in kwargs:
             #    Image_Param.create(key=arg, value=kwargs[arg])
             im.get_hash()
             return im

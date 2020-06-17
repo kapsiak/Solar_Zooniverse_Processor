@@ -30,7 +30,9 @@ class File_Model(Base_Model):
     A wrapper class for files. Includes methods to hash the contents of file, and then later verify its integrity.
     """
 
-    file_path = pw.CharField(default="NA", unique = True)  # The location of the file on the disk
+    file_path = pw.CharField(
+        default="NA", unique=True
+    )  # The location of the file on the disk
     file_name = pw.CharField(default="NA")  # The name of the file
     file_hash = pw.CharField(default="NA")  # The file checksum
 
@@ -58,5 +60,5 @@ class File_Model(Base_Model):
                 return True
         return False
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         return self.file_path == other.file_path

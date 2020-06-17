@@ -76,7 +76,9 @@ class Hek_Request:
                 self.time_intervals.append((current_time, self.end_time))
             current_time = next_time
 
-    def request_one_interval(self, start_time: datetime.datetime, end_time: datetime.datetime) -> None:
+    def request_one_interval(
+        self, start_time: datetime.datetime, end_time: datetime.datetime
+    ) -> None:
         """
         Make a request to the HEK server for a single time interval
 
@@ -112,17 +114,19 @@ class Hek_Request:
         except Exception as err:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            #print(f"Successfully retrieved events")
+            # print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
-            with open('test.json','w') as f:
-                f.write(json.dumps(json_data,indent=4))
+            with open("test.json", "w") as f:
+                f.write(json.dumps(json_data, indent=4))
             with Hek_Request.event_adder_lock:
-                events = [Solar_Event.from_hek(x, source="HEK")  for x in json_data["result"]]
+                events = [
+                    Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]
+                ]
                 for e in events:
                     if not e in self.events:
                         self.events.append(e)
                 print(self.events)
-            #print(f"In thisiteration there are {len(self.events)}")
+            # print(f"In thisiteration there are {len(self.events)}")
 
     def request(self) -> None:
         """
@@ -134,13 +138,13 @@ class Hek_Request:
         self.break_into_intervals()
         with cf.ThreadPoolExecutor(max_workers=5) as executor:
             ret = [
-                    executor.submit(self.request_one_interval, *interval)
-                    for interval in self.time_intervals
-                ]
+                executor.submit(self.request_one_interval, *interval)
+                for interval in self.time_intervals
+            ]
             for _ in tqdm(
                 cf.as_completed(ret),
                 total=len(self.time_intervals),
-                desc="Requesting Events from HEK"
+                desc="Requesting Events from HEK",
             ):
                 pass
         print(f"Found {len(self.events)} new events")
