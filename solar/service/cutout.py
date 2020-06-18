@@ -44,8 +44,8 @@ class Cutout_Service(Base_Service):
             fovx=abs(event.x_max - event.x_min),
             fovy=abs(event.y_max - event.y_min),
             notrack=1,
-            start=event.start_time,
-            end=event.end_time,
+            starttime=event.start_time,
+            endtime=event.end_time,
         )
         c = Cutout_Service(**to_pass)
         c.event = event
@@ -83,8 +83,8 @@ todo
         queue = Att("queue_job", kwargs.get("queue", 1))
         channel = Att("waves", kwargs.get("channel", 304))
         notrack = Att("notrack", kwargs.get("notrack", 1))
-        start_time = Att("event_starttime", start)
-        end_time = Att("event_endtime", end)
+        start_time = Att("starttime", start)
+        end_time = Att("endtime", end)
         cmd = Att("cmd", "search")
         use_json = Att("cosec", 2)
         command_type = Att("type", "column")
