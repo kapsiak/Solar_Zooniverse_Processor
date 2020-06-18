@@ -38,7 +38,7 @@ class Solar_Event(Base_Model):
     @staticmethod
     def from_hek(h: Dict[str, Any], source: str) -> None:
         params = dict(
-            event_id=h["SOL_standard"],
+                event_id=h["SOL_standard"].replace(':','-'),
             sol_standard=h["SOL_standard"],
             start_time=datetime.strptime(
                 h["event_starttime"], Config["time_format_hek"]

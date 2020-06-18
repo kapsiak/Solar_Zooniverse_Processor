@@ -14,7 +14,6 @@ class Service_Request(Base_Model):
     #  - submitted (but not complete)
     #  - completed (request has been completed)
     status = pw.CharField()
-    service_response_url = pw.CharField(null=True)
     job_id = pw.CharField(null=True)
 
     def __getitem__(self, key: str) -> Any:
@@ -33,8 +32,22 @@ class Service_Request(Base_Model):
     def get_params_as_dict(self) -> Dict[str, Any]:
         return {x.key: into_number(x.value) for x in self.parameters}
 
+    def __str__(self):
+        return (f"<Service_Req   id = {self.id}>\n"
+                f"{self.service_type}: {self.status}\n" 
+                )
+
 
 class Service_Parameter(Base_Model):
     service_request = pw.ForeignKeyField(Service_Request, backref="parameters")
     key = pw.CharField()
     val = pw.CharField()
+    desc = pw.CharField(null=True)
+
+    def __hash__(self):
+        return hash((self.key, self.val))
+
+    def __str__(self):
+        return (f"<Service_Param id = {self.id} -> {self.service_request}>\n" 
+                f"{self.key} = {self.val}\n" 
+                f"Desc: {self.desc}")

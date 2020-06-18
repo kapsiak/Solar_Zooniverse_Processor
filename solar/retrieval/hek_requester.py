@@ -5,17 +5,30 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
-from solar.database import Solar_Event,Service_Request
+from solar.database import Solar_Event, Service_Request,Service_Parameter
 from solar.retrieval.attribute import Attribute as Att
 from solar.common.config import Config
 from threading import Lock
 from tqdm import tqdm
+from solar.retrieval.request import Base_Service
+import peewee as pw
 
 
-class Request_Hek:
+def build_from_defaults(default_list, new_list):
+    ret = []
+    for i in default_list:
+        search = [x for x in new_list if x.name == i.name]
+        if search:
+            ret.append(search[0])
+        else:
+            ret.append(i)
+    return ret
+
+class Hek_Service(Base_Service):
     """
     Encapsulates a request to the Hek system
     """
+
     base_url = "http://www.lmsal.com/hek/her"
     attribute_list = []
     event_adder_lock = Lock()
@@ -33,31 +46,58 @@ class Request_Hek:
         :return: None
         :rtype: None
         """
+        start = "2010-06-01T00:00:00"
+        end = "2010-07-01T00:00:00"
 
-        self.service_req = Service_Request(service_type = 'hek', status = 'unsubmitted')
-        self.x1 = Att("x1", kwargs.get("x1", -1200))
-        self.x2 = Att("x2", kwargs.get("x2", 1200))
-        self.y1 = Att("y1", kwargs.get("y1", -1200))
-        self.y2 = Att("y2", kwargs.get("y2", 1200))
-        self.event_types = Att("event_type", kwargs.get("event_types", ["cj"]))
-        self.channel = Att("channel", kwargs.get("channel", 304), "obs_channelid")
-        self.coord_sys = Att(
-            "coord_sys", kwargs.get("coord_sys", "helioprojective"), "event_coordsys"
-        )
-        self.start_time = Att("start_time", datetime.strptime(start_time, Config["time_format_hek"]), "event_starttime")
-        self.end_time = Att("end_time", datetime.strptime(end_time, Config["time_format_hek"]), "event_endtime")
-        self.cmd = Att("cmd", "search")
-        self.use_json = Att("cosec", 2)
-        self.command_type = Att("type", "column")
-        self.other = args + [Att(x, kwargs[x]) for x in kwargs]
+        x1 = Att("x1", kwargs.get("x1", -1200))
+        x2 = Att("x2", kwargs.get("x2", 1200))
+        y1 = Att("y1", kwargs.get("y1", -1200))
+        y2 = Att("y2", kwargs.get("y2", 1200))
+        event_types = Att("event_type", kwargs.get("event_types", ["cj"]))
+        channel = Att("obs_channelid", kwargs.get("channel", 304))
+        coord_sys = Att("event_coordsys", kwargs.get("coord_sys", "helioprojective"))
+        start_time = Att("event_starttime", start)
+        end_time = Att("event_endtime", end)
+        cmd = Att("cmd", "search")
+        use_json = Att("cosec", 2)
+        command_type = Att("type", "column")
 
-        self.time_intervals = []
+        defaults = [
+            x1,
+            x2,
+            y1,
+            y2,
+            event_types,
+            channel,
+            coord_sys,
+            start_time,
+            end_time,
+            cmd,
+            use_json,
+            command_type,
+        ]
+
+        temp = []
+        temp.extend(args)
+        temp.extend([Att(key, kwargs[key]) for key in kwargs])
+        self.params = build_from_defaults(defaults,temp)
+
+
+        self.start_time = [x for x in self.params if x.name == "event_starttime"][0].value
+        self.end_time = [x for x in self.params if x.name == "event_endtime"][0].value
 
         self.found_count = 0
 
-        self.events = []
+        self._data = []
 
-    def break_into_intervals(self, days: int = 60) -> None:
+        self.request_status = "unsubmitted"
+
+    def __parse_attributes(self, params, **kwargs):
+        other = [Att(key, kwargs[key]) for key in kwargs]
+        new_params = build_from_defaults(params,other)
+        return {att.name: att.value for att in new_params}
+
+    def __break_into_intervals(self, days: int = 60) -> None:
         """
         Break the time interval into subintervals, to avoid reaching the HEK response limit
 
@@ -66,17 +106,27 @@ class Request_Hek:
         :return: None
         :rtype: None
         """
-        interval = timedelta(days=days)
-        current_time = self.start_time.value
-        while current_time < self.end_time:
-            next_time = current_time + interval
-            if next_time < self.end_time.value:
-                self.time_intervals.append((current_time, next_time))
-            else:
-                self.time_intervals.append((current_time, self.end_time.value))
-            current_time = next_time
+        start = datetime.strptime(self.start_time, Config["time_format_hek"])
+        end = datetime.strptime(self.end_time, Config["time_format_hek"])
 
-    def request_one_interval(
+        interval = timedelta(days=days)
+        ret = []
+
+        current_time = start
+        while current_time < end:
+            next_time = current_time + interval
+            if next_time < end:
+                ret.append((current_time, next_time))
+            else:
+                ret.append((current_time, end))
+            current_time = next_time
+        return [(x.strftime(Config["time_format_hek"]),
+                y.strftime(Config["time_format_hek"]))
+                for x,y in ret
+            ]
+
+
+    def _request_one_interval(
         self, start_time: datetime.datetime, end_time: datetime.datetime
     ) -> None:
         """
@@ -89,26 +139,9 @@ class Request_Hek:
         :return: None   
         :rtype: None
         """
-        to_pass = {
-            p.query_name: p.get_value()
-            for p in [
-                self.use_json,
-                self.cmd,
-                self.command_type,
-                self.event_types,
-                self.start_time,
-                self.end_time,
-                self.coord_sys,
-                self.x1,
-                self.x2,
-                self.y1,
-                self.y2,
-                self.channel,
-                *self.other,
-            ]
-        }
+        to_pass = self.__parse_attributes(self.params, event_starttime= start_time, event_endtime = end_time)
         try:
-            response = requests.get(Hek_Request.base_url, params=to_pass)
+            response = requests.get(Hek_Service.base_url, params=to_pass)
         except HTTPError as http_err:
             print(f"HTTP error occurred: {http_err}")  # Python 3.6
         except Exception as err:
@@ -118,13 +151,17 @@ class Request_Hek:
             json_data = json.loads(response.text)
             with open("test.json", "w") as f:
                 f.write(json.dumps(json_data, indent=4))
-            with Hek_Request.event_adder_lock:
+            with Hek_Service.event_adder_lock:
                 events = [
                     Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]
                 ]
                 for e in events:
-                    if not e in self.events:
-                        self.events.append(e)
+                    if not e in self._data:
+                        self.data.append(e)
+            self.status = 'completed'
+    @property
+    def data(self):
+        return self._data
 
     def submit_request(self) -> None:
         """
@@ -133,11 +170,11 @@ class Request_Hek:
         :return: None
         :rtype: None
         """
-        self.break_into_intervals()
+        intervals = self._break_into_intervals()
         with cf.ThreadPoolExecutor(max_workers=5) as executor:
             ret = [
-                executor.submit(self.request_one_interval, *interval)
-                for interval in self.time_intervals
+                executor.submit(self._request_one_interval, *interval)
+                for interval in intervals
             ]
             for _ in tqdm(
                 cf.as_completed(ret),
@@ -155,17 +192,55 @@ class Request_Hek:
         :return: List of events found by the hek search
         :rtype: List[Solar_Event]
         """
-        return self.events
+        return self.data
 
     def save_data(self) -> None:
-        for e in self.events:
+        for e in self.data:
             try:
                 e.save()
-            except IntegrityError as e:
-                print(f"Could not save: {e}")    
+            except pw.IntegrityError as err:
+                print(f"Could not save: {e} : {err}")
+
+    def save_request(self):
+        s = Service_Request(
+                event = None,
+                service_type = 'hek',
+                status = self.status,
+                job_id = None
+                )
+        print(s)
+        for p in self.params:
+            print(p)
+        params = [Service_Parameter(
+            service_request = s,
+            key = a.name,
+            val = a.get_value(),
+            desc = a.description
+            ) for a in self.params]
+        s.save()
+        for p in params:
+            p.save()
+
+    
+    @staticmethod
+    def _from_model(serv_obj):
+        att_list = [Att.from_model(x) for x in serv_obj.parameters]
+        h = Hek_Service(*att_list)
+        h.status = serv_obj.status
+        return h
 
 
 
-
-        
-
+if __name__ == "__main__":
+    from solar.database import create_tables
+    create_tables()
+    h = Hek_Service()
+    x,y =('2010-06-01T00:00:00', '2010-07-01T00:00:00')
+    h._request_one_interval(x,y) 
+    h.save_data()
+    h.save_request()
+    mod = Service_Request.get()
+    print(mod)
+    new = Hek_Service._from_model(mod)
+    for param in new.params:
+        print(param)
