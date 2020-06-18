@@ -13,9 +13,10 @@ from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
 from peewee import DoesNotExist
-from .attributes import Attribute as Att
+from .attribute import Attribute as Att
 from .utils import build_from_defaults
-from .requests import Base_Service
+from .request import Base_Service
+import peewee as pw
 
 
 class Cutout_Service(Base_Service):
@@ -23,9 +24,9 @@ class Cutout_Service(Base_Service):
     # The base url for the ssw response, a response from this returns, most importatnyl, the job ID associated with this cuttout request
     base_api_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
-    repeat_time = 60  # seconds
+    delay_time = 60  # seconds
 
-    @static_method
+    @staticmethod
     def _from_event(event):
         to_pass = dict(
             xcen=event.hpc_x,
@@ -43,7 +44,7 @@ class Cutout_Service(Base_Service):
         if mod.event:
             return Cutout_Service._from_event(mod.event)
 
-        params = [Att._from_model(x) for x in mod.parameters]
+        params = [Att.from_model(x) for x in mod.parameters]
         cut = Cutout_Service(*params)
         cut.status = mod.status
         cut.job_id = mod.job_id
@@ -97,16 +98,15 @@ todo
         self.event = None
 
         self.service_request_id = None
+
         self.job_id = None  # The SSW job ID
+
+        self.status = "unsubmitted"
 
         # We want to avoid making unnecessary requests.
         # If allow similar is false (default) then Cutout_Service first checks database for any fits files with this event as an id.
         # If it finds such an event, it sets this request's job_id to the job id of the first item it finds (if there are many).
         # This causes the request step to skip (since a request has already been made, and we now have the job id of that request)
-
-        self.fovx = abs(self.event.x_max - self.event.x_min)
-        self.fovy = abs(self.event.y_max - self.event.y_min)
-        self.notrack = 1
 
         self.reponse = None  # The requests response
         self._data = None  # The text from the response
@@ -131,8 +131,9 @@ todo
         """
         if not self.job_id:
             try:
-                self.response = requests.get(
-                    Cutout_Service.base_api_url, params=__parse_attributes(self.params)
+                response = requests.get(
+                    Cutout_Service.base_api_url,
+                    params=self.__parse_attributes(self.params),
                 )
             except HTTPError as http_err:
                 print(f"HTTP error occurred: {http_err}")  # Python 3.6
@@ -140,9 +141,10 @@ todo
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
                 # print(f"Successfully submitted request ")
-                self.job_id = re.search('<param name="JobID">(.*)</param>', self.data)[
-                    1
-                ]
+                self.job_id = re.search(
+                    '<param name="JobID">(.*)</param>', response.text
+                )[1]
+                self.status = "submitted"
 
     def fetch_data(self, delay=None) -> None:
         """
@@ -163,24 +165,24 @@ todo
             # We then check if the response contains the string "Per-Wave file lists", to determine
             # if the request has been processed
             try:
-                self.data_response = requests.get(self.data_response_url)
+                data_response = requests.get(data_response_url)
             except HTTPError as http_err:
                 print(f"HTTP error occurred: {http_err}")  # Python 3.6
             except Exception as err:
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
-                if re.search("Per-Wave file lists", self.data_response.text):
+                if re.search("Per-Wave file lists", data_response.text):
                     data_acquired = True
                 else:
-                    # print("Data not available")
+                    print("Data not available")
                     time.sleep(delay_time)
-                    # print(f"Attempting to fetch data from {self.data_response_url}")
+                    print(f"Attempting to fetch data from {data_response_url}")
         # print("Data now available")
         # Once the response has been processed we need to extract the list of fits files
         if data_acquired:
             self.status = "completed"
             fits_list_url = re.search(
-                '<p><a href="(.*)">.*</a>', self.data_response.text
+                '<p><a href="(.*)">.*</a>', data_response.text
             )[1]
 
             if not fits_list_url:
@@ -189,19 +191,28 @@ todo
 
             # List_files_raw contains the pure text from the page listing the urls
             # We then split and extract the actial name
-            list_files_raw = requests.get(self.data_response_url + fits_list_url).text
+            list_files_raw = requests.get(data_response_url + fits_list_url).text
             file_list = list_files_raw.split("\n")
-            file_list = [re.search(".*/(.*)$", x)[1] for x in self.file_list if x]
+            file_list = [re.search(".*/(.*)$", x)[1] for x in file_list if x]
             self._data = self._as_fits(file_list)
 
     def save_data(self):
         pass
 
     def save_request(self):
-        if self.service_request_id:
-            req = Service_Request.get_by_id(self.service_request_id)
-        else:
-            req = Service_Request()
+        if self.status == "unsubmitted":
+            print("No reason to save an unsubmitted service request")
+            return None
+
+        try:
+            req = Service_Request.get(
+                Service_Request.job_id == self.job_id,
+                Service_Request.service_type == "cutout",
+            )
+        except pw.DoesNotExist:
+            req = Service_Request.create(service_type="cutout", status=self.status)
+
+        self.service_request_id = req.job_id
 
         if self.event:
             req.event = self.event
@@ -213,18 +224,21 @@ todo
 
         req.job_id = self.job_id
 
-        params_list = []
-        existing_param_list = [p for p in req.parameters]
+        param_list = [p for p in req.parameters]
+        my_params = [a.as_model(req) for a in self.params]
 
-        for param in self.params:
-            search = [x for x in existing_param_list if x.key == param.key]
-            if search:
-                param_list.append(param)
+        new_list = []
+
+        for param in my_params:
+            search = [x for x in param_list if x.key == param.key]
+            if not search:
+                new_list.append(param)
             else:
-                param_list.append(search[0])
+                param.id = search[0].id
+                new_list.append(param)
 
         req.save()
-        for p in param_list:
+        for p in new_list:
             p.save()
 
     def complete_execution(self) -> None:
@@ -251,16 +265,15 @@ todo
         :rtype: List[Fits_File]
         """
         ret = []
-        if self.event:
-            sol = self.event.sol_standard
-        else:
-            sol = "unknown"
+        sol = self.event.sol_standard if self.event else 'unknown'
+        event_id = self.event.event_id if self.event else 'unknown'
+
 
         data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
         )
 
-        for fits_server_file in self.file_list:
+        for fits_server_file in file_list:
 
             f = Fits_File(
                 event=self.event,
@@ -271,7 +284,7 @@ todo
                 file_name=fits_server_file,
             )
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
-                Config["fits_file_name_format"], f
+                Config["fits_file_name_format"], f, event_id = event_id
             )
             ret.append(f)
         return ret
@@ -327,4 +340,16 @@ def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
 
 
 if __name__ == "__main__":
-    c = Cutout_Service()
+    from solar.database import create_tables
+
+    create_tables()
+    x = Service_Request.get()
+    c = Cutout_Service._from_model(x)
+    for param in c.params:
+        print(param)
+    c.save_request()
+    c.submit_request()
+    c.fetch_data()
+    c.save_request()
+    print(c.data)
+

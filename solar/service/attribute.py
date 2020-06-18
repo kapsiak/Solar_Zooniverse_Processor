@@ -31,9 +31,12 @@ class Attribute:
         else:
             return str(self.value)
 
-    def as_model(self):
+    def as_model(self, req=None):
         return Service_Parameter(
-            key=self.name, val=self.get_value(), desc=self.description
+            service_request=req,
+            key=self.name,
+            val=self.get_value(),
+            desc=self.description,
         )
 
     @staticmethod
