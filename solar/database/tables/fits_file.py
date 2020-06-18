@@ -3,7 +3,7 @@ from solar.database import database as db
 from solar.database.utils import prepend_root, format_string
 from solar.common.config import Config
 from datetime import datetime
-from solar.retrieval.downloads import multi_downloader
+from solar.service.downloads import multi_downloader
 from pathlib import Path
 from solar.common.utils import checksum, into_number
 from sunpy.map import Map

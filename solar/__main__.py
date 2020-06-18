@@ -1,5 +1,5 @@
-from solar.retrieval.hek_requester import Hek_Request
-from solar.retrieval.cutout_requester import Cutout_Request, multi_cutout
+from solar.service.hek_requester import Hek_Request
+from solar.service.cutout_requester import Cutout_Request, multi_cutout
 from solar.database import *
 import peewee as pw
 from solar.common.utils import into_number

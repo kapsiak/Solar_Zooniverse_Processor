@@ -6,13 +6,13 @@ from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
 from solar.database import Solar_Event, Service_Request, Service_Parameter
-from solar.retrieval.attribute import Attribute as Att
+from solar.service.attribute import Attribute as Att
 from solar.common.config import Config
 from threading import Lock
 from tqdm import tqdm
-from solar.retrieval.request import Base_Service
+from solar.service.request import Base_Service
 import peewee as pw
-from solar.retrieval.utils import build_from_defaults
+from solar.service.utils import build_from_defaults
 
 
 class Hek_Service(Base_Service):
