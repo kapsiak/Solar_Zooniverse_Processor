@@ -100,7 +100,7 @@ todo
         self.job_id = None  # The SSW job ID
 
         # We want to avoid making unnecessary requests.
-        # If allow similar is false (default) then Cutout_Request first checks database for any fits files with this event as an id.
+        # If allow similar is false (default) then Cutout_Service first checks database for any fits files with this event as an id.
         # If it finds such an event, it sets this request's job_id to the job id of the first item it finds (if there are many).
         # This causes the request step to skip (since a request has already been made, and we now have the job id of that request)
 
@@ -150,7 +150,7 @@ todo
         :return: None
         :rtype: None
         """
-        data_response_url = Cutout_Request.data_response_url_template.format(
+        data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
         )
         data_acquired = False  # Have we been able to get the data_file list?
@@ -256,7 +256,7 @@ todo
         else:
             sol = "unknown"
 
-        data_response_url = Cutout_Request.data_response_url_template.format(
+        data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
         )
 
@@ -277,21 +277,21 @@ todo
         return ret
 
 
-def make_cutout_request(c: Cutout_Request) -> Cutout_Request:
+def make_cutout_request(c: Cutout_Service) -> Cutout_Service:
     """
     A wrapper function for processing cutout requests
 
     :param c: The request
-    :type c: Cutout_Request
+    :type c: Cutout_Service
     :return: The request after executing both the request and fetch stages
-    :rtype: Cutout_Request
+    :rtype: Cutout_Service
     """
     c.complete_execution()
     c.as_fits()
     return c
 
 
-def multi_cutout(list_of_reqs: List[Cutout_Request]) -> List[Cutout_Request]:
+def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
     """
     A multithreaded cutout requester. 
     Accepts a list of cutout requests, processes them in paralle and then returns a list of the 
@@ -300,9 +300,9 @@ def multi_cutout(list_of_reqs: List[Cutout_Request]) -> List[Cutout_Request]:
     WARNING: The order of the original list is not guaranteed to be preserved in the returned list
 
     :param list_of_reqs: List of requests to be processed
-    :type list_of_reqs: List[Cutout_Request]
+    :type list_of_reqs: List[Cutout_Service]
     :return: List of completed request
-    :rtype: List[Cutout_Request]
+    :rtype: List[Cutout_Service]
     """
     with ThreadPoolExecutor(max_workers=1000) as executor:
         total_jobs = len(list_of_reqs)
