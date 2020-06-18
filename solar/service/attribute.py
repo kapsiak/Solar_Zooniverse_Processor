@@ -26,7 +26,7 @@ class Attribute:
             return ",".join([str(x) for x in self.value])
         elif isinstance(self.value, datetime.datetime):
             return self.value.strftime(
-                kwargs.get("time_format", Config["time_format_hek"])
+                kwargs.get("time_format", Config.time_format.hek)
             )
         else:
             return str(self.value)

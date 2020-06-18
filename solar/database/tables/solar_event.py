@@ -41,9 +41,9 @@ class Solar_Event(Base_Model):
             event_id=h["SOL_standard"].replace(":", "-"),
             sol_standard=h["SOL_standard"],
             start_time=datetime.strptime(
-                h["event_starttime"], Config["time_format_hek"]
+                h["event_starttime"], Config.time_format.hek
             ),
-            end_time=datetime.strptime(h["event_endtime"], Config["time_format_hek"]),
+            end_time=datetime.strptime(h["event_endtime"], Config.time_format.hek),
             coord_unit=h["event_coordunit"],
             x_min=h["boundbox_c1ll"],
             x_max=h["boundbox_c1ur"],

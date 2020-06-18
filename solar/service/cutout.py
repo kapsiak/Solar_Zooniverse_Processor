@@ -317,8 +317,8 @@ todo
                 server_full_path=data_response_url + fits_server_file,
                 file_name=fits_server_file,
             )
-            f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
-                Config["fits_file_name_format"], f, event_id=event_id
+            f.file_path = Path(Config.storage_path.fits) / dbs.format_string(
+                Config.db_save, f, event_id=event_id
             )
             ret.append(f)
         return ret

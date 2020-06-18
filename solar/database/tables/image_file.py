@@ -9,7 +9,7 @@ import numpy as np
 from .base_models import File_Model, Base_Model
 from .fits_file import Fits_File
 from typing import Union, Any, List
-
+from solar.database.utils import dbformat, dbroot
 
 class Image_File(File_Model):
 
@@ -26,6 +26,11 @@ class Image_File(File_Model):
 
     ref_pixel_x = pw.IntegerField(default=0)
     ref_pixel_y = pw.IntegerField(default=0)
+
+
+    @dbroot
+    def make_path(self, default_format , **kwargs):
+
 
     @staticmethod
     def create_new_image(

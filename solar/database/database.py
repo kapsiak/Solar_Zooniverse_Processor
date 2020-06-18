@@ -2,7 +2,7 @@ import peewee as pw
 from solar.common.config import Config
 
 database = pw.SqliteDatabase(
-    Config["database_path"],
+    Config.db_path,
     pragmas={
         "journal_mode": "wal",
         "cache_size": -1 * 64000,  # 64MB

@@ -98,8 +98,8 @@ class Hek_Service(Base_Service):
         :return: None
         :rtype: None
         """
-        start = datetime.strptime(self.start_time, Config["time_format_hek"])
-        end = datetime.strptime(self.end_time, Config["time_format_hek"])
+        start = datetime.strptime(self.start_time, Config.time_format.hek)
+        end = datetime.strptime(self.end_time, Config.time_format.hek)
 
         interval = timedelta(days=days)
         ret = []
@@ -114,8 +114,8 @@ class Hek_Service(Base_Service):
             current_time = next_time
         return [
             (
-                x.strftime(Config["time_format_hek"]),
-                y.strftime(Config["time_format_hek"]),
+                x.strftime(Config.time_format.hek),
+                y.strftime(Config.time_format.hek),
             )
             for x, y in ret
         ]

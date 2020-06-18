@@ -2,9 +2,10 @@ from __future__ import annotations
 from typing import List, Dict, Any
 from solar.common.config import Config
 from pathlib import Path
+from functools import wraps
 
 
-def format_string(format_string: str, row: object, **kwargs) -> str:
+def dbformat(format_string: str, row: object, **kwargs) -> str:
     """
     Helper method to format a string given a database model instance.
 
@@ -28,4 +29,17 @@ def prepend_root(path: Union[Path, str]) -> str:
     :return: the path with the database save file prepended
     :rtype: str
     """
-    return str(Path(Config["file_save_path"]) / path)
+    return str(Path(Config.db_save) / path)
+
+def dbroot(fun)
+    @wraps(fun)
+    def ret(*args,**kwargs):
+        new_path = Path(Config.db_save) / fun(*args, **kwargs)
+        return new_path
+    return ret
+
+
+
+
+
+

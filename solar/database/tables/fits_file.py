@@ -16,7 +16,7 @@ from tqdm import tqdm
 from typing import Any, Dict
 from .service_request import Service_Request
 import shutil
-
+from solar.database.utils import dbformat, dbroot
 
 class Fits_File(File_Model):
     """
@@ -47,6 +47,17 @@ File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
 
+    @dbroot
+    def make_path(self, default_format = Config["fits_file_name_format"]. **kwargs):
+        """TODO: Docstring for make_path.
+
+        :param default_format: TODO
+        :returns: TODO
+
+        """
+        return dbformat(default_format, self, **kwargs)
+        
+
     @staticmethod
     def from_file(file_path, file_name):
         new_path = Config["fits_unkown_name_format"].format(file_name=file_name)
@@ -62,7 +73,7 @@ Hash            = {self.file_hash}
             shutil.copy(file_path, new_path)
             fits.get_hash()
             return fits
-
+    
     @staticmethod
     def update_table(update_headers: bool = True):
         """
@@ -91,7 +102,7 @@ Hash            = {self.file_hash}
             for f in tqdm(bad_files, total=len(bad_files), desc="Extracting Data"):
                 f.extract_fits_data()
                 f.image_time = datetime.strptime(
-                    f["date-obs"], Config["time_format_from_fits"]
+                    f["date-obs"], Config.time_format.fits
                 )
                 f.save()
 

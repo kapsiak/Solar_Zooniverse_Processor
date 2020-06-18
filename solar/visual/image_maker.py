@@ -17,6 +17,8 @@ class Image_Maker:
         self.ax = None
         self.map = None
         self.dpi = 300
+        self.width = 0
+        self.height = 0
 
     def save_image(self, save_path, clear_after=True):
         p = Path(save_path)
