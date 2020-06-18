@@ -1,6 +1,7 @@
 from solar.database import *
 from solar.database.tables.base_models import Base_Model
 
+
 class Base_Service:
 
     base_api_url = None

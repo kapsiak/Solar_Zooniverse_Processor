@@ -55,7 +55,7 @@ class Image_File(File_Model):
         )
         params = {}
         add_data_stamp = kwargs.get("add_data_stamp", False)
-        stamp_format = kwargs.get("stamp_format" , "{}: {}\nhpc=({},{})\nWav={}" )
+        stamp_format = kwargs.get("stamp_format", "{}: {}\nhpc=({},{})\nWav={}")
         if add_data_stamp:
             try:
                 params["data_stamp"] = stamp_format.format(

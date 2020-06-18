@@ -10,5 +10,4 @@ class Config(metaclass=ConfMeta):
     default_img_file_path = "generated/{image_type}/{sol_standard}/{file_name}"
     time_format_hek = "%Y-%m-%dT%H:%M:%S"
     time_format_fits = "%Y-%m-%dT%H:%M:%S.%f"
-    chatty=True
-
+    chatty = True

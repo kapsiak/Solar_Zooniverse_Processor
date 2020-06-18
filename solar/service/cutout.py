@@ -32,7 +32,10 @@ class Cutout_Service(Base_Service):
 
         if strict:
             try:
-                c = Service_Request.get(Service_Request.event == event, Service_Request.service_type == 'cutout')
+                c = Service_Request.get(
+                    Service_Request.event == event,
+                    Service_Request.service_type == "cutout",
+                )
                 chat(f"I found a cutout request for event {event.__repr__()}")
                 return Cutout_Service._from_model(c)
             except pw.DoesNotExist:
@@ -192,9 +195,7 @@ todo
         # Once the response has been processed we need to extract the list of fits files
         if data_acquired:
             self.status = "completed"
-            fits_list_url = re.search(
-                '<p><a href="(.*)">.*</a>', data_response.text
-            )[1]
+            fits_list_url = re.search('<p><a href="(.*)">.*</a>', data_response.text)[1]
 
             if not fits_list_url:
                 # print(f"Looks like there are no cut out files available")
@@ -221,11 +222,18 @@ todo
                     Service_Request.job_id == self.job_id,
                     Service_Request.service_type == "cutout",
                 )
-                chat(("While saving this request, I found an existing request with a matching job id.\n"
+                chat(
+                    (
+                        "While saving this request, I found an existing request with a matching job id.\n"
                         "I am going to update that request instead"
-                    ))
+                    )
+                )
             except pw.DoesNotExist:
-                print(("While saving this request, I could not find any matching request. I am creating a new one"))
+                print(
+                    (
+                        "While saving this request, I could not find any matching request. I am creating a new one"
+                    )
+                )
 
                 req = Service_Request.create(service_type="cutout", status=self.status)
         else:
@@ -233,8 +241,10 @@ todo
                 chat("This request already has an id, I will try saving it to that")
                 req = Service_Request.get_by_id(self.service_request_id)
             except pw.DoesNotExist:
-                print(  f"Somehow this request has an invalid id: {self.service_request_id}  "
-                        "I don't know what to do with this so I am bailing.")
+                print(
+                    f"Somehow this request has an invalid id: {self.service_request_id}  "
+                    "I don't know what to do with this so I am bailing."
+                )
                 return None
 
         self.service_request_id = req.id
@@ -290,9 +300,8 @@ todo
         :rtype: List[Fits_File]
         """
         ret = []
-        sol = self.event.sol_standard if self.event else 'unknown'
-        event_id = self.event.event_id if self.event else 'unknown'
-
+        sol = self.event.sol_standard if self.event else "unknown"
+        event_id = self.event.event_id if self.event else "unknown"
 
         data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
@@ -309,7 +318,7 @@ todo
                 file_name=fits_server_file,
             )
             f.file_path = Path(Config["file_save_path"]) / dbs.format_string(
-                Config["fits_file_name_format"], f, event_id = event_id
+                Config["fits_file_name_format"], f, event_id=event_id
             )
             ret.append(f)
         return ret
@@ -379,4 +388,3 @@ if __name__ == "__main__":
     c.fetch_data()
     c.save_request()
     print(c.data)
-

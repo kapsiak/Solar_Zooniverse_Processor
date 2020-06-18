@@ -6,7 +6,8 @@ lprint_lock = Lock()
 
 def chat(*args, **kwargs):
     if Config.chatty:
-        print(*args,**kwargs)
+        print(*args, **kwargs)
+
 
 def lr_print(*a, **b):
     with lprint_lock:

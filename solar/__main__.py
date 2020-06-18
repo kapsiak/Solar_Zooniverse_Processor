@@ -13,19 +13,19 @@ for e in h.data:
     except pw.IntegrityError:
         pass
 
-c_list = [Cutout_Service._from_event(e) for e in Solar_Event.select()]
-for x in c_list:
-    print(x)
-    x.submit_request()
-    x.save_request()
-    x.fetch_data()
-    x.save_request()
+#c_list = [Cutout_Service._from_event(e) for e in Solar_Event.select()]
+#for x in c_list:
+#    print(x)
+#    x.submit_request()
+#    x.save_request()
+#    x.fetch_data()
+#    x.save_request()
+#
+#for x in c_list:
+#    for f in x.data:
+#        try:
+#            f.save()
+#        except pw.IntegrityError:
+#            pass
 
-for x in c_list:
-    for f in x.data:
-        try:
-            f.save()
-        except pw.IntegrityError:
-            pass
-
-
+Fits_File.update_table()
