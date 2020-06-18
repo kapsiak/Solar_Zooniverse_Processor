@@ -31,7 +31,7 @@ class Image_File(File_Model):
     def create_new_image(
         fits_file: Union[Path, str],
         image_maker: Any,
-        file_name: str = None,
+        file_save_path: str = None,
         desc: str = "",
         overwrite=True,
         **kwargs,
@@ -45,7 +45,7 @@ class Image_File(File_Model):
         file_path = str(
             Path(
                 prepend_root(
-                    Config["img_file_name_format"].format(
+                    file_save_path.format(
                         image_type=image_maker.image_type,
                         sol_standard=fits_file.sol_standard,
                         file_name=file_name,
@@ -53,11 +53,12 @@ class Image_File(File_Model):
                 )
             )
         )
-        params = kwargs
+        params = {}
         add_data_stamp = kwargs.get("add_data_stamp", False)
+        stamp_format = kwargs.get("stamp_format" , "{}: {}\nhpc=({},{})\nWav={}" )
         if add_data_stamp:
             try:
-                params["data_stamp"] = "{}: {}\nhpc=({},{})\nWav={}".format(
+                params["data_stamp"] = stamp_format.format(
                     fits_file["instrume"],
                     fits_file["date-obs"],
                     fits_file.event.hpc_x,

@@ -37,7 +37,8 @@ class Service_Request(Base_Model):
 
     def __str__(self):
         return (
-            f"<Service_Req   id = {self.id}>\n" f"{self.service_type}: {self.status}\n"
+            f"<Service_Req   id = {self.id} | event = {self.event}>\n" 
+            f"{self.service_type}: {self.status}\n"
         )
 
 

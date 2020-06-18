@@ -167,7 +167,7 @@ class Hek_Service(Base_Service):
         :return: None
         :rtype: None
         """
-        intervals = self._break_into_intervals()
+        intervals = self.__break_into_intervals()
         with cf.ThreadPoolExecutor(max_workers=5) as executor:
             ret = [
                 executor.submit(self._request_one_interval, *interval)
@@ -175,12 +175,12 @@ class Hek_Service(Base_Service):
             ]
             for _ in tqdm(
                 cf.as_completed(ret),
-                total=len(self.time_intervals),
+                total=len(intervals),
                 desc="Requesting Events from HEK",
             ):
                 pass
 
-        print(f"Found {len(self.events)} new events")
+        print(f"Found {len(self._data)} new events")
 
     def fetch_data(self) -> List[Solar_Event]:
         """

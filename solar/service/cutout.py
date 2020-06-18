@@ -17,6 +17,7 @@ from .attribute import Attribute as Att
 from .utils import build_from_defaults
 from .request import Base_Service
 import peewee as pw
+from solar.common import chat
 
 
 class Cutout_Service(Base_Service):
@@ -27,26 +28,36 @@ class Cutout_Service(Base_Service):
     delay_time = 60  # seconds
 
     @staticmethod
-    def _from_event(event):
+    def _from_event(event, strict=True):
+
+        if strict:
+            try:
+                c = Service_Request.get(Service_Request.event == event, Service_Request.service_type == 'cutout')
+                chat(f"I found a cutout request for event {event.__repr__()}")
+                return Cutout_Service._from_model(c)
+            except pw.DoesNotExist:
+                pass
+        chat("I could not find request matching this event, I will create a new one")
         to_pass = dict(
             xcen=event.hpc_x,
             ycen=event.hpc_y,
-            fovx=abs(self.event.x_max - self.event.x_min),
-            fovy=abs(self.event.y_max - self.event.y_min),
+            fovx=abs(event.x_max - event.x_min),
+            fovy=abs(event.y_max - event.y_min),
             notrack=1,
             start=event.start_time,
             end=event.end_time,
         )
-        return Cutout_Service(**to_pass)
+        c = Cutout_Service(**to_pass)
+        c.event = event
+        return c
 
     @staticmethod
     def _from_model(mod):
-        if mod.event:
-            return Cutout_Service._from_event(mod.event)
-
         params = [Att.from_model(x) for x in mod.parameters]
         cut = Cutout_Service(*params)
+        cut.event = mod.event
         cut.status = mod.status
+        cut.service_request_id = mod.id
         cut.job_id = mod.job_id
 
         return cut
@@ -174,9 +185,9 @@ todo
                 if re.search("Per-Wave file lists", data_response.text):
                     data_acquired = True
                 else:
-                    print("Data not available")
+                    chat("Data not available")
                     time.sleep(delay_time)
-                    print(f"Attempting to fetch data from {data_response_url}")
+                    chat(f"Attempting to fetch data from {data_response_url}")
         # print("Data now available")
         # Once the response has been processed we need to extract the list of fits files
         if data_acquired:
@@ -201,18 +212,32 @@ todo
 
     def save_request(self):
         if self.status == "unsubmitted":
-            print("No reason to save an unsubmitted service request")
+            chat("No reason to save an unsubmitted service request")
             return None
 
-        try:
-            req = Service_Request.get(
-                Service_Request.job_id == self.job_id,
-                Service_Request.service_type == "cutout",
-            )
-        except pw.DoesNotExist:
-            req = Service_Request.create(service_type="cutout", status=self.status)
+        if not self.service_request_id:
+            try:
+                req = Service_Request.get(
+                    Service_Request.job_id == self.job_id,
+                    Service_Request.service_type == "cutout",
+                )
+                chat(("While saving this request, I found an existing request with a matching job id.\n"
+                        "I am going to update that request instead"
+                    ))
+            except pw.DoesNotExist:
+                print(("While saving this request, I could not find any matching request. I am creating a new one"))
 
-        self.service_request_id = req.job_id
+                req = Service_Request.create(service_type="cutout", status=self.status)
+        else:
+            try:
+                chat("This request already has an id, I will try saving it to that")
+                req = Service_Request.get_by_id(self.service_request_id)
+            except pw.DoesNotExist:
+                print(  f"Somehow this request has an invalid id: {self.service_request_id}  "
+                        "I don't know what to do with this so I am bailing.")
+                return None
+
+        self.service_request_id = req.id
 
         if self.event:
             req.event = self.event
@@ -299,8 +324,10 @@ def make_cutout_request(c: Cutout_Service) -> Cutout_Service:
     :return: The request after executing both the request and fetch stages
     :rtype: Cutout_Service
     """
-    c.complete_execution()
-    c.as_fits()
+    c.request()
+    c.save_request()
+    c.fetch_data()
+    c.save_request()
     return c
 
 
@@ -320,8 +347,8 @@ def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
     with ThreadPoolExecutor(max_workers=1000) as executor:
         total_jobs = len(list_of_reqs)
         completed = 0
-        print("Starting Requests")
-        print(
+        chat("Starting Requests")
+        chat(
             f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
             end="\r",
         )
@@ -331,11 +358,11 @@ def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
         for future in concurrent.futures.as_completed(cmap):
             ret.append(future.result())
             completed += 1
-            print(
+            chat(
                 f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
                 end="\r",
             )
-        print("\nDone")
+        chat("\nDone")
     return ret
 
 
