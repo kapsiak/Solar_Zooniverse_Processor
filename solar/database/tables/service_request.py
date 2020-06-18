@@ -29,13 +29,16 @@ class Service_Request(Base_Model):
             self.parameters.where(Fits_Header_Elem.key == key).get().value
         )
 
+    def get_param(self, param):
+        self.parameters.where(Fits_Header_Elem.key == key).get()
+
     def get_params_as_dict(self) -> Dict[str, Any]:
         return {x.key: into_number(x.value) for x in self.parameters}
 
     def __str__(self):
-        return (f"<Service_Req   id = {self.id}>\n"
-                f"{self.service_type}: {self.status}\n" 
-                )
+        return (
+            f"<Service_Req   id = {self.id}>\n" f"{self.service_type}: {self.status}\n"
+        )
 
 
 class Service_Parameter(Base_Model):
@@ -48,6 +51,8 @@ class Service_Parameter(Base_Model):
         return hash((self.key, self.val))
 
     def __str__(self):
-        return (f"<Service_Param id = {self.id} -> {self.service_request}>\n" 
-                f"{self.key} = {self.val}\n" 
-                f"Desc: {self.desc}")
+        return (
+            f"<Service_Param id = {self.id} -> {self.service_request}>\n"
+            f"{self.key} = {self.val}\n"
+            f"Desc: {self.desc}"
+        )

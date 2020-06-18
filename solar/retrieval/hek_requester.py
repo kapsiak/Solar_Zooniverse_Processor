@@ -5,24 +5,15 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
-from solar.database import Solar_Event, Service_Request,Service_Parameter
+from solar.database import Solar_Event, Service_Request, Service_Parameter
 from solar.retrieval.attribute import Attribute as Att
 from solar.common.config import Config
 from threading import Lock
 from tqdm import tqdm
 from solar.retrieval.request import Base_Service
 import peewee as pw
+from solar.retrieval.utils import build_from_defaults
 
-
-def build_from_defaults(default_list, new_list):
-    ret = []
-    for i in default_list:
-        search = [x for x in new_list if x.name == i.name]
-        if search:
-            ret.append(search[0])
-        else:
-            ret.append(i)
-    return ret
 
 class Hek_Service(Base_Service):
     """
@@ -80,10 +71,11 @@ class Hek_Service(Base_Service):
         temp = []
         temp.extend(args)
         temp.extend([Att(key, kwargs[key]) for key in kwargs])
-        self.params = build_from_defaults(defaults,temp)
+        self.params = build_from_defaults(defaults, temp)
 
-
-        self.start_time = [x for x in self.params if x.name == "event_starttime"][0].value
+        self.start_time = [x for x in self.params if x.name == "event_starttime"][
+            0
+        ].value
         self.end_time = [x for x in self.params if x.name == "event_endtime"][0].value
 
         self.found_count = 0
@@ -94,7 +86,7 @@ class Hek_Service(Base_Service):
 
     def __parse_attributes(self, params, **kwargs):
         other = [Att(key, kwargs[key]) for key in kwargs]
-        new_params = build_from_defaults(params,other)
+        new_params = build_from_defaults(params, other)
         return {att.name: att.value for att in new_params}
 
     def __break_into_intervals(self, days: int = 60) -> None:
@@ -120,11 +112,13 @@ class Hek_Service(Base_Service):
             else:
                 ret.append((current_time, end))
             current_time = next_time
-        return [(x.strftime(Config["time_format_hek"]),
-                y.strftime(Config["time_format_hek"]))
-                for x,y in ret
-            ]
-
+        return [
+            (
+                x.strftime(Config["time_format_hek"]),
+                y.strftime(Config["time_format_hek"]),
+            )
+            for x, y in ret
+        ]
 
     def _request_one_interval(
         self, start_time: datetime.datetime, end_time: datetime.datetime
@@ -139,7 +133,9 @@ class Hek_Service(Base_Service):
         :return: None   
         :rtype: None
         """
-        to_pass = self.__parse_attributes(self.params, event_starttime= start_time, event_endtime = end_time)
+        to_pass = self.__parse_attributes(
+            self.params, event_starttime=start_time, event_endtime=end_time
+        )
         try:
             response = requests.get(Hek_Service.base_url, params=to_pass)
         except HTTPError as http_err:
@@ -158,7 +154,8 @@ class Hek_Service(Base_Service):
                 for e in events:
                     if not e in self._data:
                         self.data.append(e)
-            self.status = 'completed'
+            self.status = "completed"
+
     @property
     def data(self):
         return self._data
@@ -203,25 +200,21 @@ class Hek_Service(Base_Service):
 
     def save_request(self):
         s = Service_Request(
-                event = None,
-                service_type = 'hek',
-                status = self.status,
-                job_id = None
-                )
+            event=None, service_type="hek", status=self.status, job_id=None
+        )
         print(s)
         for p in self.params:
             print(p)
-        params = [Service_Parameter(
-            service_request = s,
-            key = a.name,
-            val = a.get_value(),
-            desc = a.description
-            ) for a in self.params]
+        params = [
+            Service_Parameter(
+                service_request=s, key=a.name, val=a.get_value(), desc=a.description
+            )
+            for a in self.params
+        ]
         s.save()
         for p in params:
             p.save()
 
-    
     @staticmethod
     def _from_model(serv_obj):
         att_list = [Att.from_model(x) for x in serv_obj.parameters]
@@ -230,13 +223,13 @@ class Hek_Service(Base_Service):
         return h
 
 
-
 if __name__ == "__main__":
     from solar.database import create_tables
+
     create_tables()
     h = Hek_Service()
-    x,y =('2010-06-01T00:00:00', '2010-07-01T00:00:00')
-    h._request_one_interval(x,y) 
+    x, y = ("2010-06-01T00:00:00", "2010-07-01T00:00:00")
+    h._request_one_interval(x, y)
     h.save_data()
     h.save_request()
     mod = Service_Request.get()

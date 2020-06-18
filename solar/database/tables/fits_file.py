@@ -30,7 +30,7 @@ class Fits_File(File_Model):
     sol_standard = pw.CharField(null=True)
 
     server_file_name = pw.CharField(null=True)
-    server_full_path = pw.CharField(null=True)
+    server_full_path = pw.CharField(unique=True, null=True)
 
     ssw_cutout_id = pw.CharField(null=True)
 
