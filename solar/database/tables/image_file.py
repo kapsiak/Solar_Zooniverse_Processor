@@ -62,8 +62,8 @@ class Image_File(File_Model):
                 fits_file, image_maker, save_format, file_name=file_name
             )
         )
-        print(file_path)
-        print(type(file_path))
+        chat(file_path)
+        chat(type(file_path))
         params = {}
         add_data_stamp = kwargs.get("add_data_stamp", False)
         stamp_format = kwargs.get("stamp_format", "{}: {}\nhpc=({},{})\nWav={}")
@@ -78,10 +78,14 @@ class Image_File(File_Model):
                 )
             except Exception as e:
                 params["data_stamp"] = "NA"
+        already_exists = False
+        try:
+            im = Image_File.get(Image_File.file_path == file_path)
+            already_exists = True
+            chat("Looks like there is already an image at this filepath")
 
-        if image_maker.create(fits_file.file_path, **params):
-            try:
-                im = Image_File.create(
+        except pw.DoesNotExist:
+            im = Image_File(
                     fits_file=fits_file,
                     file_path=file_path,
                     file_name=file_name,
@@ -93,20 +97,21 @@ class Image_File(File_Model):
                     # width  = fits_file["naxis1"],
                     # height  = fits_file["naxis2"]
                 )
-            except pw.IntegrityError:
-                chat("Looked like there is already an image with file path:")
-                chat(file_path)
-                im = Image_File.get(Image_File.file_path == file_path)
-                if overwrite or not im.check_integrity():
-                    chat(
-                        "Since you have set overwrite, I am going to replace the old image with a new one"
-                    )
-                    image_maker.save_image(file_path)
-            print(type(im.file_path))
-            im.get_hash()
-            return im
-        else:
-            return None
+            chat("I couldn't find an existing image")
+        except Exception as e:
+            print(e)
+
+        if not already_exists or overwrite:
+            if image_maker.create(fits_file.file_path, **params):
+                chat(
+                    "Since you have set overwrite, I am going to replace the old image with a new one"
+                )
+                image_maker.save_image(file_path)
+                im.save()
+                im.get_hash()
+            else:
+                return None
+        return im
 
     def get_world_from_pixels(self, x: int, y: int) -> Any:
         header_dict = FileHeader(self.fits_file.get_header_as_dict())

@@ -3,9 +3,7 @@ import sunpy.map as sm
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from pathlib import Path
-
 from functools import wraps
-
 
 class Image_Maker:
     def __init__(self, im_type):
