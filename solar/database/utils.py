@@ -17,7 +17,10 @@ def dbformat(format_string: str, row: object, **kwargs) -> str:
     :return: The formatted string
     :rtype: str
     """
-    return format_string.format(**row.__data__, **kwargs)
+    to_pass = dict(row.__data__)
+    for k in kwargs:
+        to_pass[k] = kwargs[k]
+    return format_string.format(**to_pass)
 
 
 def prepend_root(path: Union[Path, str]) -> str:
@@ -31,15 +34,11 @@ def prepend_root(path: Union[Path, str]) -> str:
     """
     return str(Path(Config.db_save) / path)
 
-def dbroot(fun)
+
+def dbroot(fun):
     @wraps(fun)
-    def ret(*args,**kwargs):
+    def ret(*args, **kwargs):
         new_path = Path(Config.db_save) / fun(*args, **kwargs)
         return new_path
+
     return ret
-
-
-
-
-
-
