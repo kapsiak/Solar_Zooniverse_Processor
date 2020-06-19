@@ -3,6 +3,7 @@ from solar.database.database import database as db
 from pathlib import Path
 from solar.common.utils import checksum
 import shutil
+from solar.common.config import Config
 
 
 class Base_Model(pw.Model):
@@ -45,9 +46,12 @@ class File_Model(Base_Model):
         pass
 
     def move(self, new_path):
+        new = Path(Config.db_save) / new_path
+        new.parent.mkdir(parents=True, exist_ok=True)
         try:
-            shutil.move(self.file_path, new_path)
-            self.file_path = new_path
+            shutil.move(self.file_path, new)
+            self.file_path = new
+            self.get_hash()
             return True
         except IOError as e:
             print(e)
