@@ -1,6 +1,5 @@
 import peewee as pw
 from solar.common.config import Config
-from solar.database.utils import prepend_root, format_string
 from pathlib import Path
 from sunpy.map import Map
 import astropy.units as u
@@ -10,6 +9,8 @@ from .base_models import File_Model, Base_Model
 from .fits_file import Fits_File
 from typing import Union, Any, List
 from solar.database.utils import dbformat, dbroot
+from solar.common.printing import chat
+
 
 class Image_File(File_Model):
 
@@ -27,37 +28,42 @@ class Image_File(File_Model):
     ref_pixel_x = pw.IntegerField(default=0)
     ref_pixel_y = pw.IntegerField(default=0)
 
-
+    @staticmethod
     @dbroot
-    def make_path(self, default_format , **kwargs):
-
+    def __make_path(fits, image_maker, save_format, file_name=None, **kwargs):
+        file_path = dbformat(
+            save_format,
+            fits,
+            file_name=file_name,
+            image_type=image_maker.image_type,
+            **kwargs,
+        )
+        return file_path
 
     @staticmethod
     def create_new_image(
         fits_file: Union[Path, str],
         image_maker: Any,
-        file_save_path: str = None,
+        file_name=None,
+        save_format: str = Config.storage_path.img,
         desc: str = "",
         overwrite=True,
         **kwargs,
     ):
         # TODO: This whole thing is a bit of a mess #
         # TODO: Need to work on dealing with extension: <16-06-20> #
+
         if not file_name:
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
-        file_name = Path(file_name).with_suffix("." + image_maker.image_type)
+        file_name = str(Path(file_name).with_suffix("." + image_maker.image_type))
         file_path = str(
-            Path(
-                prepend_root(
-                    file_save_path.format(
-                        image_type=image_maker.image_type,
-                        sol_standard=fits_file.sol_standard,
-                        file_name=file_name,
-                    )
-                )
+            Image_File.__make_path(
+                fits_file, image_maker, save_format, file_name=file_name
             )
         )
+        print(file_path)
+        print(type(file_path))
         params = {}
         add_data_stamp = kwargs.get("add_data_stamp", False)
         stamp_format = kwargs.get("stamp_format", "{}: {}\nhpc=({},{})\nWav={}")
@@ -88,31 +94,19 @@ class Image_File(File_Model):
                     # height  = fits_file["naxis2"]
                 )
             except pw.IntegrityError:
-                # print("Looked like there is already an image with file path:")
-                # print(file_path)
+                chat("Looked like there is already an image with file path:")
+                chat(file_path)
                 im = Image_File.get(Image_File.file_path == file_path)
                 if overwrite or not im.check_integrity():
-                    # print("Since you have set overwrite, I am going to replace the old image with a new one")
+                    chat(
+                        "Since you have set overwrite, I am going to replace the old image with a new one"
+                    )
                     image_maker.save_image(file_path)
-                # print("Since you have not set overwrite, I am going to throw away the new image")
-            # for arg in kwargs:
-            #    Image_Param.create(key=arg, value=kwargs[arg])
+            print(type(im.file_path))
             im.get_hash()
             return im
         else:
             return None
-
-    def correct_file_path(self) -> None:
-        self.file_path = prepend_root(
-            format_string(
-                Config[f"img_file_name_format"],
-                self,
-                sol_standard=self.fits_file.sol_standard,
-                file_type=self.image_type,
-            )
-        )
-        self.file_path = self.file_path.replace(":", "-")
-        self.save()
 
     def get_world_from_pixels(self, x: int, y: int) -> Any:
         header_dict = FileHeader(self.fits_file.get_header_as_dict())

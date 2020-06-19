@@ -2,7 +2,8 @@ import peewee as pw
 from solar.database.database import database as db
 from pathlib import Path
 from solar.common.utils import checksum
-import shutils
+import shutil
+
 
 class Base_Model(pw.Model):
     """
@@ -40,12 +41,12 @@ class File_Model(Base_Model):
                 return True
         return False
 
-    def make_path(self, default_form= None):
+    def make_path(self, default_form=None):
         pass
 
-    def move(self,new_path):
+    def move(self, new_path):
         try:
-            shutils.move(self.file_path, new_path)
+            shutil.move(self.file_path, new_path)
             self.file_path = new_path
             return True
         except IOError as e:
@@ -56,4 +57,3 @@ class File_Model(Base_Model):
 
     def __eq__(self, other):
         return self.file_path == other.file_path
-    
