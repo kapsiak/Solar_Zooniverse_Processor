@@ -1,6 +1,5 @@
 import peewee as pw
 from solar.database import database as db
-from solar.database.utils import prepend_root, format_string
 from solar.common.config import Config
 from datetime import datetime
 from solar.service.downloads import multi_downloader
@@ -17,6 +16,7 @@ from typing import Any, Dict
 from .service_request import Service_Request
 import shutil
 from solar.database.utils import dbformat, dbroot
+
 
 class Fits_File(File_Model):
     """
@@ -47,16 +47,16 @@ File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
 
+    @staticmethod
     @dbroot
-    def make_path(self, default_format = Config["fits_file_name_format"]. **kwargs):
+    def make_path(fits_model, default_format=Config.storage_path.fits, **kwargs):
         """TODO: Docstring for make_path.
 
         :param default_format: TODO
         :returns: TODO
 
         """
-        return dbformat(default_format, self, **kwargs)
-        
+        return dbformat(default_format, fits_model, **kwargs)
 
     @staticmethod
     def from_file(file_path, file_name):
@@ -73,7 +73,7 @@ Hash            = {self.file_hash}
             shutil.copy(file_path, new_path)
             fits.get_hash()
             return fits
-    
+
     @staticmethod
     def update_table(update_headers: bool = True):
         """
@@ -101,9 +101,7 @@ Hash            = {self.file_hash}
             print(f"Updating headers on {num_rows} files")
             for f in tqdm(bad_files, total=len(bad_files), desc="Extracting Data"):
                 f.extract_fits_data()
-                f.image_time = datetime.strptime(
-                    f["date-obs"], Config.time_format.fits
-                )
+                f.image_time = datetime.strptime(f["date-obs"], Config.time_format.fits)
                 f.save()
 
         print(f"Update complete")
