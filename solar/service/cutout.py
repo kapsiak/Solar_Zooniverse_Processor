@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 import time
 from solar.common.config import Config
-import solar.database.utils as dbs
+from solar.database.utils import dbformat
 from solar.database import Solar_Event, Fits_File, Service_Parameter, Service_Request
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
@@ -301,7 +301,8 @@ todo
         """
         ret = []
         sol = self.event.sol_standard if self.event else "unknown"
-        event_id = self.event.event_id if self.event else "unknown"
+        event_id = self.event.event_id if self.event else None
+        req_id = self.service_request_id if self.service_request_id else None
 
         data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
@@ -316,10 +317,10 @@ todo
                 server_file_name=fits_server_file,
                 server_full_path=data_response_url + fits_server_file,
                 file_name=fits_server_file,
+                request_id=req_id,
             )
-            f.file_path = Path(Config.storage_path.fits) / dbs.format_string(
-                Config.db_save, f, event_id=event_id
-            )
+            f.file_path = Fits_File.make_path(f, event_id=event_id)
+            print(f.file_path)
             ret.append(f)
         return ret
 

@@ -113,10 +113,7 @@ class Hek_Service(Base_Service):
                 ret.append((current_time, end))
             current_time = next_time
         return [
-            (
-                x.strftime(Config.time_format.hek),
-                y.strftime(Config.time_format.hek),
-            )
+            (x.strftime(Config.time_format.hek), y.strftime(Config.time_format.hek))
             for x, y in ret
         ]
 
