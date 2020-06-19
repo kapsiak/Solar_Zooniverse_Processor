@@ -17,6 +17,10 @@ class Image_File(File_Model):
     fits_file = pw.ForeignKeyField(Fits_File, backref="image_file")
 
     image_type = pw.CharField(default="png")
+            if overwrite:
+                chat(
+                    "Since you have set overwrite, I am going to replace the old image with a new one"
+                )
 
     description = pw.CharField(default="NA")
 
@@ -41,9 +45,9 @@ class Image_File(File_Model):
         return file_path
 
     @staticmethod
-    def create_new_image(
+    def create_new_visual(
         fits_file: Union[Path, str],
-        image_maker: Any,
+        visual_builder: Any,
         file_name=None,
         save_format: str = Config.storage_path.img,
         desc: str = "",
@@ -56,10 +60,10 @@ class Image_File(File_Model):
         if not file_name:
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
-        file_name = str(Path(file_name).with_suffix("." + image_maker.image_type))
+        file_name = str(Path(file_name).with_suffix("." + visual_builder.image_type))
         file_path = str(
             Image_File.__make_path(
-                fits_file, image_maker, save_format, file_name=file_name
+                fits_file, visual_builder, save_format, file_name=file_name
             )
         )
         chat(file_path)
@@ -89,11 +93,11 @@ class Image_File(File_Model):
                     fits_file=fits_file,
                     file_path=file_path,
                     file_name=file_name,
-                    image_type=image_maker.image_type,
+                    image_type=visual_builder.image_type,
                     description=desc,
-                    frame=image_maker.frame,
-                    ref_pixel_x=image_maker.ref_pixel_x,
-                    ref_pixel_y=image_maker.ref_pixel_y,
+                    frame=visual_builder.frame,
+                    ref_pixel_x=visual_builder.ref_pixel_x,
+                    ref_pixel_y=visual_builder.ref_pixel_y,
                     # width  = fits_file["naxis1"],
                     # height  = fits_file["naxis2"]
                 )
@@ -102,11 +106,11 @@ class Image_File(File_Model):
             print(e)
 
         if not already_exists or overwrite:
-            if image_maker.create(fits_file.file_path, **params):
+            if visual_builder.create(fits_file.file_path, **params):
                 chat(
                     "Since you have set overwrite, I am going to replace the old image with a new one"
                 )
-                image_maker.save_image(file_path)
+                visual_builder.save_image(file_path)
                 im.save()
                 im.get_hash()
             else:

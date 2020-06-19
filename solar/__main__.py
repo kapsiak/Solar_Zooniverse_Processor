@@ -14,4 +14,4 @@ for e in h.data:
 
 uf = Unframed_Image("png")
 for x in Fits_File.select():
-    im = Image_File.create_new_image(x, uf)
+    im = Image_File.create_new_visual(x, uf)
