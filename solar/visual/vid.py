@@ -19,11 +19,12 @@ class Video_Builder(Visual_Builder):
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         print("Here")
-        self.ani.save(save_path, writer=writer, bbox_inches="tight")
+        self.ani.save(save_path, writer=writer)
 
     def create(self, file_list, **kwargs):
         maps = [sm.Map(path) for path in file_list]
         seq = sm.mapsequence.MapSequence(maps, sequence=True)
+        self.fig = plt.figure()
+        self.fig.set_size_inches(5, 4)
         self.ani = seq.plot()
-        self.fig = plt.tight_layout()
         return True

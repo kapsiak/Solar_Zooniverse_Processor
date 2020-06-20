@@ -7,6 +7,14 @@ from functools import wraps
 from .base_visual import Visual_Builder
 
 
+def get_ax_size(ax):
+    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    width, height = bbox.width, bbox.height
+    width *= fig.dpi
+    height *= fig.dpi
+    return width, height
+
+
 class Image_Builder(Visual_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
@@ -15,9 +23,12 @@ class Image_Builder(Visual_Builder):
         self.map = None
 
     def save_visual(self, save_path, clear_after=True):
+        bbox = self.fig.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
+        self.width, self.height = bbox.width*self.fig.dpi, bbox.height*self.fig.dpi
+        (self.im_ll_x,self.im_ll_y), (self.im_ur_x, self.im_ur_y)  = self.fig.axes[0].get_position().get_points()
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self.fig.savefig(save_path, transparent=False, dpi=300, bbox_inches="tight")
+        self.fig.savefig(save_path)
         if clear_after:
             plt.close()
 
@@ -58,7 +69,6 @@ class Basic_Image(Image_Builder):
         if not Path(file_path).is_file():
             return False
         self.map = sm.Map(file_path)
-        self.fig = plt.figure()
+        self.fig = plt.figure(dpi=300)
         self.map.plot()
-        self.fig.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         return True

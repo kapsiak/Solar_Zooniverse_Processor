@@ -23,6 +23,7 @@ bi = Basic_Image("jpeg")
 # im = Visual_File.create_new_visual(files, vb)
 
 f = Fits_File.get()
+fs = Fits_File.select().where(Fits_File.event == 1)
 
 test_image = Visual_File.create_new_visual(f, bi)
-test_image.move("test/test.jpeg")
+test_image.export("test/test.jpeg")

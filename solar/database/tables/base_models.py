@@ -46,7 +46,8 @@ class File_Model(Base_Model):
         pass
 
     def export(self, new_path):
-        new_path.parent.mkdir(parents=True, exist_ok=True)
+        new = Path(new_path)
+        new.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.copy(self.file_path, new)
             return True
