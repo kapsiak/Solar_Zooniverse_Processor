@@ -45,13 +45,10 @@ class File_Model(Base_Model):
     def make_path(self, default_form=None):
         pass
 
-    def move(self, new_path):
-        new = Path(Config.db_save) / new_path
-        new.parent.mkdir(parents=True, exist_ok=True)
+    def export(self, new_path):
+        new_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            shutil.move(self.file_path, new)
-            self.file_path = new
-            self.get_hash()
+            shutil.copy(self.file_path, new)
             return True
         except IOError as e:
             print(e)
