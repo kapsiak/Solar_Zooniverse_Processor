@@ -22,19 +22,6 @@ def dbformat(format_string: str, row: object, **kwargs) -> str:
         to_pass[k] = kwargs[k]
     return format_string.format(**to_pass)
 
-
-def prepend_root(path: Union[Path, str]) -> str:
-    """
-    Prepend the file save path and return the new path
-
-    :param path: Original path
-    :type path: Union[Path, str]
-    :return: the path with the database save file prepended
-    :rtype: str
-    """
-    return str(Path(Config.db_save) / path)
-
-
 def dbroot(fun):
     @wraps(fun)
     def ret(*args, **kwargs):

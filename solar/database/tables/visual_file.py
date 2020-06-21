@@ -210,17 +210,17 @@ class Visual_File(File_Model):
             join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
         return join
 
-    def get_world_from_pixel(self,x,y):
+    def world_from_pixel(self,x,y):
         if x>1 and y >1:
             return self.__get_world_from_pixel_abs(x, y)
         else:
             return self.__get_world_from_pixel_norm( x, y)
 
        
-    def __get_world_from_pixel_abs(self, x:int, y:int):
-        return self.__get_world_from_pixels_norm(x/self.width, y/self.height)
+    def __world_from_pixel_abs(self, x:int, y:int):
+        return self.__world_from_pixels_norm(x/self.width, y/self.height)
 
-    def __get_world_from_pixels_norm(self, x: float, y: float) -> Any:
+    def __world_from_pixels_norm(self, x: float, y: float) -> Any:
         y = 1 - y
         fits =  self.fits_join.get().fits_file
         fits_width =   fits["naxis1"]
