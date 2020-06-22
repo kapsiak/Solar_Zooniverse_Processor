@@ -24,7 +24,7 @@ class Video_Builder(Visual_Builder):
     def create(self, file_list, **kwargs):
         maps = [sm.Map(path) for path in file_list]
         seq = sm.mapsequence.MapSequence(maps, sequence=True)
-        self.fig = plt.figure()
+        self.fig = plt.figure(dpi=300)
         self.fig.set_size_inches(5, 4)
         self.ani = seq.plot()
         return True

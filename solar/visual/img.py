@@ -36,6 +36,7 @@ class Image_Builder(Visual_Builder):
         if clear_after:
             plt.close()
 
+
 class Unframed_Image(Image_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
@@ -72,17 +73,16 @@ class Basic_Image(Image_Builder):
         if not Path(file_path).is_file():
             return False
         self.map = sm.Map(file_path)
-        title_obsdate = self.map.date.strftime('%Y-%b-%d %H:%M:%S')
-        self.fig = plt.figure(figsize = [4.4, 4.4], dpi=300)
+        title_obsdate = self.map.date.strftime("%Y-%b-%d %H:%M:%S")
+        self.fig = plt.figure(figsize=[4.4, 4.4], dpi=300)
         self.ax = self.fig.add_subplot(1, 1, 1, projection=self.map)
-        #self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
-        #self.ax.imshow(self.map.data)
+        # self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
+        # self.ax.imshow(self.map.data)
         self.map.plot()
-        self.ax.set_xlabel('Solar X (arcsec)')
-        self.ax.set_ylabel('Solar Y (arcsec)')
-        self.ax.set_title(f'SDO-AIA   {title_obsdate}')
+        self.ax.set_xlabel("Solar X (arcsec)")
+        self.ax.set_ylabel("Solar Y (arcsec)")
+        self.ax.set_title(f"SDO-AIA   {title_obsdate}")
         return True
 
     def show(self):
         plt.show()
-

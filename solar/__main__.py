@@ -27,9 +27,10 @@ fs = Fits_File.select().where(Fits_File.event == 1)
 
 test_image = Visual_File.create_new_visual(f, bi)
 test_image.export("test/test.jpeg")
-#
-#test_vid = Visual_File.create_new_visual(fs, vb)
-#test_vid.export("test/test.mp4")
 
-def test(x,y):
-    print(test_image.world_from_pixel(x,y))
+test_vid = Visual_File.create_new_visual(fs, vb)
+test_vid.export("test/test.mp4")
+
+
+def test(x, y):
+    print(test_image.world_from_pixel(x, y))
