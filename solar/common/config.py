@@ -5,8 +5,7 @@ class ConfMeta(type):
 
 class Map(dict):
     """
-    Example:
-    m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24, sports=['Soccer'])
+    The purpose of this class is to create an easy interface for accessing members of the configuration
     """
 
     def __init__(self, *args, **kwargs):
@@ -39,6 +38,11 @@ class Map(dict):
 
 
 class Config(metaclass=ConfMeta):
+    """
+    This class holds the global configuration for the project.
+    """
+
+    # TODO: Allow this class to defined via a yaml/toml document #
     db_path = "test.db"
     db_save = "files"
     storage_path = Map(

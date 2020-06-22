@@ -4,6 +4,7 @@ from pathlib import Path
 from solar.common.utils import checksum
 import shutil
 from solar.common.config import Config
+from typing import Union
 
 
 class Base_Model(pw.Model):
@@ -27,6 +28,13 @@ class File_Model(Base_Model):
     file_hash = pw.CharField(default="NA")  # The file checksum
 
     def get_hash(self) -> str:
+        """
+        Compute the hash of the file.
+        Also sets the self.file_hash variable
+
+        :return: The checksum
+        :rtype: str
+        """
         try:
             self.file_hash = checksum(self.file_path)
         except IOError as e:
@@ -36,6 +44,12 @@ class File_Model(Base_Model):
         return self.file_hash
 
     def check_integrity(self) -> bool:
+        """
+        See if the current contents of the file match the checksum
+
+        :return: True if the checksum of the file matches the one saved in self.file_hash, otherwise false
+        :rtype: bool
+        """
         p = Path(self.file_path)
         if p.is_file():
             if checksum(self.file_path) == self.file_hash:
@@ -45,8 +59,18 @@ class File_Model(Base_Model):
     def make_path(self, default_form=None):
         pass
 
-    def export(self, new_path):
+    def export(self, new_path: Union[str, Path]):
+        """
+        Create a copy of this file at a given path.
+
+        :param new_path: The location of the new file
+        :type new_path: Union[str, Path]
+        """
         new = Path(new_path)
+
+        if new.is_dir():
+            new = new / Path(self.file_path).stem
+
         new.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.copy(self.file_path, new)

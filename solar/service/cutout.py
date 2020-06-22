@@ -229,13 +229,14 @@ todo
                     )
                 )
             except pw.DoesNotExist:
-                print(
-                    (
-                        "While saving this request, I could not find any matching request. I am creating a new one"
-                    )
+                chat(
+                    ("I could not find any matching request. I am creating a new one.")
                 )
-
                 req = Service_Request.create(service_type="cutout", status=self.status)
+                chat(f"The new request's ID is {req.id}")
+            except Exception as e:
+                print(f"Other error: {e}")
+
         else:
             try:
                 chat("This request already has an id, I will try saving it to that")
@@ -245,6 +246,10 @@ todo
                     f"Somehow this request has an invalid id: {self.service_request_id}  "
                     "I don't know what to do with this so I am bailing."
                 )
+                return None
+
+            except Exception as e:
+                print(f"Other error: {e}")
                 return None
 
         self.service_request_id = req.id
@@ -275,18 +280,6 @@ todo
         req.save()
         for p in new_list:
             p.save()
-
-    def complete_execution(self) -> None:
-        """
-        A helper method to execute the request and fetch data in one step
-    
-        :return: None
-        :rtype: None
-        """
-
-        self.request()
-        self.save_request()
-        self.fetch_data()
 
     def _as_fits(self, file_list: List[str]) -> List[Fits_File]:
         """
@@ -325,7 +318,7 @@ todo
         return ret
 
 
-def make_cutout_request(c: Cutout_Service) -> Cutout_Service:
+def c_fetch(c: Cutout_Service) -> Cutout_Service:
     """
     A wrapper function for processing cutout requests
 
@@ -334,8 +327,6 @@ def make_cutout_request(c: Cutout_Service) -> Cutout_Service:
     :return: The request after executing both the request and fetch stages
     :rtype: Cutout_Service
     """
-    c.request()
-    c.save_request()
     c.fetch_data()
     c.save_request()
     return c
@@ -354,7 +345,7 @@ def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
     :return: List of completed request
     :rtype: List[Cutout_Service]
     """
-    with ThreadPoolExecutor(max_workers=1000) as executor:
+    with ThreadPoolExecutor(max_workers=20) as executor:
         total_jobs = len(list_of_reqs)
         completed = 0
         chat("Starting Requests")
@@ -362,7 +353,7 @@ def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
             f"Currently there are {completed} finished fetches and {total_jobs-completed} pending fetches",
             end="\r",
         )
-        cmap = {executor.submit(make_cutout_request, c): c for c in list_of_reqs}
+        cmap = {executor.submit(c_fetch, c): c for c in list_of_reqs}
         ret = []
 
         for future in concurrent.futures.as_completed(cmap):

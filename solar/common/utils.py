@@ -4,7 +4,9 @@ from typing import Union
 
 
 def checksum(
-    string: Union[str, Path], hash_factory=hashlib.md5, chunk_num_blocks: int = 128
+    string: Union[str, Path],
+    hash_factory: object = hashlib.md5,
+    chunk_num_blocks: int = 128,
 ) -> str:
     """
     A simple checksum function.

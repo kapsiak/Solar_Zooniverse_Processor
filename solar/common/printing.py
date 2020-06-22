@@ -5,6 +5,10 @@ lprint_lock = Lock()
 
 
 def chat(*args, **kwargs):
+    """
+    A thin wrapper that allows for turning on or off messages. 
+    Takes the same arguments are print()
+    """
     if Config.chatty:
         print(*args, **kwargs)
 

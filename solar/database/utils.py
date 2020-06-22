@@ -22,6 +22,7 @@ def dbformat(format_string: str, row: object, **kwargs) -> str:
         to_pass[k] = kwargs[k]
     return format_string.format(**to_pass)
 
+
 def dbroot(fun):
     @wraps(fun)
     def ret(*args, **kwargs):
