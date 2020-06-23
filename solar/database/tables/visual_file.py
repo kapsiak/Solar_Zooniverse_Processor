@@ -37,7 +37,8 @@ class Visual_File(File_Model):
             fits,
             file_name=file_name,
             image_type=image_maker.visual_type,
-            **kwargs,
+            event_id = fits.event.event_id,
+            **kwargs
         )
         return file_path
 
