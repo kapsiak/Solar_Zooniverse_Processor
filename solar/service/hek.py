@@ -142,8 +142,6 @@ class Hek_Service(Base_Service):
         else:
             # print(f"Successfully retrieved events")
             json_data = json.loads(response.text)
-            with open("test.json", "w") as f:
-                f.write(json.dumps(json_data, indent=4))
             with Hek_Service.event_adder_lock:
                 events = [
                     Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]
