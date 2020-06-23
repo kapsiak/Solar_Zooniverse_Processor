@@ -15,14 +15,16 @@ import matplotlib.pyplot as plt
 
 class Visual_File(File_Model):
 
-    visual_type = pw.CharField(default="png")
+    visual_type = pw.CharField()
 
     description = pw.CharField(default="NA")
 
     im_ll_x = pw.FloatField(default=0)
     im_ll_y = pw.FloatField(default=0)
+
     im_ur_x = pw.FloatField(default=0)
     im_ur_y = pw.FloatField(default=0)
+
     width = pw.FloatField(default=0)
     height = pw.FloatField(default=0)
 
@@ -48,16 +50,25 @@ class Visual_File(File_Model):
         overwrite=True,
         **kwargs,
     ):
+
         if not isinstance(input_file, Fits_File):
+            visual_type = "video"
+            chat("Looks like you want me to create a video")
+        else:
+            visual_type = "image"
+            chat("Looks like you want me to create an image")
+
+        if not visual_type == "video":
             fits_file = input_file[0]
             source_path = [x.file_path for x in input_file]
         else:
             fits_file = input_file
             source_path = fits_file.file_path
 
-        # TODO: This whole thing is a bit of a mess #
-        # TODO: Need to work on dealing with extension: <16-06-20> #
         if not file_name:
+            chat(
+                "Since you have not given me a file name, I am going to base it off the given fits image"
+            )
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
         file_name = str(Path(file_name).with_suffix("." + visual_builder.visual_type))
@@ -85,7 +96,10 @@ class Visual_File(File_Model):
                 width=visual_builder.width,
                 height=visual_builder.height,
             )
-            chat("I couldn't find an existing image")
+            already_exists = False
+            chat(
+                "I couldn't find an existing image, so I am going to create a new one."
+            )
 
         except Exception as e:
             print(e)
@@ -107,23 +121,39 @@ class Visual_File(File_Model):
                 im.height = visual_builder.height
 
                 im.save()
-                join = Visual_File.get_create_join(im, fits_file)
-                join.save()
+                if visual_type == "image":
+                    join = Visual_File.__get_create_join(im, fits_file)
+                    join.save()
+                elif visual_type == "video":
+                    joins = Visual_File.__get_joins(im, input_file)
+                    for j in joins:
+                        j.save()
+
                 im.get_hash()
             else:
                 return None
         return im
 
     @staticmethod
-    def get_create_join(vis, fits):
+    def __get_joins(vis, fits):
+        return [Visual_File.get_create_join(vis, x) for x in fits]
+
+    @staticmethod
+    def __get_create_join(vis, fits):
         from .join_vis_fit import Join_Visual_Fits
 
         try:
             join = Join_Visual_Fits.get(
                 Join_Visual_Fits.fits_file == fits, Join_Visual_Fits.visual_file == vis
             )
+            chat(
+                f"I found an existing join from this visual (id = {vis.id}) to the fits file id={fits.id}, so I am going to use it"
+            )
         except pw.DoesNotExist:
             join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
+            chat(
+                f"I could not find an existing visual for fits file with id {fits.id}, so I am creating a new one"
+            )
         return join
 
     def world_from_pixel(self, x, y):
