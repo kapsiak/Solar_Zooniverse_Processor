@@ -69,12 +69,12 @@ class File_Model(Base_Model):
         new = Path(new_path)
 
         if new.is_dir():
-            new = new / Path(self.file_path).stem
+            new = new / Path(self.file_path).name
 
         new.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.copy(self.file_path, new)
-            return True
+            return new
         except IOError as e:
             print(e)
         except Exception as e:

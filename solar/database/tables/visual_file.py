@@ -1,3 +1,4 @@
+import csv
 import peewee as pw
 from solar.common.config import Config
 from pathlib import Path
@@ -58,7 +59,7 @@ class Visual_File(File_Model):
             visual_type = "image"
             chat("Looks like you want me to create an image")
 
-        if not visual_type == "video":
+        if visual_type == "video":
             fits_file = input_file[0]
             source_path = [x.file_path for x in input_file]
         else:
@@ -87,7 +88,7 @@ class Visual_File(File_Model):
             im = Visual_File(
                 file_path=file_path,
                 file_name=file_name,
-                image_type=visual_builder.visual_type,
+                visual_type=visual_builder.visual_type,
                 description=desc,
                 im_ll_x=visual_builder.im_ll_x,
                 im_ll_y=visual_builder.im_ll_y,
@@ -105,13 +106,16 @@ class Visual_File(File_Model):
             print(e)
         if not already_exists or overwrite:
             if visual_builder.create(source_path, **kwargs):
-                chat(
-                    "Since you have set overwrite, I am going to replace the old image with a new one"
-                )
+                if overwrite and already_exists:
+                    chat(
+                    "This image already exists, but since you have set overwrite, I am going to replace the old image with a new one"
+                    )
+                elif not already_exists:
+                    chat("It doesn't look like this image exists, so I am going to create a new one")
                 visual_builder.save_visual(file_path)
                 im.file_path = file_path
                 im.file_name = file_name
-                im.image_type = visual_builder.visual_type
+                im.visual_type = visual_builder.visual_type
                 im.description = desc
                 im.im_ll_x = visual_builder.im_ll_x
                 im.im_ll_y = visual_builder.im_ll_y
@@ -136,7 +140,7 @@ class Visual_File(File_Model):
 
     @staticmethod
     def __get_joins(vis, fits):
-        return [Visual_File.get_create_join(vis, x) for x in fits]
+        return [Visual_File.__get_create_join(vis, x) for x in fits]
 
     @staticmethod
     def __get_create_join(vis, fits):
@@ -190,10 +194,55 @@ class Visual_File(File_Model):
 
     def __str__(self) -> str:
         return f""" 
-Type            = {self.image_type}
+Type            = {self.visual_type}
 File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
+
+    def __getitem__(self, key):
+        return fits_join.get().fits[key]
+
+    @staticmethod
+    def zooniverse_export(files, export_dir="export"):
+        export = Path("export")
+        files_dir = export 
+        files_dir.mkdir(exist_ok=True, parents=True)
+        data = []
+        header = [
+            "file_path",
+            "visual_type",
+            "description",
+            "im_ll_x",
+            "im_ll_y",
+            "im_ur_x",
+            "im_ur_y",
+            "width",
+            "height"
+        ]
+        try:
+            for image in files:
+                print(image)
+                new_path = image.export(files_dir)
+                new_row = {
+                    "file_path": str(Path(new_path).relative_to(export)),
+                    "visual_type": image.visual_type,
+                    "description": image.description,
+                    "im_ll_x": image.im_ll_x,
+                    "im_ll_y": image.im_ll_y,
+                    "im_ur_x": image.im_ur_x,
+                    "im_ur_y": image.im_ur_y,
+                    "width": image.width,
+                    "height": image.height,
+                }
+                data.append(new_row)
+        except Exception as e:
+            print(e)
+
+        with open(export/"meta.csv", "w") as f:
+            writer = csv.DictWriter(f, fieldnames= header)
+            writer.writeheader()
+            for row in data:
+                writer.writerow(row)
 
 
 class Visual_Param(Base_Model):

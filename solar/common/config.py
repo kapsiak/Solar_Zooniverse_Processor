@@ -47,7 +47,7 @@ class Config(metaclass=ConfMeta):
     db_save = "files"
     storage_path = Map(
         fits="fits/{event_id}/{server_file_name}",
-        img="generated/{image_type}/{sol_standard}/{file_name}",
+        img="generated/{image_type}/{event_id}/{file_name}",
     )
     time_format = Map(hek="%Y-%m-%dT%H:%M:%S", fits="%Y-%m-%dT%H:%M:%S.%f")
     chatty = True

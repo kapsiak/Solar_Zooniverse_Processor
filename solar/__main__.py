@@ -17,20 +17,14 @@ create_tables()
 
 uf = Unframed_Image("jpeg")
 vb = Video_Builder("mp4")
-bi = Basic_Image("jpeg")
+bi = Basic_Image("png")
 
-# files = Fits_File.select().where(Fits_File.event ==1)
-# im = Visual_File.create_new_visual(files, vb)
+#for x in Fits_File.select():
+#    im = Visual_File.create_new_visual(x,bi)
+#    im.save()
 
-f = Fits_File.get()
-fs = Fits_File.select().where(Fits_File.event == 1)
-
-test_image = Visual_File.create_new_visual(f, bi)
-test_image.export("test/test.jpeg")
-
-test_vid = Visual_File.create_new_visual(fs, vb)
-test_vid.export("test/test.mp4")
+to_export = Visual_File.select().where(Visual_File.visual_type == 'png')
+Visual_File.zooniverse_export(to_export)
 
 
-def test(x, y):
-    print(test_image.world_from_pixel(x, y))
+
