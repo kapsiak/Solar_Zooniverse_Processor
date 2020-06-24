@@ -37,8 +37,8 @@ class Visual_File(File_Model):
             fits,
             file_name=file_name,
             image_type=image_maker.visual_type,
-            event_id = fits.event.event_id,
-            **kwargs
+            event_id=fits.event.event_id,
+            **kwargs,
         )
         return file_path
 
@@ -109,10 +109,12 @@ class Visual_File(File_Model):
             if visual_builder.create(source_path, **kwargs):
                 if overwrite and already_exists:
                     chat(
-                    "This image already exists, but since you have set overwrite, I am going to replace the old image with a new one"
+                        "This image already exists, but since you have set overwrite, I am going to replace the old image with a new one"
                     )
                 elif not already_exists:
-                    chat("It doesn't look like this image exists, so I am going to create a new one")
+                    chat(
+                        "It doesn't look like this image exists, so I am going to create a new one"
+                    )
                 visual_builder.save_visual(file_path)
                 im.file_path = file_path
                 im.file_name = file_name
@@ -206,7 +208,7 @@ Hash            = {self.file_hash}
     @staticmethod
     def zooniverse_export(files, export_dir="export"):
         export = Path("export")
-        files_dir = export 
+        files_dir = export
         files_dir.mkdir(exist_ok=True, parents=True)
         data = []
         header = [
@@ -218,7 +220,7 @@ Hash            = {self.file_hash}
             "im_ur_x",
             "im_ur_y",
             "width",
-            "height"
+            "height",
         ]
         try:
             for image in files:
@@ -239,8 +241,8 @@ Hash            = {self.file_hash}
         except Exception as e:
             print(e)
 
-        with open(export/"meta.csv", "w") as f:
-            writer = csv.DictWriter(f, fieldnames= header)
+        with open(export / "meta.csv", "w") as f:
+            writer = csv.DictWriter(f, fieldnames=header)
             writer.writeheader()
             for row in data:
                 writer.writerow(row)

@@ -67,8 +67,13 @@ class Cutout_Service(Base_Service):
 
     def __init__(self, *args, **kwargs) -> None:
         """
-        Initialize a cutout request
-todo
+        Initialize a cutout request. 
+
+        Args may be attributes of the form: Attribute(name,value)
+        Kwargs may be attributes in the form : name=value
+        These two will produce equivalent searches
+        
+
         :param event: The solar event the cutout request refers to
         :type event: Union[Solar_Event, str]
         :param allow_similar: Whether or not to allow similar requests to be made, defaults to False
@@ -117,23 +122,15 @@ todo
 
         self.status = "unsubmitted"
 
-        # We want to avoid making unnecessary requests.
-        # If allow similar is false (default) then Cutout_Service first checks database for any fits files with this event as an id.
-        # If it finds such an event, it sets this request's job_id to the job id of the first item it finds (if there are many).
-        # This causes the request step to skip (since a request has already been made, and we now have the job id of that request)
-
-        self.reponse = None  # The requests response
         self._data = None  # The text from the response
-
-        # The is the template for the URL where the job will be located when it completes
 
     @property
     def data(self):
         return self._data
 
-    def __parse_attributes(self, params, **kwargs):
+    def __parse_attributes(self, **kwargs):
         other = [Att(key, kwargs[key]) for key in kwargs]
-        new_params = build_from_defaults(params, other)
+        new_params = build_from_defaults(self.params, other)
         return {att.name: att.value for att in new_params}
 
     def submit_request(self) -> None:
@@ -146,8 +143,7 @@ todo
         if not self.job_id:
             try:
                 response = requests.get(
-                    Cutout_Service.base_api_url,
-                    params=self.__parse_attributes(self.params),
+                    Cutout_Service.base_api_url, params=self.__parse_attributes()
                 )
             except HTTPError as http_err:
                 print(f"HTTP error occurred: {http_err}")  # Python 3.6
@@ -158,7 +154,7 @@ todo
                 self.job_id = re.search(
                     '<param name="JobID">(.*)</param>', response.text
                 )[1]
-                self.status = "submitted"
+        self.status = "submitted"
 
     def fetch_data(self, delay=None) -> None:
         """
@@ -203,10 +199,16 @@ todo
 
             # List_files_raw contains the pure text from the page listing the urls
             # We then split and extract the actial name
-            list_files_raw = requests.get(data_response_url + fits_list_url).text
-            file_list = list_files_raw.split("\n")
-            file_list = [re.search(".*/(.*)$", x)[1] for x in file_list if x]
-            self._data = self._as_fits(file_list)
+            try:
+                list_files_raw = requests.get(data_response_url + fits_list_url).text
+            except HTTPError as http_err:
+                print(f"HTTP error occurred: {http_err}")  # Python 3.6
+            except Exception as err:
+                print(f"Other error occurred: {err}")  # Python 3.6
+            else:
+                file_list = list_files_raw.split("\n")
+                file_list = [re.search(".*/(.*)$", x)[1] for x in file_list if x]
+                self._data = self._as_fits(file_list)
 
     def save_data(self):
         pass
