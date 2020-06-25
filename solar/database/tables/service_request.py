@@ -1,7 +1,7 @@
 import peewee as pw
 from solar.common.config import Config
 from datetime import datetime
-from .base_models import Base_Model
+from .base_models import Base_Model, UnionCol
 from typing import Any, Dict
 from .solar_event import Solar_Event
 
@@ -25,31 +25,25 @@ class Service_Request(Base_Model):
         :return: The value associated with the key
         :rtype: Any
         """
-        return into_number(
-            self.parameters.where(Fits_Header_Elem.key == key).get().value
-        )
+        self.parameters.where(Fits_Header_Elem.key == key).get().value
 
     def get_param(self, param):
         self.parameters.where(Fits_Header_Elem.key == key).get()
 
     def get_params_as_dict(self) -> Dict[str, Any]:
-        return {x.key: into_number(x.value) for x in self.parameters}
+        return {x.key: x.value for x in self.parameters}
 
     def __str__(self):
         return (
-            f"<Service_Req   id = {self.id} | event = {self.event}>\n"
+            f"<Service_Req id = {self.id} | event = {self.event}>\n"
             f"{self.service_type}: {self.status}\n"
         )
 
 
-class Service_Parameter(Base_Model):
+class Service_Parameter(UnionCol):
     service_request = pw.ForeignKeyField(Service_Request, backref="parameters")
     key = pw.CharField()
-    val = pw.CharField()
     desc = pw.CharField(null=True)
-
-    def __hash__(self):
-        return hash((self.key, self.val))
 
     def __str__(self):
         return (

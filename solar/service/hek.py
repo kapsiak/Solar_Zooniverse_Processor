@@ -197,16 +197,14 @@ class Hek_Service(Base_Service):
         s = Service_Request(
             event=None, service_type="hek", status=self.status, job_id=None
         )
-        print(s)
-        for p in self.params:
-            print(p)
-        params = [
-            Service_Parameter(
-                service_request=s, key=a.name, val=a.get_value(), desc=a.description
+        params = []
+        for a in self.params:
+            s = Service_Parameter(
+                service_request=s, key=a.name , desc=a.description
             )
-            for a in self.params
-        ]
-        s.save()
+            s.value = a.value
+            params.append(s) 
+
         for p in params:
             p.save()
 

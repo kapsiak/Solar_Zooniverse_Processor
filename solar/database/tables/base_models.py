@@ -5,6 +5,8 @@ from solar.common.utils import checksum
 import shutil
 from solar.common.config import Config
 from typing import Union
+import ast
+from solar.common.convert import data_to_string, string_to_data
 
 
 class Base_Model(pw.Model):
@@ -83,3 +85,68 @@ class File_Model(Base_Model):
 
     def __eq__(self, other):
         return self.file_path == other.file_path
+
+
+class NoFormat(Exception):
+    def __init__(self):
+        pass
+
+
+class UnionCol(Base_Model):
+    """
+    A table designed to hold different types.
+    """
+
+    _field_type = pw.CharField(column_name="type")
+    _subtype = pw.CharField(null=True, column_name="subtype")
+    _format = pw.CharField(null=True, column_name="format")
+    _value = pw.CharField(column_name="value")
+
+    @staticmethod
+    def __scalar_convert(val, ftype, datetime=None):
+        if ftype == "str":
+            return val
+        elif ftype == "int":
+            return int(val)
+        elif ftype == "float":
+            return float(val)
+        elif ftype == "datetime":
+            return datetime.strptime(val, datetime)
+        else:
+            return None
+
+    @property
+    def field_type(self):
+        return self._field_type
+
+    @field_type.setter
+    def field_type(self):
+        raise NotImplementedError
+
+    @property
+    def subtype(self):
+        return self._subtype
+
+    @subtype.setter
+    def subtype(self, value):
+        raise NotImplementedError
+
+    @property
+    def format(self):
+        return self._format
+
+    @format.setter
+    def format(self, value):
+        self._format = value
+
+    @property
+    def value(self):
+        return string_to_data(
+            self._value, self._field_type, self._subtype, self._format
+        )
+
+    @value.setter
+    def value(self, value):
+        self._value, self._field_type, self._subtype = data_to_string(
+            value, self._format
+        )

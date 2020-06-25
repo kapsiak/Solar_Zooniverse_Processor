@@ -9,13 +9,14 @@ from sunpy.map import Map
 import astropy.units as u
 from sunpy.io.header import FileHeader
 import numpy as np
-from .base_models import File_Model, Base_Model
+from .base_models import File_Model, Base_Model, UnionCol
 from .solar_event import Solar_Event
 from tqdm import tqdm
 from typing import Any, Dict
 from .service_request import Service_Request
 import shutil
 from solar.database.utils import dbformat, dbroot
+import ast
 
 
 class Fits_File(File_Model):
@@ -117,11 +118,11 @@ Hash            = {self.file_hash}
             m = Map(self.file_path)
             header = m.meta
             for h_key in header:
-                f = self.fits_keys.where(Fits_Header_Elem.key == h_key)
+                f = self.fits_keys.where(F, its_Header_Elem.key == h_key)
                 if not f.exists():
-                    f = Fits_Header_Elem.create(
-                        fits_file=self, key=h_key, value=header[h_key]
-                    )
+                    f = Fits_Header_Elem.create(fits_file=self, key=h_key)
+                    f.value = header[h_key]
+                    f.save()
                 else:
                     f = f.get()
                     f.key = h_key
@@ -146,10 +147,9 @@ Hash            = {self.file_hash}
         return {x.key: into_number(x.value) for x in self.fits_keys}
 
 
-class Fits_Header_Elem(Base_Model):
+class Fits_Header_Elem(UnionCol):
     fits_file = pw.ForeignKeyField(Fits_File, backref="fits_keys")
     key = pw.CharField(default="NA")
-    value = pw.CharField(default="NA")
 
     def __repr__(self) -> str:
         return f"<Header {self.key}:{self.value}>"

@@ -4,15 +4,17 @@ import datetime
 from solar.common.config import Config
 from solar.common.utils import into_number
 from solar.database.tables.service_request import Service_Parameter
+from solar.common.convert import string_to_data, data_to_string
 
 
 class Attribute:
     def __init__(self, name: str, value: Any = None) -> None:
         self.name = name
-        self.value = value
+        self._value = value
         self.description = None
 
-    def get_value(self, **kwargs) -> Any:
+    @property
+    def value(self, **kwargs) -> Any:
         """
         Get the value of the attribute. Several rules are implemented to determine the correct for of the value.
             - If value is a list, join list with commas
@@ -22,35 +24,21 @@ class Attribute:
         :return: Appropriately formatted value
         :rtype: Any
         """
-        if type(self.value) == list:
-            return ",".join([str(x) for x in self.value])
-        elif isinstance(self.value, datetime.datetime):
-            return self.value.strftime(
-                kwargs.get("time_format", Config.time_format.hek)
-            )
-        else:
-            return str(self.value)
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        self._value = val
 
     def as_model(self, req=None):
-        return Service_Parameter(
-            service_request=req,
-            key=self.name,
-            val=self.get_value(),
-            desc=self.description,
-        )
+        s = Service_Parameter(service_request=req, key=self.name, desc=self.description)
+        s.value = self._value
+        return s
 
     @staticmethod
     def from_model(tab):
         ret = Attribute(tab.key)
-        if isinstance(ret, str):
-            if "," in tab.val:
-                temp = tab.value.split(",")
-                ret.value = [into_number(x) for x in temp]
-            else:
-                ret.value = into_number(tab.value)
-        else:
-            ret.value = tab.val
-
+        ret._value = tab.value
         ret.description = tab.desc
         return ret
 
@@ -58,15 +46,12 @@ class Attribute:
         if type(other) == str:
             return self.name == other
         else:
-            return (self.name, self.value) == (other.name, other.value)
-
-    def __hash__(self):
-        return hash((self.name, (self.value)))
+            return (self.name, self._value) == (other.name, other._value)
 
     def __str__(self):
         return (
             f"<Attribute>\n"
-            f"{self.name} = {self.value} ~ {self.get_value()}\n"
+            f"{self.name} = {self._value} ~ {self.get_value()}\n"
             f"Desc: {self.description}"
         )
 
@@ -81,16 +66,26 @@ if __name__ == "__main__":
     b = Attribute("events", ["xy", "yz", "ef"])
     c = Attribute("string", "Hello")
     d = Attribute("asdf", [1, 2, 3, 4])
-
+    print("Initial ------------")
+    print(a.value)
+    print(b.value)
+    print(c.value)
+    print(d.value)
     a = a.as_model()
     b = b.as_model()
     c = c.as_model()
     d = d.as_model()
+    print("As model ------------")
+    print(f"{a.value} -> {a._value}")
+    print(f"{b.value} -> {b._value}")
+    print(f"{c.value} -> {c._value}")
+    print(f"{d.value} -> {d._value}")
     a = Attribute.from_model(a)
     b = Attribute.from_model(b)
     c = Attribute.from_model(c)
     d = Attribute.from_model(d)
-    print(hash(a))
-    print(hash(b))
-    print(hash(c))
-    print(hash(d))
+    print("As attribute ------------")
+    print(a.value)
+    print(b.value)
+    print(c.value)
+    print(d.value)
