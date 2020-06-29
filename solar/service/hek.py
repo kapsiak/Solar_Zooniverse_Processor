@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
-from solar.database import Solar_Event, Service_Request, Service_Parameter
+from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.service_request import Service_Request, Service_Parameter
 from solar.service.attribute import Attribute as Att
 from solar.common.config import Config
 from threading import Lock
@@ -40,13 +41,13 @@ class Hek_Service(Base_Service):
         start = "2010-06-01T00:00:00"
         end = "2010-07-01T00:00:00"
 
-        x1 = Att("x1", kwargs.get("x1", -1200))
-        x2 = Att("x2", kwargs.get("x2", 1200))
-        y1 = Att("y1", kwargs.get("y1", -1200))
-        y2 = Att("y2", kwargs.get("y2", 1200))
-        event_types = Att("event_type", kwargs.get("event_types", ["cj"]))
-        channel = Att("obs_channelid", kwargs.get("channel", 304))
-        coord_sys = Att("event_coordsys", kwargs.get("coord_sys", "helioprojective"))
+        x1 = Att("x1", -1200)
+        x2 = Att("x2", 1200)
+        y1 = Att("y1", -1200)
+        y2 = Att("y2", 1200)
+        event_types = Att("event_type", ["cj"])
+        channel = Att("obs_channelid", 304)
+        coord_sys = Att("event_coordsys", "helioprojective")
         start_time = Att("event_starttime", start)
         end_time = Att("event_endtime", end)
         cmd = Att("cmd", "search")
@@ -71,6 +72,7 @@ class Hek_Service(Base_Service):
         temp = []
         temp.extend(args)
         temp.extend([Att(key, kwargs[key]) for key in kwargs])
+
         self.params = build_from_defaults(defaults, temp)
 
         self.start_time = [x for x in self.params if x.name == "event_starttime"][
@@ -82,7 +84,9 @@ class Hek_Service(Base_Service):
 
         self._data = []
 
-        self.request_status = "unsubmitted"
+        self.status = "unsubmitted"
+
+        self.for_testing_data = {"result": []}
 
     def __parse_attributes(self, params, **kwargs):
         other = [Att(key, kwargs[key]) for key in kwargs]
@@ -140,12 +144,12 @@ class Hek_Service(Base_Service):
         except Exception as err:
             print(f"Other error occurred: {err}")  # Python 3.6
         else:
-            # print(f"Successfully retrieved events")
-            json_data = json.loads(response.text)
+            json_data = response.json()
             with Hek_Service.event_adder_lock:
                 events = [
                     Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]
                 ]
+                self.for_testing_data["result"].extend(json_data["result"])
                 for e in events:
                     if not e in self._data:
                         self.data.append(e)
@@ -197,13 +201,12 @@ class Hek_Service(Base_Service):
         s = Service_Request(
             event=None, service_type="hek", status=self.status, job_id=None
         )
+        s.save()
         params = []
         for a in self.params:
-            s = Service_Parameter(
-                service_request=s, key=a.name , desc=a.description
-            )
-            s.value = a.value
-            params.append(s) 
+            p = Service_Parameter(service_request=s, key=a.name, desc=a.description)
+            p.value = a.value
+            params.append(p)
 
         for p in params:
             p.save()
@@ -215,18 +218,18 @@ class Hek_Service(Base_Service):
         h.status = serv_obj.status
         return h
 
+    def __getitem__(self, key):
+        return [x for x in self.params if x.name == key][0].value
+
 
 if __name__ == "__main__":
     from solar.database import create_tables
 
     create_tables()
-    h = Hek_Service()
     x, y = ("2010-06-01T00:00:00", "2010-07-01T00:00:00")
-    h._request_one_interval(x, y)
-    h.save_data()
-    h.save_request()
-    mod = Service_Request.get()
-    print(mod)
-    new = Hek_Service._from_model(mod)
-    for param in new.params:
-        print(param)
+    h = Hek_Service(event_starttime=x, event_endtime=y)
+    h.submit_request()
+    with open("hek_1.txt", "w") as f:
+        f.write(json.dumps({"params": {a.name: a.value for a in h.params}}))
+        f.write("\n")
+        f.write(json.dumps(h.for_testing_data, indent=4))

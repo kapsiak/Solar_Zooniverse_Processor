@@ -25,10 +25,10 @@ class Service_Request(Base_Model):
         :return: The value associated with the key
         :rtype: Any
         """
-        self.parameters.where(Fits_Header_Elem.key == key).get().value
+        return self.parameters.where(Service_Parameter.key == key).get().value
 
     def get_param(self, param):
-        self.parameters.where(Fits_Header_Elem.key == key).get()
+        self.parameters.where(Service_Parameter.key == key).get()
 
     def get_params_as_dict(self) -> Dict[str, Any]:
         return {x.key: x.value for x in self.parameters}
@@ -47,7 +47,8 @@ class Service_Parameter(UnionCol):
 
     def __str__(self):
         return (
-            f"<Service_Param id = {self.id} -> {self.service_request}>\n"
-            f"{self.key} = {self.val}\n"
+            f"------\n"
+            f"<Service_Param id = {self.id} -> {self.service_request.id}>\n"
+            f"{self.key} = {self.value}\n"
             f"Desc: {self.desc}"
         )

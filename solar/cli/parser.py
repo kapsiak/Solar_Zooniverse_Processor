@@ -5,20 +5,16 @@ import re
 from solar.common.utils import into_number
 
 
-def param_to_obj(param, table):
-    param.replace(" ", "")
-    comps = {"<": operator.lt, "=": operator.eq, ">": operator.gt}
-    found = None
-    for x in comps:
-        found = param.find(x)
-        if found >= 0:
-            comp = x
-            break
 
-    field = param[:found]
-    val = into_number(param[found + 1 :])
-    field = table._meta.fields[field]
-    return comps[comp](field, val)
+query_re = re.compile('([a-zA-Z1-9_]+)\s*([<=>]+)\s*([a-zA-Z1-9_-]+)')
+
+def param_to_obj(param, table):
+    comps = {"<": operator.lt, "=": operator.eq, ">": operator.gt ,'<=': operator.ge, '>=' : operator.le , '==' : operator.eq}
+    matches = query_re.search(param)
+    col, op , val = matches.groups()
+    val = into_number(val)
+    col = table._meta.fields[col]
+    return comps[op](col, val)
 
 
 def parse_q(args):

@@ -11,6 +11,9 @@ class Attribute:
     def __init__(self, name: str, value: Any = None) -> None:
         self.name = name
         self._value = value
+        self._field_type = None
+        self._sub_type = None
+        self._format = None
         self.description = None
 
     @property
@@ -29,6 +32,12 @@ class Attribute:
     @value.setter
     def value(self, val):
         self._value = val
+
+    def f_value(self, val, val_form=None):
+        if val_form:
+            return val_form(self.value)
+        else:
+            return self.value
 
     def as_model(self, req=None):
         s = Service_Parameter(service_request=req, key=self.name, desc=self.description)
@@ -50,9 +59,7 @@ class Attribute:
 
     def __str__(self):
         return (
-            f"<Attribute>\n"
-            f"{self.name} = {self._value} ~ {self.get_value()}\n"
-            f"Desc: {self.description}"
+            "<Attribute>\n" f"{self.name} = {self._value}\n" f"Desc: {self.description}"
         )
 
 

@@ -141,6 +141,7 @@ class UnionCol(Base_Model):
 
     @property
     def value(self):
+
         return string_to_data(
             self._value, self._field_type, self._subtype, self._format
         )

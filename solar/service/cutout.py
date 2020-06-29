@@ -131,7 +131,7 @@ class Cutout_Service(Base_Service):
     def __parse_attributes(self, **kwargs):
         other = [Att(key, kwargs[key]) for key in kwargs]
         new_params = build_from_defaults(self.params, other)
-        return {att.name: att.value for att in new_params}
+        return {att.name: att.f_value() for att in new_params}
 
     def submit_request(self) -> None:
         """

@@ -1,7 +1,7 @@
 from functools import wraps
 from peewee import SqliteDatabase
 from solar.database.tables import tables
-from solar.database.tables.solar_event import Solar_Event
+import requests
 
 table_tuple = tuple(tables)
 
@@ -24,4 +24,19 @@ def test_db(dbs: tuple = table_tuple):
     return decorator
 
 
+def mock_get_json(param_resp_tuples):
+    def mocked_requests_get(*args, **kwargs):
+        class MockResponse:
+            def __init__(self, json_data, status_code):
+                self.json_data = json_data
+                self.status_code = status_code
 
+            def json(self):
+                return self.json_data
+
+        found = [x for x in param_resp_tuples if x[0] == kwargs["params"]]
+        if found:
+            return MockResponse(found[0][1], 200)
+        return MockResponse(None, 404)
+
+    return mocked_requests_get

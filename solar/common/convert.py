@@ -29,11 +29,11 @@ def data_to_string(value, data_format=None):
             field_type = main_type
             ret_str = str(value)
         elif main_type == "datetime":
-            if not format:
+            if not data_format:
                 raise NoFormat
             else:
                 field_type = main_type
-                ret_str = datetime.strptime(value, format)
+                ret_str = datetime.strptime(value, data_format)
         else:
             raise ValueError
     else:
@@ -41,6 +41,9 @@ def data_to_string(value, data_format=None):
             to_data = ast.literal_eval(value)
         except ValueError:
             to_data = ast.literal_eval(f'"{value}"')
+        except SyntaxError:
+            to_data = value
+
         if isinstance(to_data, str):
             ret_str = to_data
             field_type = "str"
