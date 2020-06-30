@@ -8,7 +8,9 @@ from pathlib import Path
 import time
 from solar.common.config import Config
 from solar.database.utils import dbformat
-from solar.database import Solar_Event, Fits_File, Service_Parameter, Service_Request
+from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.fits_file import Fits_File
+from solar.database.tables.service_request import Service_Parameter, Service_Request
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import tqdm
