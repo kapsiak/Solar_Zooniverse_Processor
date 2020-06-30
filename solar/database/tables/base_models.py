@@ -87,8 +87,6 @@ class File_Model(Base_Model):
         return self.file_path == other.file_path
 
 
-
-
 class UnionCol(Base_Model):
     """
     A table designed to hold different types.

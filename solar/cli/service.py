@@ -45,7 +45,7 @@ def parse_cutout_exist(search, action, save_data=False, save_request=False):
 def parse_cutout_event(search, action, save_data=False, save_request=False):
     event = Solar_Event.select().where(
         (Solar_Event.id % search)
-        | (Solar_Event.event_id.contains(search) )
+        | (Solar_Event.event_id.contains(search))
         | (Solar_Event.sol_standard % f"%{search}%")
     )
     if not event:
@@ -170,13 +170,17 @@ def make_s_parser(command_parser):
         "-w", "--save-data", action="store_true", help="Save the data from the request"
     )
     service_parser.add_argument(
-        "-r", "--save-request", action="store_true", help="Save the request itself", default=True
+        "-r",
+        "--save-request",
+        action="store_true",
+        help="Save the request itself",
+        default=True,
     )
 
     service_parser.add_argument(
         "--event",
         action="store_true",
-        help="If submitting a cutout request, treat the search using search, look for an existing solar event matching the parameter, and create a cutout request using that event"
+        help="If submitting a cutout request, treat the search using search, look for an existing solar event matching the parameter, and create a cutout request using that event",
     )
 
     service_parser.set_defaults(func=parse_s)

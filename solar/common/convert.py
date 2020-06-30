@@ -1,11 +1,14 @@
 import ast
 from datetime import datetime
 
+
 class NoFormat(Exception):
-    def __init__(self, val= None):
+    def __init__(self, val=None):
         self.str = f"Trying to format {val}"
+
     def __str__(self):
         return self.str
+
 
 def __scalar_convert(val, ftype, datetime=None):
     if ftype == "str":

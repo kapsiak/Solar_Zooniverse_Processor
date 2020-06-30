@@ -8,7 +8,7 @@ from solar.common.convert import string_to_data, data_to_string
 
 
 class Attribute:
-    def __init__(self, name: str, value: Any = None, t_format = None) -> None:
+    def __init__(self, name: str, value: Any = None, t_format=None) -> None:
         self.name = name
         self._value = value
         self._field_type = None
