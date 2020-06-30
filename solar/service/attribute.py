@@ -8,12 +8,12 @@ from solar.common.convert import string_to_data, data_to_string
 
 
 class Attribute:
-    def __init__(self, name: str, value: Any = None) -> None:
+    def __init__(self, name: str, value: Any = None, t_format = None) -> None:
         self.name = name
         self._value = value
         self._field_type = None
         self._sub_type = None
-        self._format = None
+        self._format = t_format
         self.description = None
 
     @property
@@ -33,7 +33,7 @@ class Attribute:
     def value(self, val):
         self._value = val
 
-    def f_value(self, val, val_form=None):
+    def f_value(self, val_form=None):
         if val_form:
             return val_form(self.value)
         else:
@@ -41,12 +41,15 @@ class Attribute:
 
     def as_model(self, req=None):
         s = Service_Parameter(service_request=req, key=self.name, desc=self.description)
+        print(f"Format is {self._format} for val {self._value}")
+        s.format = self._format
         s.value = self._value
         return s
 
     @staticmethod
     def from_model(tab):
         ret = Attribute(tab.key)
+        ret._format = tab.format
         ret._value = tab.value
         ret.description = tab.desc
         return ret

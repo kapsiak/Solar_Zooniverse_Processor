@@ -1,5 +1,11 @@
 import ast
+from datetime import datetime
 
+class NoFormat(Exception):
+    def __init__(self, val= None):
+        self.str = f"Trying to format {val}"
+    def __str__(self):
+        return self.str
 
 def __scalar_convert(val, ftype, datetime=None):
     if ftype == "str":
@@ -30,10 +36,10 @@ def data_to_string(value, data_format=None):
             ret_str = str(value)
         elif main_type == "datetime":
             if not data_format:
-                raise NoFormat
+                raise NoFormat(value)
             else:
                 field_type = main_type
-                ret_str = datetime.strptime(value, data_format)
+                ret_str = datetime.strftime(value, data_format)
         else:
             raise ValueError
     else:

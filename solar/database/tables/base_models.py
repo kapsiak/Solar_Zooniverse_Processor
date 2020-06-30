@@ -87,9 +87,6 @@ class File_Model(Base_Model):
         return self.file_path == other.file_path
 
 
-class NoFormat(Exception):
-    def __init__(self):
-        pass
 
 
 class UnionCol(Base_Model):

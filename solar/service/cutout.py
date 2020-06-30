@@ -83,8 +83,8 @@ class Cutout_Service(Base_Service):
         :return: None
         :rtype: None
         """
-        start = "2010-06-01T00:00:00"
-        end = "2010-07-01T00:00:00"
+        start = datetime.strptime("2010-06-01T00:00:00", Config.time_format.hek)
+        end = datetime.strptime( "2010-07-01T00:00:00", Config.time_format.hek)
 
         xcen = Att("xcen", kwargs.get("xcen", 0))
         ycen = Att("ycen", kwargs.get("ycen", 0))
@@ -93,8 +93,8 @@ class Cutout_Service(Base_Service):
         queue = Att("queue_job", kwargs.get("queue", 1))
         channel = Att("waves", kwargs.get("channel", 304))
         notrack = Att("notrack", kwargs.get("notrack", 1))
-        start_time = Att("starttime", start)
-        end_time = Att("endtime", end)
+        start_time = Att("starttime", start, t_format = Config.time_format.hek)
+        end_time = Att("endtime", end, t_format = Config.time_format.hek)
         cmd = Att("cmd", "search")
         use_json = Att("cosec", 2)
         command_type = Att("type", "column")
@@ -113,9 +113,10 @@ class Cutout_Service(Base_Service):
 
         temp = []
         temp.extend(args)
-        temp.extend([Att(key, kwargs[key]) for key in kwargs])
+        temp.extend([Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs])
         self.params = build_from_defaults(defaults, temp)
-
+        for x in self.params:
+            print(x._format)
         self.event = None
 
         self.service_request_id = None
@@ -131,7 +132,7 @@ class Cutout_Service(Base_Service):
         return self._data
 
     def __parse_attributes(self, **kwargs):
-        other = [Att(key, kwargs[key]) for key in kwargs]
+        other = [Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs]
         new_params = build_from_defaults(self.params, other)
         return {att.name: att.f_value() for att in new_params}
 
