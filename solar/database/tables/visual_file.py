@@ -15,10 +15,50 @@ import matplotlib.pyplot as plt
 
 
 class Visual_File(File_Model):
+    """
+    The table to store visual files. Also includes the necessary functions to extract 
+    world coordinates from coordinate on the image
+    """
 
     visual_type = pw.CharField()
 
     description = pw.CharField(default="NA")
+
+    # The following 4 float fields hold the normalized image coordinate describing the location of the actual image on the picture.
+    #
+    #                                           Actual Image             (1,1)
+    #                       ^  +------------------------------------------+
+    #                       |  |                                          |
+    #    +------->          |  |       +-------------------------------+  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |          Height  |  |       |                               |  |
+    #    |            in    |  |       |                               |  |
+    #    | im_ur_y  Pixels  |  |       |         Solar Picture         |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |                  |  |       |                               |  |
+    #    |          +-->    |  |       +-------------------------------+  |
+    #    |          |       |  |                                          |
+    #    |  im_ll_y |       |  |                                          |
+    #    +          +       +  +------------------------------------------+
+    #                        (0,0)
+    #                          +------------------------------------------>
+    #                                          Width in pixels
+    #                                   ^
+    #                          +--------+
+    #                            im_ll_x                               ^
+    #                                         im_ur_x                  |
+    #                          +---------------------------------------+
+    #      
+    #
+    # This scheme allows, along with the header data of the fits file that generated
+    # the image, a strnslation between point on the actual picture, and point in 
+    # in the world
 
     im_ll_x = pw.FloatField(default=0)
     im_ll_y = pw.FloatField(default=0)

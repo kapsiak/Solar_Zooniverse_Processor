@@ -21,8 +21,10 @@ class Hek_Service(Base_Service):
     Encapsulates a request to the Hek system
     """
 
+    # API url for the hek service
     base_url = "http://www.lmsal.com/hek/her"
-    attribute_list = []
+
+    # Lock to prevent data races
     event_adder_lock = Lock()
 
     def __init__(self, *args, **kwargs) -> None:
@@ -41,6 +43,8 @@ class Hek_Service(Base_Service):
         start = "2010-06-01T00:00:00"
         end = "2010-07-01T00:00:00"
 
+
+        # Default attributes
         x1 = Att("x1", -1200)
         x2 = Att("x2", 1200)
         y1 = Att("y1", -1200)
@@ -69,10 +73,13 @@ class Hek_Service(Base_Service):
             command_type,
         ]
 
+        # Temporary object to store user parameters
         temp = []
         temp.extend(args)
         temp.extend([Att(key, kwargs[key]) for key in kwargs])
 
+
+        # Construct the final parameter list by replacing defaults with user defined values
         self.params = build_from_defaults(defaults, temp)
 
         self.start_time = [x for x in self.params if x.name == "event_starttime"][
@@ -88,7 +95,15 @@ class Hek_Service(Base_Service):
 
         self.for_testing_data = {"result": []}
 
-    def __parse_attributes(self, params, **kwargs):
+    def __parse_attributes(self, params: List[Attribute], **kwargs)->Dict[str,Any]:
+        """
+        Parse attributes and return a dictionary that can be passed to a request object
+
+        :param params: The params to parse
+        :type params: List[Attribute]
+        :param kwargs: Additional key value pairs. 
+        :rtype: Dict[str,Any]
+        """
         other = [Att(key, kwargs[key]) for key in kwargs]
         new_params = build_from_defaults(params, other)
         return {att.name: att.value for att in new_params}
@@ -102,6 +117,7 @@ class Hek_Service(Base_Service):
         :return: None
         :rtype: None
         """
+
         start = datetime.strptime(self.start_time, Config.time_format.hek)
         end = datetime.strptime(self.end_time, Config.time_format.hek)
 

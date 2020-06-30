@@ -2,11 +2,21 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tqdm
 from pathlib import Path
+from typint import Union,Any
 
 
-def download_single_file(url, save_path):
+def download_single_file(url:str, save_path:Union[str,Path]):
+    """
+    Download a file from a url.
+
+    :param url: The url where the file is stored
+    :type url: str
+    :param save_path: The same location
+    :type save_path: Union[str,Path]
+    """
     p = Path(save_path)
     p.parent.mkdir(parents=True, exist_ok=True)
+
     with requests.get(url, stream=True) as r:
         with open(p, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -16,7 +26,13 @@ def download_single_file(url, save_path):
     return h
 
 
-def multi_downloader(download_struct):
+def multi_downloader(download_struct: Dict[str,Union[str,Path]]):
+    """
+    Download multiple files concurrently
+
+    :param download_struct: A structure describing the desired download
+    :type download_struct: Dict[str,Union[str,Path]]
+    """
     with ThreadPoolExecutor(max_workers=10) as executor:
         futures = [
             executor.submit(download_single_file, url, download_struct[url])

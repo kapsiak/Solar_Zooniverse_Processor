@@ -3,8 +3,9 @@ from solar.database.tables import tables
 import operator
 import re
 from solar.common.utils import into_number
+from functools import reduce
 
-query_re = re.compile("([a-zA-Z1-9_]+)\s*([<=>]+)\s*([a-zA-Z1-9_-]+)")
+query_re = re.compile("([a-zA-Z0-9_]+)\s*([<=>]+)\s*([a-zA-Z0-9_-]+)")
 
 
 def param_to_obj(param, table):
@@ -19,6 +20,9 @@ def param_to_obj(param, table):
     matches = query_re.search(param)
     col, op, val = matches.groups()
     val = into_number(val)
+    print(val)
+    if 'time' in col:
+        pass
     col = table._meta.fields[col]
     return comps[op](col, val)
 
@@ -28,7 +32,7 @@ def parse_q(args):
     params = args.params if args.params else []
     (table,) = [x for x in tables if x.__name__ == table_str]
     to_pass = [param_to_obj(param, table) for param in params]
-    select = table.select().where(*[to_pass]) if params else table.select()
+    select = table.select().where(reduce(operator.and_, to_pass)) if params else table.select()
     for x in select:
         print(x)
 
@@ -43,6 +47,7 @@ def make_q_parser(command_parser):
     )
 
     query_parser.add_argument(
-        "-q", metavar="query", type=str, dest="params", action="append"
+        "-q", metavar="query", type=str, dest="params", action="append",
+        help = "Add a query. These should be in the form: param(comp)val\n comp is one of =,<,>,<=,>="
     )
     query_parser.set_defaults(func=parse_q)

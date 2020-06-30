@@ -1,6 +1,7 @@
 import peewee as pw
 from solar.common.config import Config
 
+# Create the database
 database = pw.SqliteDatabase(
     Config.db_path,
     pragmas={

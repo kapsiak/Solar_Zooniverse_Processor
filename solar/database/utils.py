@@ -24,6 +24,13 @@ def dbformat(format_string: str, row: object, **kwargs) -> str:
 
 
 def dbroot(fun):
+    """
+    A decorator that takes a function which returns a path, and returns a new function that returns that path pretended with the database_storage root. Effectively does
+    f() -> path/to/something 
+    x = dbroot(f)
+    x() -> Config.db_save / f()
+
+    """
     @wraps(fun)
     def ret(*args, **kwargs):
         new_path = Path(Config.db_save) / fun(*args, **kwargs)

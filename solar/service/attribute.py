@@ -7,7 +7,11 @@ from solar.database.tables.service_request import Service_Parameter
 from solar.common.convert import string_to_data, data_to_string
 
 
+
 class Attribute:
+    """
+    This class attempts to be a wrapper for attributes that are passed to service requests. 
+    """
     def __init__(self, name: str, value: Any = None, t_format=None) -> None:
         self.name = name
         self._value = value
@@ -19,12 +23,7 @@ class Attribute:
     @property
     def value(self, **kwargs) -> Any:
         """
-        Get the value of the attribute. Several rules are implemented to determine the correct for of the value.
-            - If value is a list, join list with commas
-            - If value is a datetime.datetime, return a string formatted according to kwargs["time_format"] (defaults to Config["time_hek_format"]
-
-        :param kwargs: time_format  
-        :return: Appropriately formatted value
+        Get the value of the attribute
         :rtype: Any
         """
         return self._value
@@ -34,20 +33,35 @@ class Attribute:
         self._value = val
 
     def f_value(self, val_form=None):
+        """
+        Return an (optionally) formatted value.
+
+        :param val_form: A function that formats the value, defaults to None
+        """
         if val_form:
             return val_form(self.value)
         else:
             return self.value
 
     def as_model(self, req=None):
+        """
+        Convert an attribute into a Service_Parameter
+
+        :param req: The Service_Request object to associated with parameter to, defaults to None
+        :type req: Service_Request, optional
+        """
         s = Service_Parameter(service_request=req, key=self.name, desc=self.description)
-        print(f"Format is {self._format} for val {self._value}")
         s.format = self._format
         s.value = self._value
         return s
 
     @staticmethod
     def from_model(tab):
+        """
+        Get an attribute from a service parameter
+
+        :type tab: Service_Parameter
+        """
         ret = Attribute(tab.key)
         ret._format = tab.format
         ret._value = tab.value

@@ -18,7 +18,7 @@ def grab_save(req, action, save_data, save_request):
             try:
                 x.save()
             except pw.IntegrityError as e:
-                print(e)
+                pass
     if save_request:
         req.save_request()
 
@@ -157,13 +157,13 @@ def make_s_parser(command_parser):
 
     group2 = service_parser.add_mutually_exclusive_group(required=True)
     group2.add_argument(
-        "-s", "--submit", action="store_true", help="Submit a request to the service"
+        "-s", "--submit", action="store_true", help="Submit a request to the service. Depending on the service this may or may not be a different action than a data fetch."
     )
     group2.add_argument(
         "-f",
         "--fetch",
         action="store_true",
-        help="Attempt to fetch data from a request. If the request has not been submitted, this command will first submit the request",
+        help="Attempt to fetch data from a request. If the request has not been submitted, this command will first submit the request.\n Note that this may take some time and will block."
     )
 
     service_parser.add_argument(
@@ -180,7 +180,7 @@ def make_s_parser(command_parser):
     service_parser.add_argument(
         "--event",
         action="store_true",
-        help="If submitting a cutout request, treat the search using search, look for an existing solar event matching the parameter, and create a cutout request using that event",
+        help="If submitting a cutout request, look for an existing solar event matching the parameter (as opposed to a cutout request), and create a cutout request using that event",
     )
 
     service_parser.set_defaults(func=parse_s)

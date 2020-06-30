@@ -24,16 +24,29 @@ from solar.common import chat
 
 class Cutout_Service(Base_Service):
 
-    # The base url for the ssw response, a response from this returns, most importatnyl, the job ID associated with this cuttout request
+    # The base url for the ssw response, a response from this returns, most importantly, the job ID associated with this cutout request
     base_api_url = "http://www.lmsal.com/cgi-ssw/ssw_service_track_fov.sh"
+
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
     delay_time = 60  # seconds
 
     @staticmethod
-    def _from_event(event, strict=True):
+    def _from_event(event: Solar_Event, strict: bool =True) -> Cutout_Service:
+        """
+        Create a cutout service object from a solar event.
 
+        :param event: The event used to generate the parameters for the request
+        :type event: Solar_Event
+        :param strict: Whether to allow the program to make decisions that reduce the possibility of duplicate requests, defaults to True
+        :type strict: bool, optional
+        :return: The constructed cutout service object
+        :rtype: Cutout_Service
+        """
+
+        # TODO: Add feature that detects if there is an existing request in a similar region as this event #
         if strict:
             try:
+                # Can we find an an existing service request that used this event?
                 c = Service_Request.get(
                     Service_Request.event == event,
                     Service_Request.service_type == "cutout",
@@ -43,6 +56,7 @@ class Cutout_Service(Base_Service):
             except pw.DoesNotExist:
                 pass
         chat("I could not find request matching this event, I will create a new one")
+        # Either way, we get the parameters we need from the event
         to_pass = dict(
             xcen=event.hpc_x,
             ycen=event.hpc_y,
@@ -57,7 +71,16 @@ class Cutout_Service(Base_Service):
         return c
 
     @staticmethod
-    def _from_model(mod):
+    def _from_model(mod: Service_Request) -> Cutout_Service:
+        """
+        Load a Cutout_Service object from an existing request
+
+
+        :param mod: The Service_Request object
+        :type mod: Service_Request
+        :return: A request with parameters built from mod
+        :rtype: Cutout_Service
+        """
         params = [Att.from_model(x) for x in mod.parameters]
         cut = Cutout_Service(*params)
         cut.event = mod.event
@@ -86,6 +109,9 @@ class Cutout_Service(Base_Service):
         start = datetime.strptime("2010-06-01T00:00:00", Config.time_format.hek)
         end = datetime.strptime("2010-07-01T00:00:00", Config.time_format.hek)
 
+
+        # A collection of default arguments to make sure that even if the user
+        # does not include enough data, a reasonable request can be made
         xcen = Att("xcen", kwargs.get("xcen", 0))
         ycen = Att("ycen", kwargs.get("ycen", 0))
         fovx = Att("fovx", kwargs.get("fovx", 100))
@@ -111,14 +137,16 @@ class Cutout_Service(Base_Service):
             channel,
         ]
 
+        # A temporary list to hold the arguments submitted by the user
         temp = []
         temp.extend(args)
         temp.extend(
             [Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs]
         )
+
+        # Replace default arguments with user submitted ones when possible
         self.params = build_from_defaults(defaults, temp)
-        for x in self.params:
-            print(x._format)
+
         self.event = None
 
         self.service_request_id = None
@@ -130,10 +158,15 @@ class Cutout_Service(Base_Service):
         self._data = None  # The text from the response
 
     @property
-    def data(self):
+    def data(self)-> List[Fits_File]:
         return self._data
 
     def __parse_attributes(self, **kwargs):
+        """
+        Convert an attribute list into a dict. 
+
+        :param kwargs: Additional parameters to pass append to the created dict. If espy. Note that these parameters are of a higher precedence than the parameters stored in this request
+        """
         other = [
             Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs
         ]
@@ -157,7 +190,7 @@ class Cutout_Service(Base_Service):
             except Exception as err:
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
-                # print(f"Successfully submitted request ")
+                # Extract the job_id from the response
                 self.job_id = re.search(
                     '<param name="JobID">(.*)</param>', response.text
                 )[1]
@@ -169,6 +202,7 @@ class Cutout_Service(Base_Service):
         :return: None
         :rtype: None
         """
+
         data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
         )
@@ -221,6 +255,11 @@ class Cutout_Service(Base_Service):
         pass
 
     def save_request(self):
+        """
+        Attempt to save this request. 
+
+        """
+
         if self.status == "unsubmitted":
             chat("No reason to save an unsubmitted service request")
             return None
@@ -263,6 +302,9 @@ class Cutout_Service(Base_Service):
 
         self.service_request_id = req.id
 
+        # At this point we have a Service_Request object req, either from an existing request or one that we just created. 
+        # Now we add data to it
+
         if self.event:
             req.event = self.event
         else:
@@ -273,6 +315,7 @@ class Cutout_Service(Base_Service):
 
         req.job_id = self.job_id
 
+        # We also want to store the parameters of the request
         param_list = [p for p in req.parameters]
         my_params = [a.as_model(req) for a in self.params]
 
@@ -322,7 +365,6 @@ class Cutout_Service(Base_Service):
                 request_id=req_id,
             )
             f.file_path = Fits_File.make_path(f, event_id=event_id)
-            print(f.file_path)
             ret.append(f)
         return ret
 
@@ -334,7 +376,7 @@ def c_fetch(c: Cutout_Service) -> Cutout_Service:
     :param c: The request
     :type c: Cutout_Service
     :return: The request after executing both the request and fetch stages
-    :rtype: Cutout_Service
+    :retype: Cutout_Service
     """
     c.fetch_data()
     c.save_request()
@@ -343,16 +385,16 @@ def c_fetch(c: Cutout_Service) -> Cutout_Service:
 
 def multi_cutout(list_of_reqs: List[Cutout_Service]) -> List[Cutout_Service]:
     """
-    A multithreaded cutout requester. 
-    Accepts a list of cutout requests, processes them in paralle and then returns a list of the 
+    A multi threaded cutout requester. 
+    Accepts a list of cutout requests, processes them in parallel and then returns a list of the 
     processed requests
 
     WARNING: The order of the original list is not guaranteed to be preserved in the returned list
 
-    :param list_of_reqs: List of requests to be processed
-    :type list_of_reqs: List[Cutout_Service]
+    :pram list_of_reds: List of requests to be processed
+    :type list_of_reds: List[Cutout_Service]
     :return: List of completed request
-    :rtype: List[Cutout_Service]
+    :retype: List[Cutout_Service]
     """
     with ThreadPoolExecutor(max_workers=20) as executor:
         total_jobs = len(list_of_reqs)

@@ -3,6 +3,9 @@ from solar.database.tables.base_models import Base_Model
 
 
 class Base_Service:
+    """
+    Base class for requests
+    """
 
     base_api_url = None
 

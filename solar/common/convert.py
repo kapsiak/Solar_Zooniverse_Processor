@@ -10,7 +10,7 @@ class NoFormat(Exception):
         return self.str
 
 
-def __scalar_convert(val, ftype, datetime=None):
+def __scalar_convert(val, ftype, t_format=None):
     if ftype == "str":
         return val
     elif ftype == "int":
@@ -18,7 +18,7 @@ def __scalar_convert(val, ftype, datetime=None):
     elif ftype == "float":
         return float(val)
     elif ftype == "datetime":
-        return datetime.strptime(val, datetime)
+        return datetime.strptime(val, t_format)
     else:
         return None
 
