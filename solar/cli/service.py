@@ -157,13 +157,16 @@ def make_s_parser(command_parser):
 
     group2 = service_parser.add_mutually_exclusive_group(required=True)
     group2.add_argument(
-        "-s", "--submit", action="store_true", help="Submit a request to the service. Depending on the service this may or may not be a different action than a data fetch."
+        "-s",
+        "--submit",
+        action="store_true",
+        help="Submit a request to the service. Depending on the service this may or may not be a different action than a data fetch.",
     )
     group2.add_argument(
         "-f",
         "--fetch",
         action="store_true",
-        help="Attempt to fetch data from a request. If the request has not been submitted, this command will first submit the request.\n Note that this may take some time and will block."
+        help="Attempt to fetch data from a request. If the request has not been submitted, this command will first submit the request.\n Note that this may take some time and will block.",
     )
 
     service_parser.add_argument(

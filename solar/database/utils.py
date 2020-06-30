@@ -31,6 +31,7 @@ def dbroot(fun):
     x() -> Config.db_save / f()
 
     """
+
     @wraps(fun)
     def ret(*args, **kwargs):
         new_path = Path(Config.db_save) / fun(*args, **kwargs)

@@ -2,10 +2,10 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tqdm
 from pathlib import Path
-from typint import Union,Any
+from typint import Union, Any
 
 
-def download_single_file(url:str, save_path:Union[str,Path]):
+def download_single_file(url: str, save_path: Union[str, Path]):
     """
     Download a file from a url.
 
@@ -26,7 +26,7 @@ def download_single_file(url:str, save_path:Union[str,Path]):
     return h
 
 
-def multi_downloader(download_struct: Dict[str,Union[str,Path]]):
+def multi_downloader(download_struct: Dict[str, Union[str, Path]]):
     """
     Download multiple files concurrently
 

@@ -31,7 +31,7 @@ class Cutout_Service(Base_Service):
     delay_time = 60  # seconds
 
     @staticmethod
-    def _from_event(event: Solar_Event, strict: bool =True) -> Cutout_Service:
+    def _from_event(event: Solar_Event, strict: bool = True) -> Cutout_Service:
         """
         Create a cutout service object from a solar event.
 
@@ -109,7 +109,6 @@ class Cutout_Service(Base_Service):
         start = datetime.strptime("2010-06-01T00:00:00", Config.time_format.hek)
         end = datetime.strptime("2010-07-01T00:00:00", Config.time_format.hek)
 
-
         # A collection of default arguments to make sure that even if the user
         # does not include enough data, a reasonable request can be made
         xcen = Att("xcen", kwargs.get("xcen", 0))
@@ -158,7 +157,7 @@ class Cutout_Service(Base_Service):
         self._data = None  # The text from the response
 
     @property
-    def data(self)-> List[Fits_File]:
+    def data(self) -> List[Fits_File]:
         return self._data
 
     def __parse_attributes(self, **kwargs):
@@ -302,7 +301,7 @@ class Cutout_Service(Base_Service):
 
         self.service_request_id = req.id
 
-        # At this point we have a Service_Request object req, either from an existing request or one that we just created. 
+        # At this point we have a Service_Request object req, either from an existing request or one that we just created.
         # Now we add data to it
 
         if self.event:

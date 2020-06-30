@@ -7,11 +7,11 @@ from solar.database.tables.service_request import Service_Parameter
 from solar.common.convert import string_to_data, data_to_string
 
 
-
 class Attribute:
     """
     This class attempts to be a wrapper for attributes that are passed to service requests. 
     """
+
     def __init__(self, name: str, value: Any = None, t_format=None) -> None:
         self.name = name
         self._value = value

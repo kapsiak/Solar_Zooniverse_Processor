@@ -43,7 +43,6 @@ class Hek_Service(Base_Service):
         start = "2010-06-01T00:00:00"
         end = "2010-07-01T00:00:00"
 
-
         # Default attributes
         x1 = Att("x1", -1200)
         x2 = Att("x2", 1200)
@@ -78,7 +77,6 @@ class Hek_Service(Base_Service):
         temp.extend(args)
         temp.extend([Att(key, kwargs[key]) for key in kwargs])
 
-
         # Construct the final parameter list by replacing defaults with user defined values
         self.params = build_from_defaults(defaults, temp)
 
@@ -95,7 +93,7 @@ class Hek_Service(Base_Service):
 
         self.for_testing_data = {"result": []}
 
-    def __parse_attributes(self, params: List[Attribute], **kwargs)->Dict[str,Any]:
+    def __parse_attributes(self, params: List[Attribute], **kwargs) -> Dict[str, Any]:
         """
         Parse attributes and return a dictionary that can be passed to a request object
 

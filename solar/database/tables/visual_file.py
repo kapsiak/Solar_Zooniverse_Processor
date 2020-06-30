@@ -54,10 +54,10 @@ class Visual_File(File_Model):
     #                            im_ll_x                               ^
     #                                         im_ur_x                  |
     #                          +---------------------------------------+
-    #      
+    #
     #
     # This scheme allows, along with the header data of the fits file that generated
-    # the image, a strnslation between point on the actual picture, and point in 
+    # the image, a strnslation between point on the actual picture, and point in
     # in the world
 
     im_ll_x = pw.FloatField(default=0)
