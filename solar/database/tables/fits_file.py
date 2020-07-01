@@ -2,7 +2,7 @@ import peewee as pw
 from solar.database import database as db
 from solar.common.config import Config
 from datetime import datetime
-from solar.service.downloads import multi_downloader
+from solar.service.downloads import multi_downloader, download_single_file
 from pathlib import Path
 from solar.common.utils import checksum, into_number
 from sunpy.map import Map
@@ -42,6 +42,7 @@ class Fits_File(File_Model):
 
     def __str__(self):
         return f""" 
+ID              = {self.id}
 Event (ID/SOL)  = {self.event.sol_standard} | {self.sol_standard}
 Server_Path     = {self. server_full_path}
 File_Path       = {self.file_path}
@@ -74,6 +75,15 @@ Hash            = {self.file_hash}
             shutil.copy(file_path, new_path)
             fits.get_hash()
             return fits
+
+    def update_single(self):
+        if not self.check_integrity():
+            if self.server_full_path:
+                download_single_file(self.server_full_path, self.file_path)
+                self.extract_fits_data()
+                self.image_time = datetime.strptime(self["date-obs"], Config.time_format.fits)
+                self.save()
+
 
     @staticmethod
     def update_table(update_headers: bool = True):
@@ -117,18 +127,20 @@ Hash            = {self.file_hash}
         if Path(self.file_path).is_file():
             m = Map(self.file_path)
             header = m.meta
+            header = {x:y for x,y in m.meta.items() if not isinstance(y,dict)}
             for h_key in header:
-                f = self.fits_keys.where(F, its_Header_Elem.key == h_key)
+                f = self.fits_keys.where(Fits_Header_Elem.key == h_key)
                 if not f.exists():
-                    f = Fits_Header_Elem.create(fits_file=self, key=h_key)
+                    f = Fits_Header_Elem(fits_file=self, key=h_key)
+                    f.format= Config.time_format.fits
                     f.value = header[h_key]
                     f.save()
                 else:
                     f = f.get()
                     f.key = h_key
+                    f.format= Config.time_format.fits
                     f.value = header[h_key]
                     f.save()
-            self.save()
 
     def __getitem__(self, key: str) -> Any:
         """

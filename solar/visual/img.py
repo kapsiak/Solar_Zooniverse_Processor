@@ -71,10 +71,13 @@ class Basic_Image(Image_Builder):
 
     def create(self, file_path, cmap="hot", size=3, **kwargs):
         if not Path(file_path).is_file():
+            print("You are asking me to create an image from a fits file that does not exist")
             return False
         self.map = sm.Map(file_path)
         title_obsdate = self.map.date.strftime("%Y-%b-%d %H:%M:%S")
-        self.fig = plt.figure(figsize=[4.4, 4.4], dpi=300)
+        self.fig = plt.figure(
+               # figsize=[4.4, 4.4],
+                 dpi=300)
         self.ax = self.fig.add_subplot(1, 1, 1, projection=self.map)
         # self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
         # self.ax.imshow(self.map.data)

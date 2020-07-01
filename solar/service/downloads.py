@@ -2,7 +2,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tqdm
 from pathlib import Path
-from typint import Union, Any
+from typing import Union, Any,Dict
 
 
 def download_single_file(url: str, save_path: Union[str, Path]):

@@ -83,8 +83,6 @@ class File_Model(Base_Model):
             print(e)
         return False
 
-    def __eq__(self, other):
-        return self.file_path == other.file_path
 
 
 class UnionCol(Base_Model):

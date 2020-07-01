@@ -178,6 +178,7 @@ class Visual_File(File_Model):
 
                 im.get_hash()
             else:
+                print("For some reason the visual failed to be created")
                 return None
         return im
 
