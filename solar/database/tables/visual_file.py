@@ -155,8 +155,8 @@ class Visual_File(File_Model):
                         "It doesn't look like this image exists, so I am going to create a new one"
                     )
                 to_pass = dict(
-                        #extra_annot=f"{fits_file['naxis1']}"
-                        )
+                    # extra_annot=f"{fits_file['naxis1']}"
+                )
                 visual_builder.save_visual(file_path, **to_pass)
                 im.file_path = file_path
                 im.file_name = file_name
@@ -168,7 +168,6 @@ class Visual_File(File_Model):
                 im.im_ur_y = visual_builder.im_ur_y
                 im.width = visual_builder.width
                 im.height = visual_builder.height
-
 
                 im.save()
                 if visual_type == "image":

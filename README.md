@@ -106,6 +106,31 @@ In the last line, we show how to get a world pixel from a location on the image,
 # (Work in Progress) Command line interface
 
 
+The program contains a basic cli to simplify use. For help, please run the module with the option '-h'.
+
+```console
+$ python3 -m solar -h
+
+usage: Jets Processing [-h] {query,service,visual} ...
+
+positional arguments:
+  {query,service,visual}
+                        Command
+    query               Query one of the databases, if it exists
+    service             Submit a request to a some service
+    visual              Construct visuals from existing fits files
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
+
+Help for each subcommand may be accessed in a similar way.
+
+```console
+$ python3 -m solar visual -h
+```
+
+
 
 
 
