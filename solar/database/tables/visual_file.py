@@ -8,10 +8,9 @@ from sunpy.io.header import FileHeader
 import numpy as np
 from .base_models import File_Model, Base_Model
 from .fits_file import Fits_File
-from typing import Union, Any, List
+from typing import Any
 from solar.database.utils import dbformat, dbroot
 from solar.common.printing import chat
-import matplotlib.pyplot as plt
 
 
 class Visual_File(File_Model):
@@ -155,7 +154,10 @@ class Visual_File(File_Model):
                     chat(
                         "It doesn't look like this image exists, so I am going to create a new one"
                     )
-                visual_builder.save_visual(file_path)
+                to_pass = dict(
+                        #extra_annot=f"{fits_file['naxis1']}"
+                        )
+                visual_builder.save_visual(file_path, **to_pass)
                 im.file_path = file_path
                 im.file_name = file_name
                 im.visual_type = visual_builder.visual_type
@@ -166,6 +168,7 @@ class Visual_File(File_Model):
                 im.im_ur_y = visual_builder.im_ur_y
                 im.width = visual_builder.width
                 im.height = visual_builder.height
+
 
                 im.save()
                 if visual_type == "image":

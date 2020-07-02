@@ -1,28 +1,21 @@
 import matplotlib.pyplot as plt
 import sunpy.map as sm
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 from pathlib import Path
-from functools import wraps
 from .base_visual import Visual_Builder
 
 
-def get_ax_size(ax):
-    bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    width, height = bbox.width, bbox.height
-    width *= fig.dpi
-    height *= fig.dpi
-    return width, height
-
-
 class Image_Builder(Visual_Builder):
+    def add_annotation(self, **kwargs):
+        pass
+
     def __init__(self, im_type):
         super().__init__(im_type)
         self.fig = None
         self.ax = None
         self.map = None
 
-    def save_visual(self, save_path, clear_after=True):
+    def save_visual(self, save_path, clear_after=True, **kwargs):
         bbox = self.fig.get_window_extent().transformed(
             self.fig.dpi_scale_trans.inverted()
         )
@@ -30,6 +23,7 @@ class Image_Builder(Visual_Builder):
         (self.im_ll_x, self.im_ll_y), (self.im_ur_x, self.im_ur_y) = (
             self.fig.axes[0].get_position().get_points()
         )
+        self.add_annotation(**kwargs)
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         self.fig.savefig(save_path)
@@ -50,7 +44,7 @@ class Unframed_Image(Image_Builder):
         y = self.map.meta["naxis2"]
         larger = max(x, y)
         self.fig = plt.figure()
-        self.fig.set_size_inches(x / larger * size, y / larger * size)
+        self.fig.set_size_inches((x / larger) * size, (y / larger) * size)
         self.ax = plt.Axes(self.fig, [0.0, 0.0, 1.0, 1.0])
         self.ax.set_axis_off()
         self.fig.add_axes(self.ax)
@@ -68,6 +62,24 @@ class Basic_Image(Image_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
         self.frame = False
+
+    def add_annotation(self, **kwargs):
+        if not self.fig:
+            return None
+        extras = kwargs.get("extra_annot", "")
+        self.fig.text(
+            0.01,
+            0.01,
+            (
+                f"({round(self.im_ll_x,2)}, {round(self.im_ll_y, 2)})"
+                f"-- ({round(self.im_ur_x, 2)}, {round(self.im_ur_y, 2)})"
+                f"::({round(self.width, 2)}, {round(self.height, 2)})"
+                # f"hpc_ll:({self.map.bottom_left_coord}, {self.map.top_right_coord})"
+                f"{extras}"
+            ),
+            fontsize=4,
+            color="aliceblue",
+        )
 
     def create(self, file_path, cmap="hot", size=3, **kwargs):
         if not Path(file_path).is_file():

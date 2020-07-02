@@ -11,7 +11,7 @@ Img_Factories = {x.__name__.lower(): x for x in vis.Img_Factories}
 Vid_Factories = {x.__name__.lower(): x for x in vis.Vid_Factories}
 
 
-def sorter(val: List[Any, int]) -> int:
+def sorter(val: List[List[Any]]) -> int:
     """
     Returns a value between 0 and 1, with values closer to 1 being mapped to larger values (with one being the max). 
     Zero is eliminated by giving it a negative value

@@ -11,6 +11,7 @@ from typing import Any, Dict
 from .service_request import Service_Request
 import shutil
 from solar.database.utils import dbformat, dbroot
+from solar.common.utils import into_number
 
 
 class Fits_File(File_Model):
