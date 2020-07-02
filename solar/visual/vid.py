@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
-class Video_Builder(Visual_Builder):
+class Basic_Video(Visual_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
         self.fig = None

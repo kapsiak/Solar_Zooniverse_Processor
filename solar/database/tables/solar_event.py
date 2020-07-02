@@ -62,7 +62,7 @@ class Solar_Event(Base_Model):
         return f""" <Solar_Event: {self.event_id}>"""
 
     def __str__(self) -> str:
-        return f""" 
+        return f"""
 sol         =  {self.sol_standard}
 coord(hpc)  = {self.hpc_x,self.hpc_y}
 rec (ll ,ur)= {self.x_min, self.y_min} -- {self.x_max,self.y_max}

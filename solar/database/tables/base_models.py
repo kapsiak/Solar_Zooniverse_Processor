@@ -84,7 +84,6 @@ class File_Model(Base_Model):
         return False
 
 
-
 class UnionCol(Base_Model):
     """
     A table designed to hold different types.

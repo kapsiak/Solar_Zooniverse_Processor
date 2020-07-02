@@ -1,17 +1,26 @@
 from solar.database.tables.visual_file import Visual_File
 from solar.database.tables.solar_event import Solar_Event
 from solar.database.tables.fits_file import Fits_File
-from solar.visual.img import Basic_Image
-from pathlib import Path
-import operator
-from functools import reduce
-import re
-import math
 from solar.common.utils import into_number
+import solar.visual as vis
 import peewee as pw
+from typing import List, Any
 
 
-def sorter(val):
+Img_Factories = {x.__name__.lower(): x for x in vis.Img_Factories}
+Vid_Factories = {x.__name__.lower(): x for x in vis.Vid_Factories}
+
+
+def sorter(val: List[Any, int]) -> int:
+    """
+    Returns a value between 0 and 1, with values closer to 1 being mapped to larger values (with one being the max). 
+    Zero is eliminated by giving it a negative value
+
+    :param val: A value in a list
+    :type val: List[Any, int]
+    :return: The ranking
+    :rtype: int
+    """
     l = val[1]
     if l == 1:
         return 1
@@ -25,30 +34,47 @@ def recursive_search(arg, *args, current_search=None):
     """
     Arg and args are a series of strings. This system executes a basic algorithm to narrow the results. Expects to find either a single fits file, or a list of files. Returns None if the function cannot deduce reasonable file(s)
     """
-    cols = [
+
+    search_cols = [
         Solar_Event.id,
         Solar_Event.sol_standard,
         Fits_File.id,
         Fits_File.file_path,
         Fits_File.file_hash,
     ]
+
     table = Fits_File.select(Solar_Event, Fits_File).join(Solar_Event)
+
     found = []
+
     arg = into_number(arg)
-    for col in cols:
-        q_sub = col.contains(arg) if isinstance(col, pw.CharField) else (col == arg)
+    for col in search_cols:
+        # We search string "fuzzily" and numbers exactly
+        query_subpart = (
+            col.contains(arg) if isinstance(col, pw.CharField) else (col == arg)
+        )
         if not current_search:
-            q = q_sub
+            query = query_subpart
         else:
-            q = current_search & q_sub
-        search = table.where(q)
-        found.append([q, search.count()])
+            query = current_search & query_subpart
+        results = table.where(query)
+        found.append([query, results.count()])
     found = sorted(found, key=sorter, reverse=True)
     if all(x[1] == 0 for x in found) or not found:
         return None
     if not args:
         return table.where(found[0][0])
     return recursive_search(*args, current_search=found[0][0])
+
+
+def make_im_factory(name, *args, **kwargs):
+    name = name.lower()
+    return Img_Factories[name](*args, **kwargs)
+
+
+def make_vid_factory(name, *args, **kwargs):
+    name = name.lower()
+    return Vid_Factories[name](*args, **kwargs)
 
 
 def parse_v(args):
@@ -68,28 +94,38 @@ def parse_v(args):
 
     found = recursive_search(*args.search)
     exp = args.export
+    factory = (
+        args.factory
+        if args.factory
+        else {"video": "basic_video", "image": "basic_image"}[v_type]
+    )
     if not found:
         print("Didn't find anything")
         return None
-    if found.count() > 1 and v_type != 'video':
+    if found.count() > 1 and v_type != "video":
         raise ValueError
 
-    if v_type == 'image':
-        im = im_maker(found, extension)
+    if v_type == "image":
+        im = im_maker(found, make_im_factory(factory, extension))
         if exp:
             im.export(exp)
 
-    if v_type == 'video':
+    if v_type == "video":
         pass
 
-def vid_maker(fits,ext):
-    pass
 
-def im_maker(fits,ext):
+def vid_maker(fits, ext):
+    for f in fits:
+        f.update_single()
+    vb = Video_Builder(ext)
+    im = Visual_File.create_new_visual(fits, bi)
+    return im
+
+
+def im_maker(fits, factory):
     fits = fits.get()
     fits.update_single()
-    bi = Basic_Image(ext)
-    im = Visual_File.create_new_visual(fits, bi)
+    im = Visual_File.create_new_visual(fits, factory)
     return im
 
 
@@ -116,6 +152,13 @@ def make_v_parser(command_parser):
 
     visual_parser.add_argument(
         "-e", "--export", type=str, help="Location to export the image to"
+    )
+
+    visual_parser.add_argument(
+        "-f",
+        "--factory",
+        type=str,
+        help=f"The 'miniprogram' used to make the image for images the available builders are {', '.join(list(Img_Factories.keys())+ list(Vid_Factories.keys()))}.",
     )
 
     visual_parser.add_argument(

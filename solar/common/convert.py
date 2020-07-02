@@ -43,8 +43,8 @@ def data_to_string(value, data_format=None):
             else:
                 field_type = main_type
                 ret_str = datetime.strftime(value, data_format)
-        elif main_type == 'bool':
-            field_type = 'bool'
+        elif main_type == "bool":
+            field_type = "bool"
             ret_str = str(value)
         else:
             raise ValueError
