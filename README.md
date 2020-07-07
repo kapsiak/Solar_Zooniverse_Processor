@@ -14,7 +14,7 @@ This is a package to aid in the construction of the JETS universe database. The 
 ## Request events from HEK
 ```python
 from solar.service.hek import Hek_Service
-h = Hek_Service('2010-06-01T00:00:00','2010-06-01T00:00:00',event_types=['cj'])
+h = Hek_Service(event_starttime = '2010-06-01T00:00:00', event_endtime='2010-06-01T00:00:00',event_type=['cj'])
 h.submit_request()
 h.save_request()
 found_events = h.data
