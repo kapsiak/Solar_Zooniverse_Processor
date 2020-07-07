@@ -75,6 +75,7 @@ Hash            = {self.file_hash}
         if not self.check_integrity():
             if self.server_full_path:
                 download_single_file(self.server_full_path, self.file_path)
+                self.get_hash()
                 self.extract_fits_data()
                 self.image_time = datetime.strptime(
                     self["date-obs"], Config.time_format.fits

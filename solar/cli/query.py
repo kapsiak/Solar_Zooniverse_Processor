@@ -29,6 +29,7 @@ def param_to_obj(param, table):
 
 def parse_q(args):
     table_str = args.table
+    update = args.update
     params = args.params if args.params else []
     (table,) = [x for x in tables if x.__name__ == table_str]
     to_pass = [param_to_obj(param, table) for param in params]
@@ -39,6 +40,12 @@ def parse_q(args):
     )
     for x in select:
         print(x)
+    if update:
+        try:
+            print("Updating table")
+            table.update_table()
+        except Exception as e:
+            print(e)
 
 
 def make_q_parser(command_parser):
@@ -57,5 +64,12 @@ def make_q_parser(command_parser):
         dest="params",
         action="append",
         help="Add a query. These should be in the form: param(comp)val\n comp is one of =,<,>,<=,>=",
+    )
+    query_parser.add_argument(
+        "-u",
+        "--update",
+        dest="update",
+        action="store_true",
+        help="Whether to sync the table with the server (only works for Fits files for now)",
     )
     query_parser.set_defaults(func=parse_q)

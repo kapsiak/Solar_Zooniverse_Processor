@@ -1,8 +1,4 @@
 import argparse as arg
-from solar.database.tables import tables
-import operator
-import re
-from solar.common.utils import into_number
 from solar.cli.query import make_q_parser
 from solar.cli.service import make_s_parser
 from solar.cli.visual import make_v_parser

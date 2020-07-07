@@ -14,6 +14,7 @@ from tqdm import tqdm
 from solar.service.request import Base_Service
 import peewee as pw
 from solar.service.utils import build_from_defaults
+from solar.common.printing import chat
 
 
 class Hek_Service(Base_Service):
@@ -205,11 +206,21 @@ class Hek_Service(Base_Service):
         return self.data
 
     def save_data(self) -> None:
+        self._data = [
+            e
+            if Solar_Event.select().where(Solar_Event.event_id == e.event_id).count()
+            == 0
+            else Solar_Event.select().where(Solar_Event.event_id == e.event_id).get()
+            for e in self._data
+        ]
         for e in self.data:
             try:
                 e.save()
             except pw.IntegrityError as err:
-                print(f"Could not save: {e} : {err}")
+                print(err)
+                chat(
+                    f"Looks like the event {e} is already in the database, so I am replacing it with the existing one"
+                )
 
     def save_request(self):
         s = Service_Request(

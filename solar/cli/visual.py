@@ -111,14 +111,15 @@ def parse_v(args):
             im.export(exp)
 
     if v_type == "video":
-        pass
+        im = vid_maker(found, make_vid_factory(factory, extension))
+        if exp:
+            im.export(exp)
 
 
-def vid_maker(fits, ext):
+def vid_maker(fits, factory):
     for f in fits:
         f.update_single()
-    vb = Video_Builder(ext)
-    im = Visual_File.create_new_visual(fits, bi)
+    im = Visual_File.create_new_visual(fits, factory)
     return im
 
 

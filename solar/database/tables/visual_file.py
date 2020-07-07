@@ -246,7 +246,7 @@ Hash            = {self.file_hash}
             """
 
     def __getitem__(self, key):
-        return fits_join.get().fits[key]
+        return Join_Visual_Fits.get().fits[key]
 
     @staticmethod
     def zooniverse_export(files, export_dir="export"):

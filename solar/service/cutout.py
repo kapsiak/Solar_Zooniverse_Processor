@@ -1,20 +1,16 @@
 from __future__ import annotations
-from typing import List, Dict, Any
+from typing import List, Dict
 import requests
 from datetime import datetime
 from requests.exceptions import HTTPError
 import re
-from pathlib import Path
 import time
 from solar.common.config import Config
-from solar.database.utils import dbformat
 from solar.database.tables.solar_event import Solar_Event
 from solar.database.tables.fits_file import Fits_File
-from solar.database.tables.service_request import Service_Parameter, Service_Request
+from solar.database.tables.service_request import Service_Request
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
-import tqdm
-from peewee import DoesNotExist
 from .attribute import Attribute as Att
 from .utils import build_from_defaults
 from .request import Base_Service
@@ -92,12 +88,11 @@ class Cutout_Service(Base_Service):
 
     def __init__(self, *args, **kwargs) -> None:
         """
-        Initialize a cutout request. 
+        Initialize a cutout request.
 
         Args may be attributes of the form: Attribute(name,value)
         Kwargs may be attributes in the form : name=value
         These two will produce equivalent searches
-        
 
         :param event: The solar event the cutout request refers to
         :type event: Union[Solar_Event, str]
@@ -160,9 +155,13 @@ class Cutout_Service(Base_Service):
     def data(self) -> List[Fits_File]:
         return self._data
 
+    @data.setter
+    def data(self, val):
+        self._data = val
+
     def __parse_attributes(self, **kwargs):
         """
-        Convert an attribute list into a dict. 
+        Convert an attribute list into a dict.
 
         :param kwargs: Additional parameters to pass append to the created dict. If espy. Note that these parameters are of a higher precedence than the parameters stored in this request
         """
@@ -172,7 +171,7 @@ class Cutout_Service(Base_Service):
         new_params = build_from_defaults(self.params, other)
         return {att.name: att.f_value() for att in new_params}
 
-    def submit_request(self) -> None:
+    def submit_request(self, auto_save=True) -> None:
         """
         Make a request to the SSW server in order to begin processing.
 
@@ -194,13 +193,18 @@ class Cutout_Service(Base_Service):
                     '<param name="JobID">(.*)</param>', response.text
                 )[1]
         self.status = "submitted"
+        if auto_save:
+            self.save_request()
 
-    def fetch_data(self, delay=None) -> None:
+    def fetch_data(self, delay=None, auto_save=True) -> None:
         """
         Attempt to fetch the data from the ssw_server.
         :return: None
         :rtype: None
         """
+
+        if not self.job_id:
+            self.submit_request(auto_save=auto_save)
 
         data_response_url = Cutout_Service.data_response_url_template.format(
             ssw_id=self.job_id
@@ -248,10 +252,17 @@ class Cutout_Service(Base_Service):
             else:
                 file_list = list_files_raw.split("\n")
                 file_list = [re.search(".*/(.*)$", x)[1] for x in file_list if x]
-                self._data = self._as_fits(file_list)
+                self._data = [self._as_fits(x) for x in file_list] 
 
     def save_data(self):
-        pass
+        for i in range(len(self._data)):
+            try:
+                self._data[i].save()
+            except pw.IntegrityError as e:
+                self._data[i] = Fits_File.get(Fits_File.server_full_path == self._data[i].server_full_path) 
+            except Exception as e:
+                print(e)
+        
 
     def save_request(self):
         """
@@ -332,7 +343,7 @@ class Cutout_Service(Base_Service):
         for p in new_list:
             p.save()
 
-    def _as_fits(self, file_list: List[str]) -> List[Fits_File]:
+    def _as_fits(self, fits_server_file) -> Fits_File:
         """
         Use the fits file list to construct and insert fits_files into the database.
         Note that this does not download the files. That is done through the
@@ -343,7 +354,6 @@ class Cutout_Service(Base_Service):
         :return: List of fits files (already inserted;w
         :rtype: List[Fits_File]
         """
-        ret = []
         sol = self.event.sol_standard if self.event else "unknown"
         event_id = self.event.event_id if self.event else None
         req_id = self.service_request_id if self.service_request_id else None
@@ -352,9 +362,7 @@ class Cutout_Service(Base_Service):
             ssw_id=self.job_id
         )
 
-        for fits_server_file in file_list:
-
-            f = Fits_File(
+        f = Fits_File(
                 event=self.event,
                 sol_standard=sol,
                 ssw_cutout_id=self.job_id,
@@ -363,12 +371,11 @@ class Cutout_Service(Base_Service):
                 file_name=fits_server_file,
                 request_id=req_id,
             )
-            f.file_path = Fits_File.make_path(f, event_id=event_id)
-            ret.append(f)
-        return ret
+        f.file_path = Fits_File.make_path(f, event_id=event_id)
+        return f
 
 
-def c_fetch(c: Cutout_Service) -> Cutout_Service:
+def c_fetch(c: Cutout_Service, auto_save=True) -> Cutout_Service:
     """
     A wrapper function for processing cutout requests
 
@@ -378,7 +385,8 @@ def c_fetch(c: Cutout_Service) -> Cutout_Service:
     :retype: Cutout_Service
     """
     c.fetch_data()
-    c.save_request()
+    if auto_save:
+        c.save_request()
     return c
 
 
