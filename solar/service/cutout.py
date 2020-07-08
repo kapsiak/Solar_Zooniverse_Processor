@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, Dict
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import re
 import time
@@ -16,6 +16,7 @@ from .utils import build_from_defaults
 from .request import Base_Service
 import peewee as pw
 from solar.common import chat
+import math
 
 
 class Cutout_Service(Base_Service):
@@ -115,9 +116,15 @@ class Cutout_Service(Base_Service):
         notrack = Att("notrack", kwargs.get("notrack", 1))
         start_time = Att("starttime", start, t_format=Config.time_format.hek)
         end_time = Att("endtime", end, t_format=Config.time_format.hek)
-        cmd = Att("cmd", "search")
-        use_json = Att("cosec", 2)
-        command_type = Att("type", "column")
+
+
+
+        # A temporary list to hold the arguments submitted by the user
+        temp = []
+        temp.extend(args)
+        temp.extend(
+            [Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs]
+        )
 
         defaults = [
             xcen,
@@ -131,15 +138,12 @@ class Cutout_Service(Base_Service):
             channel,
         ]
 
-        # A temporary list to hold the arguments submitted by the user
-        temp = []
-        temp.extend(args)
-        temp.extend(
-            [Att(key, kwargs[key], t_format=Config.time_format.hek) for key in kwargs]
-        )
-
         # Replace default arguments with user submitted ones when possible
         self.params = build_from_defaults(defaults, temp)
+
+        temp_start, = [x for x in self.params if x.name=='starttime']
+        temp_end, = [x for x in self.params if x.name=='endtime']
+        self.params.append(self.__compute_frames(temp_start,temp_end))
 
         self.event = None
 
@@ -151,6 +155,12 @@ class Cutout_Service(Base_Service):
 
         self._data = None  # The text from the response
 
+    def __compute_frames(self, start_time, end_time, cadence=12):
+        seconds = math.ceil((end_time.value - start_time.value) / timedelta(seconds=cadence))
+        return Att("max_frames", seconds)
+
+
+    
     @property
     def data(self) -> List[Fits_File]:
         return self._data
@@ -189,9 +199,11 @@ class Cutout_Service(Base_Service):
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
                 # Extract the job_id from the response
+                print(response.content)
                 self.job_id = re.search(
                     '<param name="JobID">(.*)</param>', response.text
                 )[1]
+
         self.status = "submitted"
         if auto_save:
             self.save_request()
@@ -252,17 +264,18 @@ class Cutout_Service(Base_Service):
             else:
                 file_list = list_files_raw.split("\n")
                 file_list = [re.search(".*/(.*)$", x)[1] for x in file_list if x]
-                self._data = [self._as_fits(x) for x in file_list] 
+                self._data = [self._as_fits(x) for x in file_list]
 
     def save_data(self):
         for i in range(len(self._data)):
             try:
                 self._data[i].save()
             except pw.IntegrityError as e:
-                self._data[i] = Fits_File.get(Fits_File.server_full_path == self._data[i].server_full_path) 
+                self._data[i] = Fits_File.get(
+                    Fits_File.server_full_path == self._data[i].server_full_path
+                )
             except Exception as e:
                 print(e)
-        
 
     def save_request(self):
         """
@@ -363,14 +376,14 @@ class Cutout_Service(Base_Service):
         )
 
         f = Fits_File(
-                event=self.event,
-                sol_standard=sol,
-                ssw_cutout_id=self.job_id,
-                server_file_name=fits_server_file,
-                server_full_path=data_response_url + fits_server_file,
-                file_name=fits_server_file,
-                request_id=req_id,
-            )
+            event=self.event,
+            sol_standard=sol,
+            ssw_cutout_id=self.job_id,
+            server_file_name=fits_server_file,
+            server_full_path=data_response_url + fits_server_file,
+            file_name=fits_server_file,
+            request_id=req_id,
+        )
         f.file_path = Fits_File.make_path(f, event_id=event_id)
         return f
 
