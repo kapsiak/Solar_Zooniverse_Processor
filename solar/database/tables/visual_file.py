@@ -15,11 +15,12 @@ from solar.common.printing import chat
 
 class Visual_File(File_Model):
     """
-    The table to store visual files. Also includes the necessary functions to extract 
+    The table to store visual files. Also includes the necessary functions to extract
     world coordinates from coordinate on the image
     """
 
     visual_type = pw.CharField()
+    extension = pw.CharField()
 
     description = pw.CharField(default="NA")
 
@@ -75,7 +76,7 @@ class Visual_File(File_Model):
             save_format,
             fits,
             file_name=file_name,
-            image_type=image_maker.visual_type,
+            extension=image_maker.extension,
             event_id=fits.event.event_id,
             **kwargs,
         )
@@ -112,7 +113,7 @@ class Visual_File(File_Model):
             )
             file_name = fits_file.file_name
             file_name = Path(file_name).stem
-        file_name = str(Path(file_name).with_suffix("." + visual_builder.visual_type))
+        file_name = str(Path(file_name).with_suffix("." + visual_builder.extension))
         file_path = str(
             Visual_File.__make_path(
                 fits_file, visual_builder, save_format, file_name=file_name
@@ -129,6 +130,7 @@ class Visual_File(File_Model):
                 file_path=file_path,
                 file_name=file_name,
                 visual_type=visual_builder.visual_type,
+                extension=visual_builder.extension,
                 description=desc,
                 im_ll_x=visual_builder.im_ll_x,
                 im_ll_y=visual_builder.im_ll_y,
@@ -157,7 +159,7 @@ class Visual_File(File_Model):
                 to_pass = dict(
                     # extra_annot=f"{fits_file['naxis1']}"
                 )
-                visual_builder.save_visual(file_path, **to_pass)
+                visual_builder.save_visual(fits_file, file_path, **to_pass)
                 im.file_path = file_path
                 im.file_name = file_name
                 im.visual_type = visual_builder.visual_type
@@ -244,54 +246,3 @@ Type            = {self.visual_type}
 File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
-
-    def __getitem__(self, key):
-        return Join_Visual_Fits.get().fits[key]
-
-    @staticmethod
-    def zooniverse_export(files, export_dir="export"):
-        export = Path("export")
-        files_dir = export
-        files_dir.mkdir(exist_ok=True, parents=True)
-        data = []
-        header = [
-            "file_path",
-            "visual_type",
-            "description",
-            "im_ll_x",
-            "im_ll_y",
-            "im_ur_x",
-            "im_ur_y",
-            "width",
-            "height",
-        ]
-        try:
-            for image in files:
-                print(image)
-                new_path = image.export(files_dir)
-                new_row = {
-                    "file_path": str(Path(new_path).relative_to(export)),
-                    "visual_type": image.visual_type,
-                    "description": image.description,
-                    "im_ll_x": image.im_ll_x,
-                    "im_ll_y": image.im_ll_y,
-                    "im_ur_x": image.im_ur_x,
-                    "im_ur_y": image.im_ur_y,
-                    "width": image.width,
-                    "height": image.height,
-                }
-                data.append(new_row)
-        except Exception as e:
-            print(e)
-
-        with open(export / "meta.csv", "w") as f:
-            writer = csv.DictWriter(f, fieldnames=header)
-            writer.writeheader()
-            for row in data:
-                writer.writerow(row)
-
-
-class Visual_Param(Base_Model):
-    visual = pw.ForeignKeyField(Visual_File, backref="image_param")
-    key = pw.CharField()
-    value = pw.CharField()

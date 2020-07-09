@@ -155,6 +155,8 @@ Hash            = {self.file_hash}
     def get_header_as_dict(self) -> Dict[str, Any]:
         return {x.key: into_number(x.value) for x in self.fits_keys}
 
+    def __iter__(self):
+        return (x for x in self.fits_keys)
 
 class Fits_Header_Elem(UnionCol):
     fits_file = pw.ForeignKeyField(Fits_File, backref="fits_keys")
