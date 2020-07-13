@@ -69,8 +69,8 @@ def prepare_row(files, export_dir="export"):
 
 
 def split(values, size, overlap=2):
-    step = size- overlap
-    new = [values[i:i+size] for i in range(0, len(values)-overlap, step)]
+    step = size - overlap
+    new = [values[i : i + size] for i in range(0, len(values) - overlap, step)]
     if len(new[-1]) < size:
         new[-1] = values[-size:]
     if new[-1] == new[-2]:
@@ -80,5 +80,5 @@ def split(values, size, overlap=2):
 
 if __name__ == "__main__":
     A = list(range(0, 15))
-    s = split(A, 6,3 )
+    s = split(A, 6, 3)
     print(s)

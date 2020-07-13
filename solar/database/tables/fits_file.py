@@ -158,6 +158,7 @@ Hash            = {self.file_hash}
     def __iter__(self):
         return (x for x in self.fits_keys)
 
+
 class Fits_Header_Elem(UnionCol):
     fits_file = pw.ForeignKeyField(Fits_File, backref="fits_keys")
     key = pw.CharField(default="NA")

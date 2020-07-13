@@ -50,7 +50,9 @@ Fits_File.update_table()
 image_builder = Basic_Image("png")
 video_builder = Basic_Video("mp4")
 
-fits_files = Fits_File.select().where(Fits_File.sol_standard == "SOL2015-10-01T08:34:22L100C113")
+fits_files = Fits_File.select().where(
+    Fits_File.sol_standard == "SOL2015-10-01T08:34:22L100C113"
+)
 
 # First we iterate over all the files and create an image of each
 for fits in fits_files:

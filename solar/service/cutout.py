@@ -117,8 +117,6 @@ class Cutout_Service(Base_Service):
         start_time = Att("starttime", start, t_format=Config.time_format.hek)
         end_time = Att("endtime", end, t_format=Config.time_format.hek)
 
-
-
         # A temporary list to hold the arguments submitted by the user
         temp = []
         temp.extend(args)
@@ -141,9 +139,9 @@ class Cutout_Service(Base_Service):
         # Replace default arguments with user submitted ones when possible
         self.params = build_from_defaults(defaults, temp)
 
-        temp_start, = [x for x in self.params if x.name=='starttime']
-        temp_end, = [x for x in self.params if x.name=='endtime']
-        self.params.append(self.__compute_frames(temp_start,temp_end))
+        temp_start, = [x for x in self.params if x.name == "starttime"]
+        temp_end, = [x for x in self.params if x.name == "endtime"]
+        self.params.append(self.__compute_frames(temp_start, temp_end))
 
         self.event = None
 
@@ -156,11 +154,11 @@ class Cutout_Service(Base_Service):
         self._data = None  # The text from the response
 
     def __compute_frames(self, start_time, end_time, cadence=12):
-        seconds = math.ceil((end_time.value - start_time.value) / timedelta(seconds=cadence))
+        seconds = math.ceil(
+            (end_time.value - start_time.value) / timedelta(seconds=cadence)
+        )
         return Att("max_frames", seconds)
 
-
-    
     @property
     def data(self) -> List[Fits_File]:
         return self._data

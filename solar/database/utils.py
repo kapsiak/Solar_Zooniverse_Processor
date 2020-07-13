@@ -4,6 +4,7 @@ from solar.common.config import Config
 from pathlib import Path
 from functools import wraps
 
+
 def dbformat(format_string: str, row: object, **kwargs) -> str:
     """
     Helper method to format a string given a database model instance.

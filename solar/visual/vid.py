@@ -6,7 +6,8 @@ import matplotlib.animation as animation
 
 
 class Basic_Video(Visual_Builder):
-    visual_type = 'video'
+    visual_type = "video"
+
     def __init__(self, im_type):
         super().__init__(im_type)
         self.ani = None
