@@ -1,7 +1,6 @@
 import peewee as pw
-from solar.common.config import Config
-from datetime import datetime
-from .base_models import Base_Model, UnionCol
+from .base_models import Base_Model
+from .ucol import UnionCol
 from typing import Any, Dict
 from .solar_event import Solar_Event
 

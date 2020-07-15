@@ -3,7 +3,7 @@ from solar.database.tables.solar_event import Solar_Event
 from solar.database.tables.service_request import Service_Request, Service_Parameter
 import unittest
 from unittest import mock
-from tests.utils import *
+from tests.utils import test_db, mock_get_json
 from pathlib import Path
 import json
 from datetime import datetime, timedelta

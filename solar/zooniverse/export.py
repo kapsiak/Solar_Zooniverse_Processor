@@ -21,25 +21,18 @@ def zooniverse_export(files, export_dir="export"):
 def prepare_row(files, export_dir="export"):
     files_dir = Path(export_dir)
     files_dir.mkdir(exist_ok=True, parents=True)
-    data = [[], []]
     file_names = ["file_name_{}".format(x) for x in range(len(files))]
+    fits_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
     checksums = ["checksum_{}".format(x) for x in range(len(files))]
-    header = [
-        *file_names,
-        "sol_standard",
-        "visual_type",
-        "description",
-        "im_ll_x",
-        "im_ll_y",
-        "im_ur_x",
-        "im_ur_y",
-        "width",
-        "height",
-        *checksums,
-    ]
     file_info = {f: val for f, val in zip(file_names, [x.file_name for x in files])}
     check_info = {
         check: val for check, val in zip(checksums, [x.file_hash for x in files])
+    }
+    fits_db_id = {
+        f: val
+        for f, val in zip(
+            fits_db_id_names, [name.fits_join.get().fits_file.id for name in files]
+        )
     }
 
     image = files[0]
@@ -51,8 +44,15 @@ def prepare_row(files, export_dir="export"):
         ssw_id = image.fits_join.get().fits_file.service_request.job_id
     except Exception:
         ssw_id = ""
+    try:
+        event_db_id = image.fits_join.get().fits_file.event.id
+    except Exception:
+        event_db_id = ""
+
+    fits_header_data = None
 
     uniform = {
+        "event_db_id": event_db_id,
         "sol_standard": sol_standard,
         "ssw_id": ssw_id,
         "visual_type": image.visual_type,
@@ -64,7 +64,8 @@ def prepare_row(files, export_dir="export"):
         "width": image.width,
         "height": image.height,
     }
-    new_row = {**file_info, **check_info, **uniform}
+    new_row = {**file_info, **check_info, **fits_db_id, **uniform}
+    new_row = {"#" + x: y for x, y in new_row.items()}
     return new_row
 
 

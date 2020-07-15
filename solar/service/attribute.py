@@ -4,7 +4,6 @@ import datetime
 from solar.common.config import Config
 from solar.common.utils import into_number
 from solar.database.tables.service_request import Service_Parameter
-from solar.common.convert import string_to_data, data_to_string
 
 
 class Attribute:

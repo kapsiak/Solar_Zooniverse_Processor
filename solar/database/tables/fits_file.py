@@ -4,7 +4,8 @@ from datetime import datetime
 from solar.service.downloads import multi_downloader, download_single_file
 from pathlib import Path
 from sunpy.map import Map
-from .base_models import File_Model, UnionCol
+from .base_models import File_Model
+from .ucol import UnionCol
 from .solar_event import Solar_Event
 from tqdm import tqdm
 from typing import Any, Dict
