@@ -4,6 +4,9 @@ from solar.database.tables.fits_file import Fits_File
 from solar.database.tables.visual_file import Visual_File
 from solar.visual.img import Basic_Image
 from solar.visual.vid import Basic_Video
+from solar.database import create_tables
+
+create_tables()
 
 
 # Let us prepare a request for the hek service where we search for all coronal jets that occured between the October 1, 2015 and November 15, 2015.

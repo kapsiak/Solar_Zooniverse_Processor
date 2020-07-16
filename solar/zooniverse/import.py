@@ -8,7 +8,3 @@ def read_class(path):
 
 
 x = read_class("test-classifications-1.csv")
-
-
-
-

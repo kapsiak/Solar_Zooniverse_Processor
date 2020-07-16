@@ -5,12 +5,6 @@ import peewee as pw
 
 class Processed_Subject(Base_Model):
 
-    solar_event = pw.ForeignKeyField(Solar_Event, backref='zoo_jet')
+    solar_event = pw.ForeignKeyField(Solar_Event, backref="zoo_jet")
 
     event_time = pw.DateTime
-
-
-
-
-
-

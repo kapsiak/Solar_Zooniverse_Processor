@@ -197,7 +197,6 @@ class Cutout_Service(Base_Service):
                 print(f"Other error occurred: {err}")  # Python 3.6
             else:
                 # Extract the job_id from the response
-                print(response.content)
                 self.job_id = re.search(
                     '<param name="JobID">(.*)</param>', response.text
                 )[1]

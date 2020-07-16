@@ -1,6 +1,6 @@
-from solar.service.hek import Hek_Service, requests
+from solar.service.hek import Hek_Service
 from solar.database.tables.solar_event import Solar_Event
-from solar.database.tables.service_request import Service_Request, Service_Parameter
+from solar.database.tables.service_request import Service_Request
 import unittest
 from unittest import mock
 from tests.utils import test_db, mock_get_json
@@ -26,8 +26,6 @@ def load_responses(folder="resp"):
 
 
 class TestHek(unittest.TestCase):
-    mock_response = {"http://www.lmsal.com/hek/her": {"value1": 1, "value2": 2}}
-
     """Test case docstring."""
 
     def setUp(self):
