@@ -37,6 +37,7 @@ Uncertainties could then be extracted in the normal way, as for any one dimensio
 For point based spatial questions, we could first "collapse" along the time axis, then use some sort of least distance algorithm.
 
 In the end we want a "categorized jet" table with the following columns:
+
     - Event Start Time
     - Base Point (Likely in HPC coords)
     - Event End Time
