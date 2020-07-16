@@ -38,14 +38,14 @@ For point based spatial questions, we could first "collapse" along the time axis
 
 In the end we want a "categorized jet" table with the following columns:
 
-    - Event Start Time
-    - Base Point (Likely in HPC coords)
-    - Event End Time
-    - Event Extent (possibly as a function of time) ( Visual Area, Rectangle in HPC)
-    - Uncertainties in the above
-    - Foreign Key -> Fits File   ( Fits file with the necessary header information)
-    - Foreign Key -> Visual File (Actualy image that was used in zooniverse)
-    - Foreign Key -> Solar Event (Hek event this came from)
+- Event Start Time
+- Base Point (Likely in HPC coords)
+- Event End Time
+- Event Extent (possibly as a function of time) ( Visual Area, Rectangle in HPC)
+- Uncertainties in the above
+- Foreign Key -> Fits File   ( Fits file with the necessary header information)
+- Foreign Key -> Visual File (Actualy image that was used in zooniverse)
+- Foreign Key -> Solar Event (Hek event this came from)
 
 We can also perhaps ask users to point out locations where they see something interesting.
 
@@ -53,13 +53,14 @@ Will probably pick just 2 or so, since many are actually related already
     
 
 Allow for export as csv with the following columns:
-    - Event Start Time
-    - Base Point
-    - Event End Time
-    - Event Extent (possibly as a function of time)
-    - Uncertainties in the above
-    - Sol Standard
-    - Interest Level
+
+- Event Start Time
+- Base Point
+- Event End Time
+- Event Extent (possibly as a function of time)
+- Uncertainties in the above
+- Sol Standard
+- Interest Level
 
 This would allow for a high level of portability.
 Could probably also find a way to convert it to IDL data structure sophie was talking about
