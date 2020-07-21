@@ -1,6 +1,6 @@
 import peewee as pw
 from .base_models import Base_Model
-from .ucol import UnionCol
+from .ucol import UnionCol, List_Storage
 from typing import Any, Dict
 from .solar_event import Solar_Event
 
@@ -51,3 +51,10 @@ class Service_Parameter(UnionCol):
             f"{self.key} = {self.value}\n"
             f"Desc: {self.desc}"
         )
+
+
+class Service_Parameter_List(List_Storage):
+    table = pw.ForeignKeyField(Service_Parameter, backref="list_values")
+
+
+Service_Parameter.list_storage_table = Service_Parameter_List

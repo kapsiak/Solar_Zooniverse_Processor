@@ -193,19 +193,19 @@ class Visual_File(File_Model):
     @staticmethod
     def __get_create_join(vis, fits):
         from .join_vis_fit import Join_Visual_Fits
-
-        try:
-            join = Join_Visual_Fits.get(
-                Join_Visual_Fits.fits_file == fits, Join_Visual_Fits.visual_file == vis
-            )
-            chat(
-                f"I found an existing join from this visual (id = {vis.id}) to the fits file id={fits.id}, so I am going to use it"
-            )
-        except pw.DoesNotExist:
-            join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
-            chat(
-                f"I could not find an existing visual for fits file with id {fits.id}, so I am creating a new one"
-            )
+        #  try:
+        #      join = Join_Visual_Fits.get(
+        #          Join_Visual_Fits.fits_file == fits, Join_Visual_Fits.visual_file == vis
+        #      )
+        #      chat(
+        #          f"I found an existing join from this visual (id = {vis.id}) to the fits file id={fits.id}, so I am going to use it"
+        #      )
+        #  except pw.DoesNotExist:
+        #      join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
+        #      chat(
+        #          f"I could not find an existing visual for fits file with id {fits.id}, so I am creating a new one"
+        #      )
+        join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
         return join
 
     def world_from_pixel(self, x, y):
@@ -238,7 +238,7 @@ class Visual_File(File_Model):
         return list(found)
 
     def __repr__(self) -> str:
-        return f"""<image:{self.type}|{self.file_path}"""
+        return f"""<image:{self.visual_type}|{self.file_path}"""
 
     def __str__(self) -> str:
         return f""" 

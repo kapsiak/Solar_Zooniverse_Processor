@@ -5,7 +5,7 @@ from solar.service.downloads import multi_downloader, download_single_file
 from pathlib import Path
 from sunpy.map import Map
 from .base_models import File_Model
-from .ucol import UnionCol
+from .ucol import UnionCol, List_Storage
 from .solar_event import Solar_Event
 from tqdm import tqdm
 from typing import Any, Dict
@@ -149,9 +149,7 @@ Hash            = {self.file_hash}
         :return: The value associated with the key
         :rtype: Any
         """
-        return into_number(
-            self.fits_keys.where(Fits_Header_Elem.key == key).get().value
-        )
+        return self.fits_keys.where(Fits_Header_Elem.key == key).get().value
 
     def get_header_as_dict(self) -> Dict[str, Any]:
         return {x.key: into_number(x.value) for x in self.fits_keys}
@@ -169,3 +167,10 @@ class Fits_Header_Elem(UnionCol):
 
     def __str__(self) -> str:
         return f"{self.key}: {self.value}"
+
+
+class Fits_Header_Elem_List(List_Storage):
+    table = pw.ForeignKeyField(Fits_Header_Elem, backref="list_values")
+
+
+Fits_Header_Elem.list_storage_table = Fits_Header_Elem_List

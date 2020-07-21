@@ -1,6 +1,7 @@
 import peewee as pw
 from .base_models import Base_Model
 from datetime import datetime
+from functools import wraps
 
 
 class NoFormat(Exception):
@@ -27,6 +28,8 @@ class UnionCol(Base_Model):
     """
     A table designed to hold different types.
     """
+
+    list_storage_table = None
 
     _field_type = pw.CharField(column_name="type")
     _subtype = pw.CharField(null=True, column_name="subtype")
@@ -75,6 +78,7 @@ class UnionCol(Base_Model):
             return self._value_string
         elif self._field_type == "list":
             if self in self.__class__:
+                # Has the object been saved?
                 return [x.value for x in self.list_values]
             elif hasattr(self, "list_refs"):
                 return [x.value for x in self.list_refs]
@@ -95,12 +99,12 @@ class UnionCol(Base_Model):
         elif self._field_type == "list":
             self.list_refs = []
             for val in value:
-                new = List_Storage(table=self, _format=self._format)
+                new = self.list_storage_table(table=self, _format=self._format)
                 new.value = val
                 self.list_refs.append(new)
 
     def save(self, *args, **kwargs):
-        x = super().save(*args, **kwargs)
+        x = super(UnionCol, self).save(*args, **kwargs)
         if hasattr(self, "list_refs"):
             for val in self.list_refs:
                 val.save()
@@ -111,10 +115,10 @@ class List_Storage(UnionCol):
     table = pw.ForeignKeyField(UnionCol, backref="list_values")
 
     def __str__(self):
-        return f"""
-id = {self.id}
-table = {self.table}
-val = {self.value}
-type = {self._field_type}
-stype = {self._subtype}
-        """
+        return """
+        id = {self.id}
+        table = {self.table}
+        val = {self.value}
+        type = {self._field_type}
+        stype = {self._subtype}
+            """
