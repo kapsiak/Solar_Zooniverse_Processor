@@ -25,6 +25,8 @@ class Hek_Service(Base_Service):
     # API url for the hek service
     base_url = "http://www.lmsal.com/hek/her"
 
+    service_type = 'hek'
+
     # Lock to prevent data races
     event_adder_lock = Lock()
 
@@ -41,6 +43,11 @@ class Hek_Service(Base_Service):
         :return: None
         :rtype: None
         """
+
+        self.service_request_id = None
+        self.job_id = None
+
+
         start = "2010-06-01T00:00:00"
         end = "2010-07-01T00:00:00"
 
@@ -221,20 +228,6 @@ class Hek_Service(Base_Service):
                 chat(
                     f"Looks like the event {e} is already in the database, so I am replacing it with the existing one"
                 )
-
-    def save_request(self):
-        s = Service_Request(
-            event=None, service_type="hek", status=self.status, job_id=None
-        )
-        s.save()
-        params = []
-        for a in self.params:
-            p = Service_Parameter(service_request=s, key=a.name, desc=a.description)
-            p.value = a.value
-            params.append(p)
-
-        for p in params:
-            p.save()
 
     @staticmethod
     def _from_model(serv_obj):

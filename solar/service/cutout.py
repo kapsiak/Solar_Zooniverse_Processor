@@ -26,6 +26,7 @@ class Cutout_Service(Base_Service):
 
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
     delay_time = 60  # seconds
+    service_type = 'cutout'
 
     @staticmethod
     def _from_event(event: Solar_Event, strict: bool = True) -> Cutout_Service:
@@ -102,6 +103,11 @@ class Cutout_Service(Base_Service):
         :return: None
         :rtype: None
         """
+        self.service_request_id = None
+        self.job_id = None  # The SSW job ID
+
+
+
         start = datetime.strptime("2010-06-01T00:00:00", Config.time_format.hek)
         end = datetime.strptime("2010-07-01T00:00:00", Config.time_format.hek)
 
@@ -145,9 +151,6 @@ class Cutout_Service(Base_Service):
 
         self.event = None
 
-        self.service_request_id = None
-
-        self.job_id = None  # The SSW job ID
 
         self.status = "unsubmitted"
 
@@ -274,84 +277,6 @@ class Cutout_Service(Base_Service):
             except Exception as e:
                 print(e)
 
-    def save_request(self):
-        """
-        Attempt to save this request. 
-
-        """
-
-        if self.status == "unsubmitted":
-            chat("No reason to save an unsubmitted service request")
-            return None
-
-        if not self.service_request_id:
-            try:
-                req = Service_Request.get(
-                    Service_Request.job_id == self.job_id,
-                    Service_Request.service_type == "cutout",
-                )
-                chat(
-                    (
-                        "While saving this request, I found an existing request with a matching job id.\n"
-                        "I am going to update that request instead"
-                    )
-                )
-            except pw.DoesNotExist:
-                chat(
-                    ("I could not find any matching request. I am creating a new one.")
-                )
-                req = Service_Request.create(service_type="cutout", status=self.status)
-                chat(f"The new request's ID is {req.id}")
-            except Exception as e:
-                print(f"Other error: {e}")
-
-        else:
-            try:
-                chat("This request already has an id, I will try saving it to that")
-                req = Service_Request.get_by_id(self.service_request_id)
-            except pw.DoesNotExist:
-                print(
-                    f"Somehow this request has an invalid id: {self.service_request_id}  "
-                    "I don't know what to do with this so I am bailing."
-                )
-                return None
-
-            except Exception as e:
-                print(f"Other error: {e}")
-                return None
-
-        self.service_request_id = req.id
-
-        # At this point we have a Service_Request object req, either from an existing request or one that we just created.
-        # Now we add data to it
-
-        if self.event:
-            req.event = self.event
-        else:
-            req.event = None
-
-        req.service_type = "cutout"
-        req.status = self.status
-
-        req.job_id = self.job_id
-
-        # We also want to store the parameters of the request
-        param_list = [p for p in req.parameters]
-        my_params = [a.as_model(req) for a in self.params]
-
-        new_list = []
-
-        for param in my_params:
-            search = [x for x in param_list if x.key == param.key]
-            if not search:
-                new_list.append(param)
-            else:
-                param.id = search[0].id
-                new_list.append(param)
-
-        req.save()
-        for p in new_list:
-            p.save()
 
     def _as_fits(self, fits_server_file) -> Fits_File:
         """

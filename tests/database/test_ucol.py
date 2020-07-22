@@ -121,6 +121,7 @@ class TestUnionCol(unittest.TestCase):
 
     @test_db([UnionCol, List_Storage])
     def test_list_setter(self):
+        UnionCol.list_storage_table = List_Storage
         data_lists = [[1, 3, 4], ["hello", "yes", "no"], [1.21, 121.11, 0.22]]
         testers = []
         for i in data_lists:
@@ -135,6 +136,7 @@ class TestUnionCol(unittest.TestCase):
 
     @test_db((UnionCol, List_Storage))
     def test_list_getter(self):
+        UnionCol.list_storage_table = List_Storage
         data_lists = [[1, 3, 4], ["hello", "yes", "no"], [1.21, 121.11, 0.22]]
         testers = []
         for i in data_lists:

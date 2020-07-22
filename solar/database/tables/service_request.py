@@ -7,7 +7,11 @@ from .solar_event import Solar_Event
 
 class Service_Request(Base_Model):
     event = pw.ForeignKeyField(Solar_Event, backref="service_requests", null=True)
+
+    # The service type should be either hek or cutout.
+    # TODO:  Add JSOC? #
     service_type = pw.CharField()
+
     # Status should be one of
     #  - unsubmitted
     #  - submitted (but not complete)

@@ -58,6 +58,13 @@ class File_Model(Base_Model):
     def make_path(self, default_form=None):
         pass
 
+    def update_single(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def update_table():
+        raise NotImplementedError
+
     def export(self, new_path: Union[str, Path]):
         """
         Create a copy of this file at a given path.

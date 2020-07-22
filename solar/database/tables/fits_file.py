@@ -152,7 +152,7 @@ Hash            = {self.file_hash}
         return self.fits_keys.where(Fits_Header_Elem.key == key).get().value
 
     def get_header_as_dict(self) -> Dict[str, Any]:
-        return {x.key: into_number(x.value) for x in self.fits_keys}
+        return {x.key: x.value for x in self.fits_keys}
 
     def __iter__(self):
         return (x for x in self.fits_keys)
