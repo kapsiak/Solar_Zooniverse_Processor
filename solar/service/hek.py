@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from requests.exceptions import HTTPError
 import json
 import concurrent.futures as cf
-from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.hek_event import Hek_Event
 from solar.database.tables.service_request import Service_Request, Service_Parameter
 from solar.service.attribute import Attribute as Att
 from solar.common.config import Config
@@ -169,7 +169,7 @@ class Hek_Service(Base_Service):
             json_data = response.json()
             with Hek_Service.event_adder_lock:
                 events = [
-                    Solar_Event.from_hek(x, source="HEK") for x in json_data["result"]
+                    Hek_Event.from_hek(x, source="HEK") for x in json_data["result"]
                 ]
                 self.for_testing_data["result"].extend(json_data["result"])
                 for e in events:
@@ -203,21 +203,21 @@ class Hek_Service(Base_Service):
 
         print(f"Found {len(self._data)} new events")
 
-    def fetch_data(self) -> List[Solar_Event]:
+    def fetch_data(self) -> List[Hek_Event]:
         """
         Return a list of the found events
 
         :return: List of events found by the hek search
-        :rtype: List[Solar_Event]
+        :rtype: List[Hek_Event]
         """
         return self.data
 
     def save_data(self) -> None:
         self._data = [
             e
-            if Solar_Event.select().where(Solar_Event.event_id == e.event_id).count()
+            if Hek_Event.select().where(Hek_Event.event_id == e.event_id).count()
             == 0
-            else Solar_Event.select().where(Solar_Event.event_id == e.event_id).get()
+            else Hek_Event.select().where(Hek_Event.event_id == e.event_id).get()
             for e in self._data
         ]
         for e in self.data:

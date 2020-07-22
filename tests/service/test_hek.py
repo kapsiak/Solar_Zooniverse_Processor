@@ -1,5 +1,5 @@
 from solar.service.hek import Hek_Service
-from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.hek_event import Hek_Event
 from solar.database.tables.service_request import Service_Request
 import unittest
 from unittest import mock
@@ -56,25 +56,25 @@ class TestHek(unittest.TestCase):
     def test_save_requests(self):
         h = Hek_Service()
         events = [
-            Solar_Event(event_id="1"),
-            Solar_Event(event_id="123123"),
-            Solar_Event(event_id="12031mmjdd"),
-            Solar_Event(event_id="asdfnadfsoos"),
+            Hek_Event(event_id="1"),
+            Hek_Event(event_id="123123"),
+            Hek_Event(event_id="12031mmjdd"),
+            Hek_Event(event_id="asdfnadfsoos"),
         ]
 
         h._data = events
         self.assertEqual(len(h._data), 4)
 
         h.save_data()
-        self.assertEqual(len(Solar_Event.select()), 4)
+        self.assertEqual(len(Hek_Event.select()), 4)
 
-        for x, y in zip(events, Solar_Event.select()):
+        for x, y in zip(events, Hek_Event.select()):
             self.assertEqual(x.event_id, y.event_id)
 
         h.save_data()
-        self.assertEqual(len(Solar_Event.select()), 4)
+        self.assertEqual(len(Hek_Event.select()), 4)
 
-        for x, y in zip(events, Solar_Event.select()):
+        for x, y in zip(events, Hek_Event.select()):
             self.assertEqual(x.event_id, y.event_id)
 
     @test_db()

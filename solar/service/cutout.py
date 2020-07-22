@@ -6,7 +6,7 @@ from requests.exceptions import HTTPError
 import re
 import time
 from solar.common.config import Config
-from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.hek_event import Hek_Event
 from solar.database.tables.fits_file import Fits_File
 from solar.database.tables.service_request import Service_Request
 from concurrent.futures import ThreadPoolExecutor
@@ -29,12 +29,12 @@ class Cutout_Service(Base_Service):
     service_type = 'cutout'
 
     @staticmethod
-    def _from_event(event: Solar_Event, strict: bool = True) -> Cutout_Service:
+    def _from_event(event: Hek_Event, strict: bool = True) -> Cutout_Service:
         """
         Create a cutout service object from a solar event.
 
         :param event: The event used to generate the parameters for the request
-        :type event: Solar_Event
+        :type event: Hek_Event
         :param strict: Whether to allow the program to make decisions that reduce the possibility of duplicate requests, defaults to True
         :type strict: bool, optional
         :return: The constructed cutout service object
@@ -97,7 +97,7 @@ class Cutout_Service(Base_Service):
         These two will produce equivalent searches
 
         :param event: The solar event the cutout request refers to
-        :type event: Union[Solar_Event, str]
+        :type event: Union[Hek_Event, str]
         :param allow_similar: Whether or not to allow similar requests to be made, defaults to False
         :type allow_similar: bool, optional
         :return: None

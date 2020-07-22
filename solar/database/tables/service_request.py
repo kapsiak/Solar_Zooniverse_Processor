@@ -2,11 +2,11 @@ import peewee as pw
 from .base_models import Base_Model
 from .ucol import UnionCol, List_Storage
 from typing import Any, Dict
-from .solar_event import Solar_Event
+from .hek_event import Hek_Event
 
 
 class Service_Request(Base_Model):
-    event = pw.ForeignKeyField(Solar_Event, backref="service_requests", null=True)
+    event = pw.ForeignKeyField(Hek_Event, backref="service_requests", null=True)
 
     # The service type should be either hek or cutout.
     # TODO:  Add JSOC? #

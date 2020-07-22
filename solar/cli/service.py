@@ -1,7 +1,7 @@
 from solar.service.hek import Hek_Service
 from solar.service.cutout import Cutout_Service
 from solar.database.tables.service_request import Service_Request
-from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.hek_event import Hek_Event
 import re
 import peewee as pw
 
@@ -43,10 +43,10 @@ def parse_cutout_exist(search, action, save_data=False, save_request=False):
 
 
 def parse_cutout_event(search, action, save_data=False, save_request=False):
-    event = Solar_Event.select().where(
-        (Solar_Event.id % search)
-        | (Solar_Event.event_id.contains(search))
-        | (Solar_Event.sol_standard % f"%{search}%")
+    event = Hek_Event.select().where(
+        (Hek_Event.id % search)
+        | (Hek_Event.event_id.contains(search))
+        | (Hek_Event.sol_standard % f"%{search}%")
     )
     if not event:
         print("Could not find any requests matching the search")

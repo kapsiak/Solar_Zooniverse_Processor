@@ -5,7 +5,7 @@ from .base_models import Base_Model
 from typing import Any, Dict
 
 
-class Solar_Event(Base_Model):
+class Hek_Event(Base_Model):
 
     event_id = pw.CharField(default="NA", unique=True)
     sol_standard = pw.CharField(default="NA")
@@ -56,10 +56,10 @@ class Solar_Event(Base_Model):
             description=h["event_description"],
             source=source,
         )
-        return Solar_Event(**params)
+        return Hek_Event(**params)
 
     def __repr__(self) -> str:
-        return f""" <Solar_Event: {self.event_id}>"""
+        return f""" <Hek_Event: {self.event_id}>"""
 
     def __str__(self) -> str:
         return f"""

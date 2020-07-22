@@ -6,7 +6,7 @@ from pathlib import Path
 from sunpy.map import Map
 from .base_models import File_Model
 from .ucol import UnionCol, List_Storage
-from .solar_event import Solar_Event
+from .hek_event import Hek_Event
 from tqdm import tqdm
 from typing import Any, Dict
 from .service_request import Service_Request
@@ -21,7 +21,7 @@ class Fits_File(File_Model):
     =============
     """
 
-    event = pw.ForeignKeyField(Solar_Event, backref="fits_files", null=True)
+    event = pw.ForeignKeyField(Hek_Event, backref="fits_files", null=True)
     request = pw.ForeignKeyField(Service_Request, backref="fits_files", null=True)
 
     sol_standard = pw.CharField(null=True)

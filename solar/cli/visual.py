@@ -1,5 +1,5 @@
 from solar.database.tables.visual_file import Visual_File
-from solar.database.tables.solar_event import Solar_Event
+from solar.database.tables.hek_event import Hek_Event
 from solar.database.tables.fits_file import Fits_File
 from solar.common.utils import into_number
 import solar.visual as vis
@@ -36,14 +36,14 @@ def recursive_search(arg, *args, current_search=None):
     """
 
     search_cols = [
-        Solar_Event.id,
-        Solar_Event.sol_standard,
+        Hek_Event.id,
+        Hek_Event.sol_standard,
         Fits_File.id,
         Fits_File.file_path,
         Fits_File.file_hash,
     ]
 
-    table = Fits_File.select(Solar_Event, Fits_File).join(Solar_Event)
+    table = Fits_File.select(Hek_Event, Fits_File).join(Hek_Event)
 
     found = []
 
