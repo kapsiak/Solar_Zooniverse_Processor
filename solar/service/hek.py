@@ -25,7 +25,7 @@ class Hek_Service(Base_Service):
     # API url for the hek service
     base_url = "http://www.lmsal.com/hek/her"
 
-    service_type = 'hek'
+    service_type = "hek"
 
     # Lock to prevent data races
     event_adder_lock = Lock()
@@ -46,7 +46,6 @@ class Hek_Service(Base_Service):
 
         self.service_request_id = None
         self.job_id = None
-
 
         start = "2010-06-01T00:00:00"
         end = "2010-07-01T00:00:00"
@@ -215,8 +214,7 @@ class Hek_Service(Base_Service):
     def save_data(self) -> None:
         self._data = [
             e
-            if Hek_Event.select().where(Hek_Event.event_id == e.event_id).count()
-            == 0
+            if Hek_Event.select().where(Hek_Event.event_id == e.event_id).count() == 0
             else Hek_Event.select().where(Hek_Event.event_id == e.event_id).get()
             for e in self._data
         ]

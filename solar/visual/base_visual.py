@@ -1,4 +1,7 @@
 class Visual_Builder:
+
+    generator_name = "generic_visual"
+
     def __init__(self, im_type, metadata=None, annot=None, dpi=300):
         self.extension = im_type
         self.im_ll_x = 0

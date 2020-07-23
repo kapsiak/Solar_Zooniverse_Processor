@@ -6,8 +6,14 @@ from astropy.coordinates import SkyCoord
 class ZBase:
     subject_id: int
     fits_id: int
+    visual_id: int
     subject_frame: int
     user_id: int
+    subject_id: int
+
+    @staticmethod
+    def zmake(z_row, s_data):
+        pass
 
 
 @dataclass
@@ -28,7 +34,6 @@ class ZRect(ZBase):
 
     def to_space(self):
         pass
-        
 
 
 @dataclass

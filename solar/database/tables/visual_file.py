@@ -1,4 +1,3 @@
-import csv
 import peewee as pw
 from solar.common.config import Config
 from pathlib import Path
@@ -6,11 +5,13 @@ from sunpy.map import Map
 import astropy.units as u
 from sunpy.io.header import FileHeader
 import numpy as np
-from .base_models import File_Model, Base_Model
+from .base_models import File_Model
 from .fits_file import Fits_File
 from typing import Any
 from solar.database.utils import dbformat, dbroot
 from solar.common.printing import chat
+from solar.visual.img import Image_Builder
+from solar.visual.vid import Video_Builder
 
 
 class Visual_File(File_Model):
@@ -21,6 +22,8 @@ class Visual_File(File_Model):
 
     visual_type = pw.CharField()
     extension = pw.CharField()
+
+    visual_generator = pw.CharField(null=True)
 
     description = pw.CharField(default="NA")
 
@@ -70,8 +73,64 @@ class Visual_File(File_Model):
     height = pw.FloatField(default=0)
 
     @staticmethod
+    def create_new_visual(
+        input_file: Any,
+        visual_builder: Any,
+        file_name=None,
+        save_format: str = Config.storage_path.img,
+        desc: str = "",
+        overwrite=True,
+        **kwargs,
+    ):
+        btype = type(visual_builder)
+        if issubclass(btype, Video_Builder):
+            chat("Looks like you want me to create a video")
+            return Visual_File.__create_new_video(
+                input_file,
+                visual_builder,
+                file_name,
+                save_format,
+                desc,
+                overwrite,
+                **kwargs,
+            )
+
+        if issubclass(btype, Image_Builder):
+            if isinstance(input_file, Fits_File):
+                chat("Looks like you want me to create an image")
+                return Visual_File.__create_new_image(
+                    input_file,
+                    visual_builder,
+                    file_name,
+                    save_format,
+                    desc,
+                    overwrite,
+                    **kwargs,
+                )
+            else:
+                chat("Looks like you want me to create several images image")
+                return [
+                    Visual_File.__create_new_image(
+                        x,
+                        visual_builder,
+                        file_name,
+                        save_format,
+                        desc,
+                        overwrite,
+                        **kwargs,
+                    )
+                    for x in input_file
+                ]
+
+    @staticmethod
+    def __make_fname(fits, image_maker):
+        file_name = Path(fits.file_name).stem
+        file_name = str(Path(file_name).with_suffix("." + image_maker.extension))
+        return file_name
+
+    @staticmethod
     @dbroot
-    def __make_path(fits, image_maker, save_format, file_name=None, **kwargs):
+    def __make_path_name(fits, image_maker, save_format, file_name, **kwargs):
         file_path = dbformat(
             save_format,
             fits,
@@ -83,53 +142,18 @@ class Visual_File(File_Model):
         return file_path
 
     @staticmethod
-    def create_new_visual(
-        input_file: Any,
-        visual_builder: Any,
-        file_name=None,
-        save_format: str = Config.storage_path.img,
-        desc: str = "",
-        overwrite=True,
-        **kwargs,
-    ):
-
-        if not isinstance(input_file, Fits_File):
-            visual_type = "video"
-            chat("Looks like you want me to create a video")
-        else:
-            visual_type = "image"
-            chat("Looks like you want me to create an image")
-
-        if visual_type == "video":
-            fits_file = input_file[0]
-            source_path = [x.file_path for x in input_file]
-        else:
-            fits_file = input_file
-            source_path = fits_file.file_path
-
-        if not file_name:
-            chat(
-                "Since you have not given me a file name, I am going to base it off the given fits image"
-            )
-            file_name = fits_file.file_name
-            file_name = Path(file_name).stem
-        file_name = str(Path(file_name).with_suffix("." + visual_builder.extension))
-        file_path = str(
-            Visual_File.__make_path(
-                fits_file, visual_builder, save_format, file_name=file_name
-            )
-        )
-        already_exists = False
+    def __try_create_visual(file_path, file_name, visual_builder, desc):
         try:
             im = Visual_File.get(Visual_File.file_path == file_path)
             already_exists = True
-            chat("Looks like there is already a image at this filepath")
+            chat("Looks like there is already a image at this file path")
 
         except pw.DoesNotExist:
             im = Visual_File(
                 file_path=file_path,
                 file_name=file_name,
                 visual_type=visual_builder.visual_type,
+                visual_generator=visual_builder.generator_name,
                 extension=visual_builder.extension,
                 description=desc,
                 im_ll_x=visual_builder.im_ll_x,
@@ -143,47 +167,121 @@ class Visual_File(File_Model):
             chat(
                 "I couldn't find an existing image, so I am going to create a new one."
             )
-
         except Exception as e:
+            im = None
+            already_exists = False
             print(e)
-        if not already_exists or overwrite:
-            if visual_builder.create(source_path, **kwargs):
-                if overwrite and already_exists:
-                    chat(
-                        "This image already exists, but since you have set overwrite, I am going to replace the old image with a new one"
-                    )
-                elif not already_exists:
-                    chat(
-                        "It doesn't look like this image exists, so I am going to create a new one"
-                    )
-                to_pass = dict(
-                    # extra_annot=f"{fits_file['naxis1']}"
-                )
-                visual_builder.save_visual(fits_file, file_path, **to_pass)
-                im.file_path = file_path
-                im.file_name = file_name
-                im.visual_type = visual_builder.visual_type
-                im.description = desc
-                im.im_ll_x = visual_builder.im_ll_x
-                im.im_ll_y = visual_builder.im_ll_y
-                im.im_ur_x = visual_builder.im_ur_x
-                im.im_ur_y = visual_builder.im_ur_y
-                im.width = visual_builder.width
-                im.height = visual_builder.height
 
-                im.save()
-                if visual_type == "image":
-                    join = Visual_File.__get_create_join(im, fits_file)
-                    join.save()
-                elif visual_type == "video":
-                    joins = Visual_File.__get_joins(im, input_file)
-                    for j in joins:
-                        j.save()
+        return (im, already_exists)
 
-                im.get_hash()
-            else:
-                print("For some reason the visual failed to be created")
-                return None
+    @staticmethod
+    def __report_status(name, exists, overwrite):
+        if exists and not overwrite:
+            chat(
+                f"This {name} exists and overwrite is false, so I am not going to continue"
+            )
+            return False
+
+        if exists and overwrite:
+            chat(
+                f"This {name} seems to already exist, but since you have selected overwrite, I am going to replace it with a new one"
+            )
+
+            return True
+
+        if not exists:
+            chat(f"This {name} doesn't seem to exist, so I am creating a new one")
+            return True
+
+    def __assign_generated_parameters(self, visual_builder):
+        self.im_ll_x = visual_builder.im_ll_x
+        self.im_ll_y = visual_builder.im_ll_y
+        self.im_ur_x = visual_builder.im_ur_x
+        self.im_ur_y = visual_builder.im_ur_y
+        self.width = visual_builder.width
+        self.height = visual_builder.height
+        return self
+
+    @staticmethod
+    def __create_new_image(
+        input_file: Any,
+        visual_builder: Any,
+        file_name=None,
+        save_format: str = Config.storage_path.img,
+        desc: str = "",
+        overwrite=True,
+        **kwargs,
+    ):
+        base_fits = input_file
+        if not file_name:
+            file_name = Visual_File.__make_fname(base_fits, visual_builder)
+        full_path = Visual_File.__make_path_name(
+            base_fits, visual_builder, save_format, file_name=file_name
+        )
+
+        im, exists = Visual_File.__try_create_visual(
+            full_path, file_name, visual_builder, desc
+        )
+        source_path = base_fits.file_path
+
+        if not Visual_File.__report_status("image", exists, overwrite):
+            return None
+
+        created = visual_builder.create(source_path)
+
+        if not created:
+            return None
+
+        visual_builder.save_visual(base_fits, full_path)
+
+        im.__assign_generated_parameters(visual_builder)
+        im.save()
+
+        join = Visual_File.__get_create_join(im, base_fits)
+        join.save()
+        im.get_hash()
+
+        return im
+
+    @staticmethod
+    def __create_new_video(
+        input_files: Any,
+        visual_builder: Any,
+        file_name=None,
+        save_format: str = Config.storage_path.img,
+        desc: str = "",
+        overwrite=True,
+        **kwargs,
+    ):
+        base_fits = kwargs.get("base_fits", input_files[0])
+        if not file_name:
+            file_name = Visual_File.__make_fname(base_fits, visual_builder)
+        full_path = Visual_File.__make_path_name(
+            base_fits, visual_builder, save_format, file_name=file_name
+        )
+        im, exists = Visual_File.__try_create_visual(
+            full_path, file_name, visual_builder, desc
+        )
+        source_paths = [x.file_path for x in input_files]
+
+        if not Visual_File.__report_status("video", exists, overwrite):
+            return None
+
+        created = visual_builder.create(source_paths)
+
+        if not created:
+            return None
+
+        visual_builder.save_visual(base_fits, full_path)
+
+        im.__assign_generated_parameters(visual_builder)
+        im.save()
+
+        joins = Visual_File.__get_joins(im, input_files)
+        for j in joins:
+            j.save()
+        im.get_hash()
+
         return im
 
     @staticmethod
@@ -193,6 +291,7 @@ class Visual_File(File_Model):
     @staticmethod
     def __get_create_join(vis, fits):
         from .join_vis_fit import Join_Visual_Fits
+
         #  try:
         #      join = Join_Visual_Fits.get(
         #          Join_Visual_Fits.fits_file == fits, Join_Visual_Fits.visual_file == vis

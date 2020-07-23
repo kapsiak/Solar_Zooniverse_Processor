@@ -1,12 +1,12 @@
 from .base_visual import Visual_Builder
 import sunpy.map as sm
 from pathlib import Path
-import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
 class Basic_Video(Visual_Builder):
     visual_type = "video"
+    generator_name = "basic_video"
 
     def __init__(self, im_type):
         super().__init__(im_type)

@@ -26,7 +26,7 @@ class Cutout_Service(Base_Service):
 
     data_response_url_template = "https://www.lmsal.com/solarsoft//archive/sdo/media/ssw/ssw_client/data/{ssw_id}/"
     delay_time = 60  # seconds
-    service_type = 'cutout'
+    service_type = "cutout"
 
     @staticmethod
     def _from_event(event: Hek_Event, strict: bool = True) -> Cutout_Service:
@@ -106,8 +106,6 @@ class Cutout_Service(Base_Service):
         self.service_request_id = None
         self.job_id = None  # The SSW job ID
 
-
-
         start = datetime.strptime("2010-06-01T00:00:00", Config.time_format.hek)
         end = datetime.strptime("2010-07-01T00:00:00", Config.time_format.hek)
 
@@ -150,7 +148,6 @@ class Cutout_Service(Base_Service):
         self.params.append(self.__compute_frames(temp_start, temp_end))
 
         self.event = None
-
 
         self.status = "unsubmitted"
 
@@ -276,7 +273,6 @@ class Cutout_Service(Base_Service):
                 )
             except Exception as e:
                 print(e)
-
 
     def _as_fits(self, fits_server_file) -> Fits_File:
         """

@@ -11,4 +11,6 @@ class Join_Visual_Fits(Base_Model):
 
     class Meta:
         database = db
-        indexes = ((("fits_file", "visual_file"), True),)
+
+
+#        indexes = ((("fits_file", "visual_file"), True),)

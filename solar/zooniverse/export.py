@@ -21,10 +21,14 @@ def zooniverse_export(files, export_dir="export"):
 def prepare_row(files, export_dir="export"):
     files_dir = Path(export_dir)
     files_dir.mkdir(exist_ok=True, parents=True)
+
     file_names = ["file_name_{}".format(x) for x in range(len(files))]
     fits_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
+    vis_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
     checksums = ["checksum_{}".format(x) for x in range(len(files))]
+
     file_info = {f: val for f, val in zip(file_names, [x.file_name for x in files])}
+
     check_info = {
         check: val for check, val in zip(checksums, [x.file_hash for x in files])
     }
@@ -34,6 +38,7 @@ def prepare_row(files, export_dir="export"):
             fits_db_id_names, [name.fits_join.get().fits_file.id for name in files]
         )
     }
+    vis_db_id = {f: val for f, val in zip(vis_db_id_names, [name.id for name in files])}
 
     image = files[0]
     try:
@@ -64,7 +69,7 @@ def prepare_row(files, export_dir="export"):
         "width": image.width,
         "height": image.height,
     }
-    new_row = {**file_info, **check_info, **fits_db_id, **uniform}
+    new_row = {**file_info, **check_info, **fits_db_id, **vis_db_id, **uniform}
     new_row = {"#" + x: y for x, y in new_row.items()}
     return new_row
 

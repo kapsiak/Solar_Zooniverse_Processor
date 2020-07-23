@@ -6,6 +6,7 @@ from .base_visual import Visual_Builder
 
 class Image_Builder(Visual_Builder):
 
+    generator_name = "generic_image"
     visual_type = "image"
 
     def add_annotation(self, fits, **kwargs):
@@ -44,6 +45,8 @@ class Image_Builder(Visual_Builder):
 
 
 class Unframed_Image(Image_Builder):
+    generator_name = "unframed_image"
+
     def __init__(self, im_type):
         super().__init__(im_type)
         self.frame = False
@@ -71,6 +74,8 @@ class Unframed_Image(Image_Builder):
 
 
 class Basic_Image(Image_Builder):
+    generator_name = "basic_image"
+
     def __init__(self, im_type):
         super().__init__(im_type)
         self.frame = False
