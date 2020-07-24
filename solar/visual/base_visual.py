@@ -2,7 +2,7 @@ class Visual_Builder:
 
     generator_name = "generic_visual"
 
-    def __init__(self, im_type, metadata=None, annot=None, dpi=300):
+    def __init__(self, im_type, metadata=None, annotations=(), dpi=300):
         self.extension = im_type
         self.im_ll_x = 0
         self.im_ll_y = 0
@@ -17,7 +17,15 @@ class Visual_Builder:
         self.map = None
 
         self.metadata_list = metadata
-        self.annotation_format = ""
+
+        self.annotations = list(annotations)
+
+    def add_annotation(self, *annot):
+        self.annotations.extend(annot)
+
+    def draw_annotations(self):
+        for a in self.annotations:
+            a.draw(self.fig, self.ax)
 
     def generate_metadata(self, fits):
         if self.metadata_list:
@@ -54,12 +62,8 @@ class Visual_Builder:
         )
         return ret
 
-    def generate_annotation(self, fits, **kwargs):
-        data = self.generate_metadata(fits)
-        return self.annotation_format.format(**data)
-
     def save_visual(self, save_path, clear_after=True):
         pass
 
-    def create(self, file_path, **kwargs):
+    def create(self, file_path):
         pass

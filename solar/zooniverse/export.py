@@ -24,7 +24,7 @@ def prepare_row(files, export_dir="export"):
 
     file_names = ["file_name_{}".format(x) for x in range(len(files))]
     fits_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
-    vis_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
+    vis_db_id_names = ["vis_db_{}".format(x) for x in range(len(files))]
     checksums = ["checksum_{}".format(x) for x in range(len(files))]
 
     file_info = {f: val for f, val in zip(file_names, [x.file_name for x in files])}
@@ -54,9 +54,8 @@ def prepare_row(files, export_dir="export"):
     except Exception:
         event_db_id = ""
 
-    fits_header_data = None
-
     uniform = {
+        "frame_per_sub": len(files),
         "event_db_id": event_db_id,
         "sol_standard": sol_standard,
         "ssw_id": ssw_id,

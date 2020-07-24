@@ -80,44 +80,25 @@ class Visual_File(File_Model):
         save_format: str = Config.storage_path.img,
         desc: str = "",
         overwrite=True,
-        **kwargs,
     ):
         btype = type(visual_builder)
         if issubclass(btype, Video_Builder):
             chat("Looks like you want me to create a video")
             return Visual_File.__create_new_video(
-                input_file,
-                visual_builder,
-                file_name,
-                save_format,
-                desc,
-                overwrite,
-                **kwargs,
+                input_file, visual_builder, file_name, save_format, desc, overwrite
             )
 
         if issubclass(btype, Image_Builder):
             if isinstance(input_file, Fits_File):
                 chat("Looks like you want me to create an image")
                 return Visual_File.__create_new_image(
-                    input_file,
-                    visual_builder,
-                    file_name,
-                    save_format,
-                    desc,
-                    overwrite,
-                    **kwargs,
+                    input_file, visual_builder, file_name, save_format, desc, overwrite
                 )
             else:
                 chat("Looks like you want me to create several images image")
                 return [
                     Visual_File.__create_new_image(
-                        x,
-                        visual_builder,
-                        file_name,
-                        save_format,
-                        desc,
-                        overwrite,
-                        **kwargs,
+                        x, visual_builder, file_name, save_format, desc, overwrite
                     )
                     for x in input_file
                 ]
@@ -130,14 +111,13 @@ class Visual_File(File_Model):
 
     @staticmethod
     @dbroot
-    def __make_path_name(fits, image_maker, save_format, file_name, **kwargs):
+    def __make_path_name(fits, image_maker, save_format, file_name):
         file_path = dbformat(
             save_format,
             fits,
             file_name=file_name,
             extension=image_maker.extension,
             event_id=fits.event.event_id,
-            **kwargs,
         )
         return file_path
 
@@ -210,7 +190,6 @@ class Visual_File(File_Model):
         save_format: str = Config.storage_path.img,
         desc: str = "",
         overwrite=True,
-        **kwargs,
     ):
         base_fits = input_file
         if not file_name:
@@ -251,9 +230,9 @@ class Visual_File(File_Model):
         save_format: str = Config.storage_path.img,
         desc: str = "",
         overwrite=True,
-        **kwargs,
+        base_fits=None,
     ):
-        base_fits = kwargs.get("base_fits", input_files[0])
+        base_fits = base_fits if base_fits else input_files[0]
         if not file_name:
             file_name = Visual_File.__make_fname(base_fits, visual_builder)
         full_path = Visual_File.__make_path_name(
