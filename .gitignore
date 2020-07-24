@@ -4,5 +4,6 @@ files/*
 misc/*
 *.db*
 *.json
+*.csv
 
 
