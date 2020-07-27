@@ -14,7 +14,7 @@ def json_annot(df, index):
     return json.loads(y)
 
 
-def bool_maker(value):
+def bool_maker(value, s_data):
     purp = "See_Start"
     if value == "Yes":
         return [ZBool(val=True, purpose=purp)]
@@ -22,14 +22,16 @@ def bool_maker(value):
         return [ZBool(val=False, purpose=purp)]
 
 
-def point_maker(value):
+def point_maker(value, s_data):
     return [
-        ZPoint(x=v["x"], y=v["y"], frame=v["frame"], purpose=v["tool_label"])
+        ZPoint(x=v["x"], y=v["y"], frame=v["frame"], purpose=v["tool_label"]).flip_y(
+            s_data["#height"]
+        )
         for v in value
     ]
 
 
-def rect_maker(value):
+def rect_maker(value, s_data):
     return [
         ZRect(
             x=v["x"],
@@ -39,7 +41,7 @@ def rect_maker(value):
             a=v["angle"],
             frame=v["frame"],
             purpose=v["tool_label"],
-        )
+        ).flip_y(s_data["#height"])
         for v in value
     ]
 
@@ -72,9 +74,10 @@ def make_row(z_row):
     wid = z_row.loc["workflow_id"]
     sid = z_row.loc["subject_ids"]
     meta = json.loads(z_row.loc["subject_data"])
+    s_data = next(iter(meta.items()))[1]
     task_data = json.loads(z_row.loc["annotations"])
 
-    ret = [task_allocator[t["task"]](t["value"]) for t in task_data]
+    ret = [task_allocator[t["task"]](t["value"], s_data) for t in task_data]
     ret = [x for y in ret for x in y]
     for struct in ret:
         struct.subject_id = sid

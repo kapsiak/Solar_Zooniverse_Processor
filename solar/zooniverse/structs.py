@@ -23,21 +23,22 @@ class ZBool(ZBase):
 
 
 @dataclass
-class ZRect(ZBase):
+class ZSpatial(ZBase):
     x: float = -1
     y: float = -1
+
+    def flip_y(self, y_pix):
+        # self.y = int(float(y_pix)) - self.y
+        return self
+
+
+@dataclass
+class ZRect(ZSpatial):
     w: float = -1
     h: float = -1
     a: float = -1
 
-    def to_space(self):
-        pass
-
 
 @dataclass
-class ZPoint(ZBase):
-    x: float = -1
-    y: float = -1
-
-
-
+class ZPoint(ZSpatial):
+    pass
