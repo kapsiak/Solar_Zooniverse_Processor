@@ -67,3 +67,18 @@ class Visual_Builder:
 
     def create(self, file_path):
         pass
+
+    def __hash__(self):
+        return hash(
+            (
+                self.extension,
+                self.im_ll_x,
+                self.im_ll_y,
+                self.im_ur_x,
+                self.im_ur_y,
+                self.width,
+                self.height,
+                self.dpi,
+                self.map,
+            )
+        )

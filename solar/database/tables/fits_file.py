@@ -1,4 +1,5 @@
 import peewee as pw
+import json
 from solar.common.config import Config
 from datetime import datetime
 from solar.service.downloads import multi_downloader, download_single_file
@@ -153,6 +154,9 @@ Hash            = {self.file_hash}
 
     def get_header_as_dict(self) -> Dict[str, Any]:
         return {x.key: x.value for x in self.fits_keys}
+
+    def get_header_as_json(self):
+        return json.dumps(self.get_header_as_dict())
 
     def __iter__(self):
         return (x for x in self.fits_keys)

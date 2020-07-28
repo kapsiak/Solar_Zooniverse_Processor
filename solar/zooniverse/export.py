@@ -1,20 +1,28 @@
 import csv
 from pathlib import Path
+from itertools import chain
 
 
-def zooniverse_export(files, export_dir="export"):
-    export = Path("export")
+def zooniverse_export(*files, export_dir="export", existing_csv=None):
+    """
+     Files is 
+     [
+    subject_2 ->   [[file1, file2,...] ,[file_1,file_2,...]] 
+    subject 1->   ,[[file1, file2,...] ,[file_1,file_2,...]]
+    ]
+    """
+    export = Path(export_dir)
     files_dir = export
     files_dir.mkdir(exist_ok=True, parents=True)
-    data = [prepare_row(x) for x in files]
+    data = [prepare_row(x) for event in files for x in event]
     header = [x for x in data[0]]
-    print(header)
     with open(export / "meta.csv", "w") as f:
         writer = csv.DictWriter(f, fieldnames=header)
         writer.writeheader()
         for row in data:
             writer.writerow(row)
-    for f in set([x for y in files for x in y]):
+    print(set([z for x in files for y in x for z in y]))
+    for f in set([z for x in files for y in x for z in y]):
         f.export(export)
 
 
@@ -26,6 +34,8 @@ def prepare_row(files, export_dir="export"):
     fits_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
     vis_db_id_names = ["vis_db_{}".format(x) for x in range(len(files))]
     checksums = ["checksum_{}".format(x) for x in range(len(files))]
+
+    fits_header_names = ["fits_header_{}".format(x) for x in range(len(files))]
 
     file_info = {f: val for f, val in zip(file_names, [x.file_name for x in files])}
 
@@ -39,6 +49,14 @@ def prepare_row(files, export_dir="export"):
         )
     }
     vis_db_id = {f: val for f, val in zip(vis_db_id_names, [name.id for name in files])}
+
+    fits_header_info = {
+        col: header
+        for col, header in zip(
+            fits_header_names,
+            [name.fits_join.get().fits_file.get_header_as_json() for name in files],
+        )
+    }
 
     image = files[0]
     try:
@@ -68,7 +86,14 @@ def prepare_row(files, export_dir="export"):
         "width": image.width,
         "height": image.height,
     }
-    new_row = {**file_info, **check_info, **fits_db_id, **vis_db_id, **uniform}
+    new_row = {
+        **file_info,
+        # **check_info,
+        **fits_db_id,
+        **vis_db_id,
+        **uniform,
+        **fits_header_info,
+    }
     new_row = {"#" + x: y for x, y in new_row.items()}
     return new_row
 

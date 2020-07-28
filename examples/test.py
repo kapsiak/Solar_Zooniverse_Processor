@@ -13,9 +13,9 @@ create_tables()
 
 # Let us prepare a request for the hek service where we search for all coronal jets that occured between the October 1, 2015 and November 15, 2015.
 
-if False:
+if True:
     h = Hek_Service(
-        event_starttime="2010-06-01T00:00:00", event_endtime="2010-06-30T00:00:00"
+        event_starttime="2010-06-01T00:00:00", event_endtime="2010-9-30T00:00:00"
     )
     h.submit_request()
     h.save_request()
@@ -28,20 +28,13 @@ if False:
 
     # Now let us get the fits files that correspond to these events
     # Please see http://docs.peewee-orm.com/en/latest/peewee/api.html# for information on constructing queries.
-    c = Cutout_Service._from_event(Hek_Event.get(Hek_Event.id == 2))
-    c.submit_request()
-    c.fetch_data()
-    c.save_data()
+    c = [Cutout_Service._from_event(h) for h in Hek_Event.select()]
+    multi_cutout(c)
 
-    f = Fits_File.get()
-    Fits_File.update_table()
+bi = Basic_Image("png")
 
-    f = Fits_File.get()
-
-    bi = Basic_Image("png")
-
-    for x in Fits_File.select().where(Fits_File.event == 2):
-        Visual_File.create_new_visual(x, bi).save()
+for x in Fits_File.select().where(Fits_File.event == 2):
+    Visual_File.create_new_visual(x, bi).save()
 
 
 if True:

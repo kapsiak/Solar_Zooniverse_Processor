@@ -13,6 +13,7 @@ from solar.common.printing import chat
 from solar.visual.img import Image_Builder
 from solar.visual.vid import Video_Builder
 import solar.common.mapproc as mp
+import datetime
 
 
 class Visual_File(File_Model):
@@ -27,6 +28,7 @@ class Visual_File(File_Model):
     visual_generator = pw.CharField(null=True)
 
     description = pw.CharField(default="NA")
+    time_generated = pw.DateTimeField(default=datetime.datetime.now)
 
     # The following 4 float fields hold the normalized image coordinate describing the location of the actual image on the picture.
     #
@@ -121,6 +123,13 @@ class Visual_File(File_Model):
             event_id=fits.event.event_id,
         )
         return file_path
+
+    @staticmethod
+    def __delete(im):
+        for x in im.fits_join:
+            x.delete_instance()
+
+        im.delete_instance()
 
     @staticmethod
     def __try_create_visual(file_path, file_name, visual_builder, desc):
@@ -219,6 +228,7 @@ class Visual_File(File_Model):
 
         join = Visual_File.__get_create_join(im, base_fits)
         join.save()
+
         im.get_hash()
 
         return im
@@ -255,6 +265,7 @@ class Visual_File(File_Model):
         visual_builder.save_visual(base_fits, full_path)
 
         im.__assign_generated_parameters(visual_builder)
+        im.set_visual_hash()
         im.save()
 
         joins = Visual_File.__get_joins(im, input_files)
@@ -272,19 +283,26 @@ class Visual_File(File_Model):
     def __get_create_join(vis, fits):
         from .join_vis_fit import Join_Visual_Fits
 
-        #  try:
-        #      join = Join_Visual_Fits.get(
-        #          Join_Visual_Fits.fits_file == fits, Join_Visual_Fits.visual_file == vis
-        #      )
-        #      chat(
-        #          f"I found an existing join from this visual (id = {vis.id}) to the fits file id={fits.id}, so I am going to use it"
-        #      )
-        #  except pw.DoesNotExist:
-        #      join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
-        #      chat(
-        #          f"I could not find an existing visual for fits file with id {fits.id}, so I am creating a new one"
-        #      )
-        join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
+        try:
+            join = (
+                Join_Visual_Fits.select()
+                .join(Visual_File)
+                .where(
+                    Join_Visual_Fits.fits_file == fits,
+                    Join_Visual_Fits.visual_file == vis,
+                    Visual_File.file_hash == vis.file_hash,
+                )
+                .get()
+            )
+            chat(
+                f"I found an existing join from this visual (id = {vis.id}) to the fits file id={fits.id}, so I am going to use it. Both images has a file hash {vis.file_hash}."
+            )
+        except pw.DoesNotExist:
+            join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
+            chat(
+                f"I could not find an existing visual for fits file with id {fits.id}, so I am creating a new one"
+            )
+        # join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
         return join
 
     def pixel_from_world(self, hpc_x, hpc_y, normalized=False):
@@ -320,7 +338,7 @@ class Visual_File(File_Model):
         return list(found)
 
     def __repr__(self) -> str:
-        return f"""<image:{self.visual_type}|{self.file_path}"""
+        return f"""<vid: {self.id}>"""
 
     def __str__(self) -> str:
         return f""" 
@@ -328,3 +346,17 @@ Type            = {self.visual_type}
 File_Path       = {self.file_path}
 Hash            = {self.file_hash}
             """
+
+    def __set_vis_hash(self):
+        self.visual_hash = hash(
+            (
+                self.extension,
+                self.visual_generator,
+                self.im_ll_x,
+                self.im_ll_y,
+                self.im_ur_x,
+                self.im_ur_y,
+                self.width,
+                self.height,
+            )
+        )
