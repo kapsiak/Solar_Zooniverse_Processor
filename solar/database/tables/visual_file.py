@@ -12,6 +12,7 @@ from solar.database.utils import dbformat, dbroot
 from solar.common.printing import chat
 from solar.visual.img import Image_Builder
 from solar.visual.vid import Video_Builder
+import solar.common.mapproc as mp
 
 
 class Visual_File(File_Model):
@@ -286,33 +287,36 @@ class Visual_File(File_Model):
         join = Join_Visual_Fits(fits_file=fits, visual_file=vis)
         return join
 
+    def pixel_from_world(self, hpc_x, hpc_y, normalized=False):
+        fits = self.fits_join.get().fits_file
+        header_dict = FileHeader(fits.get_header_as_dict())
+        fake_map = Map(np.zeros((1, 1)), header_dict)
+        return mp.pixel_from_world(fake_map, self, hpc_x, hpc_y, normalized=normalized)
+
     def world_from_pixel(self, x, y):
         if x > 1 and y > 1:
             return self.__world_from_pixel_abs(x, y)
         else:
             return self.__world_from_pixel_norm(x, y)
 
+    def world_from_pixel_value(self, x, y):
+        v = self.world_from_pixel(x, y)
+        return v.spherical.lon.arcsec, v.spherical.lat.arcsec
+
     def __world_from_pixel_abs(self, x: int, y: int):
-        return self.__world_from_pixels_norm(x / self.width, y / self.height)
+        return self.__world_from_pixel_norm(x / self.width, y / self.height)
 
-    def __world_from_pixels_norm(self, x: float, y: float) -> Any:
-        y = 1 - y
+    def __world_from_pixel_norm(self, x: float, y: float) -> Any:
         fits = self.fits_join.get().fits_file
-        fits_width = fits["naxis1"]
-        fits_height = fits["naxis2"]
-
-        axis_x_normalized = (x - self.im_ll_x) / (self.im_ur_x - self.im_ll_x)
-        axis_y_normalized = (y - self.im_ll_y) / (self.im_ur_y - self.im_ll_y)
-
-        pix_x = axis_x_normalized * fits_width
-        pix_y = axis_y_normalized * fits_height
-
         header_dict = FileHeader(fits.get_header_as_dict())
         fake_map = Map(np.zeros((1, 1)), header_dict)
-        return fake_map.pixel_to_world(pix_x * u.pix, pix_y * u.pix)
+
+        return mp.world_from_pixel_norm(fake_map, self, x, y)
 
     def get_fits(self):
-        found = Visual_File.fits_join
+        from .join_vis_fit import Join_Visual_Fits
+
+        found = Join_Visual_Fits.select().where(Join_Visual_Fits.visual_file == self)
         return list(found)
 
     def __repr__(self) -> str:
