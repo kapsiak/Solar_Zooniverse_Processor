@@ -45,8 +45,8 @@ def world_from_pixel_abs(sunmap, image_data, x: int, y: int):
 
 
 def world_from_pixel_norm(sunmap, image_data, x: float, y: float):
-    fits_width = sunmap["naxis1"]
-    fits_height = sunmap["naxis2"]
+    fits_width = sunmap.meta["naxis1"]
+    fits_height = sunmap.meta["naxis2"]
 
     im_ll_x = image_data.im_ll_x
     im_ll_y = image_data.im_ll_y

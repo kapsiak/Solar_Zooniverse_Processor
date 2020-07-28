@@ -25,8 +25,8 @@ class Space_Obj:
 
     time: datetime = datetime(1990, 1, 1)
 
-    hpc_x: float = -1
-    hpc_y: float = -1
+    x: float = -1
+    y: float = -1
 
     purpose: str = None
 
@@ -40,7 +40,7 @@ class Space_Obj:
     def __set_hpcxy(self, z_struct):
         v = Visual_File.get(Visual_File.id == self.visual_id)
         coord = v.world_from_pixel(z_struct.x, z_struct.y)
-        self.hpc_y, self.hpc_x = coord.spherical.lat.arcsec, coord.spherical.lon.arcsec
+        self.y, self.x = coord.spherical.lat.arcsec, coord.spherical.lon.arcsec
 
     @classmethod
     def base_make(cls, z_struct):
@@ -69,7 +69,7 @@ class Space_Obj:
 @dataclass
 class Space_Point(Space_Obj):
     def make_data(self):
-        return (self.hpc_x, self.hpc_y, since_start(self.time))
+        return (self.x, self.y, since_start(self.time))
 
     @classmethod
     def make(cls, z_struct):
@@ -83,7 +83,7 @@ class Space_Rect(Space_Obj):
     a: float = -1
 
     def make_data(self):
-        return (self.hpc_x, self.hpc_y, self.w, self.h, self.a, since_start(self.time))
+        return (self.x, self.y, self.w, self.h, self.a, since_start(self.time))
 
     @classmethod
     def make(cls, z_struct):

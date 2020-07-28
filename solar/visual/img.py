@@ -12,7 +12,7 @@ class Image_Builder(Visual_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
 
-    def save_visual(self, fits, save_path, clear_after=True):
+    def save_visual(self, fits, save_path, clear_after=True, fake_save=False):
         bbox = self.fig.get_window_extent().transformed(
             self.fig.dpi_scale_trans.inverted()
         )
@@ -22,7 +22,8 @@ class Image_Builder(Visual_Builder):
         )
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self.fig.savefig(save_path, metadata=self.generate_metadata(fits))
+        if not fake_save:
+            self.fig.savefig(save_path, metadata=self.generate_metadata(fits))
         if clear_after:
             plt.close()
 
@@ -59,18 +60,26 @@ class Basic_Image(Image_Builder):
         super().__init__(im_type)
         self.frame = False
 
-    def create(self, file_path, cmap="hot", size=3):
-        if not Path(file_path).is_file():
-            print(
-                "You are asking me to create an image from a fits file that does not exist"
-            )
-            return False
-        self.map = sm.Map(file_path)
+    def create(self, file_path, cmap="hot", size=None):
+        if not issubclass(type(file_path), sm.GenericMap):
+            self.map = sm.Map(file_path)
+            if not Path(file_path).is_file():
+                print(
+                    "You are asking me to create an image from a fits file that does not exist"
+                )
+                return False
+        else:
+            self.map = file_path
         title_obsdate = self.map.date.strftime("%Y-%b-%d %H:%M:%S")
-        self.fig = plt.figure(
-            # figsize=[4.4, 4.4],
-            dpi=300
-        )
+        if not size:
+            self.fig = plt.figure(
+                # figsize=[4.4, 4.4],
+                dpi=300
+            )
+        else:
+            self.fig = plt.figure(
+                figsize=[size, size],
+                dpi=300)
         self.ax = self.fig.add_subplot(1, 1, 1, projection=self.map)
         # self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
         # self.ax.imshow(self.map.data)
@@ -78,6 +87,7 @@ class Basic_Image(Image_Builder):
         self.ax.set_xlabel("Solar X (arcsec)")
         self.ax.set_ylabel("Solar Y (arcsec)")
         self.ax.set_title(f"SDO-AIA   {title_obsdate}")
+
         self.draw_annotations()
         return True
 

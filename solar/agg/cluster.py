@@ -19,7 +19,7 @@ def aff_fit(data):
 def mean_fit(data):
     bandwidth = estimate_bandwidth(data, quantile=0.2, n_samples=500)
     ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    ms.fit(data) 
+    ms.fit(data)
     labels = ms.labels_
     cluster_centers = ms.cluster_centers_
     return (labels, cluster_centers)

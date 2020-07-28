@@ -7,7 +7,7 @@ class Annot:
         raise NotImplementedError
 
     @staticmethod
-    def to_annot(struct):
+    def to_annot(struct, **kwargs):
         """TODO: Docstring for to_annot.
 
         :param struct: TODO
@@ -19,10 +19,22 @@ class Annot:
         point_attr = ["x", "y"]
 
         if all([hasattr(struct, att) for att in rect_attr]):
-            return Rect_Annot(struct.x, struct.y, struct.w, struct.h, struct.a)
+            return Rect_Annot(
+                struct.x, 1- struct.y, struct.w, struct.h, struct.a, **kwargs
+            )
 
         if all([hasattr(struct, att) for att in point_attr]):
-            return Circle_Annot(struct.x, struct.y)
+            return Circle_Annot(struct.x,1- struct.y, **kwargs)
+
+        try:
+            if len(struct) == 2:
+                return Circle_Annot(struct[0], struct[1], **kwargs)
+            if len(struct) == 5:
+                return Rect_Annot(
+                    struct[0], struct[1], struct[2], struct[3], struct[4], **kwargs
+                )
+        except Exception:
+            pass
 
         return None
 
@@ -50,7 +62,13 @@ class Rect_Annot(Annot):
 
     def draw(self, fig, ax):
         rect = patches.Rectangle(
-            (self.x, self.y), self.w, self.h, angle=self.a, fill=False, **self.props
+            (self.x,self.y),
+            self.w,
+            self.h,
+            angle=self.a,
+            fill=False,
+            transform=fig.transFigure,
+            **self.props
         )
         fig.patches.append(rect)
 
@@ -59,7 +77,7 @@ class Circle_Annot(Annot):
 
     """Docstring for Rect_annot. """
 
-    def __init__(self, x, y, r=10, **kwargs):
+    def __init__(self, x, y, r=0.01, **kwargs):
         """TODO: to be defined.
 
         :param x: TODO
@@ -75,5 +93,11 @@ class Circle_Annot(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
-        rect = patches.Circle((self.x, self.y), radius=self.r, fill=True, **self.props)
+        rect = patches.Circle(
+            (self.x,self.y),
+            radius=self.r,
+            fill=True,
+            transform=fig.transFigure,
+            **self.props
+        )
         fig.patches.append(rect)
