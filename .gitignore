@@ -5,5 +5,5 @@ misc/*
 *.db*
 *.json
 *.csv
-
+examples/*.png
 
