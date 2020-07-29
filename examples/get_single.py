@@ -39,6 +39,6 @@ bim = Basic_Image("png")
 
 for x in Fits_File.select():
     im = Visual_File.create_new_visual(x, bim, overwrite=False)
-    im.description = 'Test_Upload_1'
+    im.description = "Test_Upload_1"
     if im:
         im.save()

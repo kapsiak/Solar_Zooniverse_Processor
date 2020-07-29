@@ -12,7 +12,7 @@ class Image_Builder(Visual_Builder):
     def __init__(self, im_type):
         super().__init__(im_type)
 
-    def save_visual(self, fits, save_path, clear_after=True, fake_save=False):
+    def generate_image_data(self):
         bbox = self.fig.get_window_extent().transformed(
             self.fig.dpi_scale_trans.inverted()
         )
@@ -20,6 +20,9 @@ class Image_Builder(Visual_Builder):
         (self.im_ll_x, self.im_ll_y), (self.im_ur_x, self.im_ur_y) = (
             self.fig.axes[0].get_position().get_points()
         )
+
+    def save_visual(self, fits, save_path, clear_after=True, fake_save=False):
+        self.generate_image_data()
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
         if not fake_save:
@@ -77,18 +80,19 @@ class Basic_Image(Image_Builder):
                 dpi=300
             )
         else:
-            self.fig = plt.figure(
-                figsize=[size, size],
-                dpi=300)
+            self.fig = plt.figure(figsize=[size, size], dpi=300)
+
         self.ax = self.fig.add_subplot(1, 1, 1, projection=self.map)
+        plt.sca(self.ax)
+        plt.figure(self.fig.number)
         # self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
         # self.ax.imshow(self.map.data)
         self.map.plot()
         self.ax.set_xlabel("Solar X (arcsec)")
         self.ax.set_ylabel("Solar Y (arcsec)")
         self.ax.set_title(f"SDO-AIA   {title_obsdate}")
-
         self.draw_annotations()
+        #self.generate_image_data()
         return True
 
     def show(self):

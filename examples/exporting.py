@@ -28,4 +28,4 @@ print(to_export)
 to_export = [x[0:20] for x in to_export if x]
 
 print([split(x, 4, 1) for x in to_export])
-# zooniverse_export(*[split(x,4,1) for x in to_export])
+zooniverse_export(*[split(x, 4, 1) for x in to_export])

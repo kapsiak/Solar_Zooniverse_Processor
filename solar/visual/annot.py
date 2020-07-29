@@ -1,6 +1,7 @@
 import matplotlib.patches as patches
 from matplotlib.transforms import IdentityTransform
-
+from functools import wraps
+import matplotlib.transforms as tr
 
 class Annot:
     def draw(self, fig, ax):
@@ -20,11 +21,11 @@ class Annot:
 
         if all([hasattr(struct, att) for att in rect_attr]):
             return Rect_Annot(
-                struct.x, 1- struct.y, struct.w, struct.h, struct.a, **kwargs
+                struct.x, 1 - struct.y, struct.w, struct.h, struct.a, **kwargs
             )
 
         if all([hasattr(struct, att) for att in point_attr]):
-            return Circle_Annot(struct.x,1- struct.y, **kwargs)
+            return Circle_Annot(struct.x, 1 - struct.y, **kwargs)
 
         try:
             if len(struct) == 2:
@@ -61,13 +62,14 @@ class Rect_Annot(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
+        new = (self.x, self.y)
         rect = patches.Rectangle(
-            (self.x,self.y),
+            new,
             self.w,
             self.h,
-            angle=self.a,
+            angle=0,
             fill=False,
-            transform=fig.transFigure,
+            transform=tr.Affine2D().rotate(self.a) * fig.transFigure,
             **self.props
         )
         fig.patches.append(rect)
@@ -77,7 +79,7 @@ class Circle_Annot(Annot):
 
     """Docstring for Rect_annot. """
 
-    def __init__(self, x, y, r=0.01, **kwargs):
+    def __init__(self, x, y, r=10, **kwargs):
         """TODO: to be defined.
 
         :param x: TODO
@@ -93,11 +95,15 @@ class Circle_Annot(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
-        rect = patches.Circle(
-            (self.x,self.y),
+        new = tuple(fig.transFigure.transform((self.x, self.y)))
+        new_r = fig.transFigure.transform((self.r, self.r))
+        print(new)
+        circ = patches.Circle(
+            new,
             radius=self.r,
             fill=True,
-            transform=fig.transFigure,
+            transform=None,
+            # fig.transFigure,
             **self.props
         )
-        fig.patches.append(rect)
+        fig.patches.append(circ)

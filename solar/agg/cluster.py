@@ -23,4 +23,3 @@ def mean_fit(data):
     labels = ms.labels_
     cluster_centers = ms.cluster_centers_
     return (labels, cluster_centers)
-

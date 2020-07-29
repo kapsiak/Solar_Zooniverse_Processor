@@ -41,9 +41,7 @@ def rect_maker(value, s_data):
             a=v["angle"],
             frame=v["frame"],
             purpose=v["tool_label"],
-        ).scale(
-            s_data["#width"], s_data["#height"]
-        )
+        ).scale(s_data["#width"], s_data["#height"])
         for v in value
     ]
 

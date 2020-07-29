@@ -30,7 +30,6 @@ class ZBase:
 
     s_map: Map = None
 
-
     def as_data(self):
         return list((getattr(self, x) for x in self.data_members))
 

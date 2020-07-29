@@ -1,25 +1,30 @@
 from solar.database.tables.fits_file import Fits_File
 from solar.database.tables.visual_file import Visual_File
-from solar.visual.annot import Circle_Annot
+from solar.visual.annot import Circle_Annot, Rect_Annot
 from solar.visual.img import Basic_Image
+from sunpy.map import Map
+from solar.common.mapproc import *
 
 
-x, y = 1500, 300
+x, y = 500, 500
 
-
-v = Visual_File.get()
-print(f"{v.im_ll_x,v.im_ll_y}")
-f = v.get_fits()[0].fits_file
-print(v.world_from_pixel(v.im_ll_x, v.im_ll_y))
-c1 = Circle_Annot(x, y)
-
-lon, lat = v.world_from_pixel_value(x, y)
+f = Fits_File.get()
+c1 = Circle_Annot(0.5, 0.5)
+r1 = Rect_Annot(0.4, 0.4, 0.2, 0.2, 45)
 bim = Basic_Image("png")
-bim.add_annotation(c1)
-im = Visual_File.create_new_visual(f, bim)
-im.export("scripts/test.png")
+bim.add_annotation(c1,r1)
+bim.create(f.file_path)
+bim.save_visual(f, "examples/test.png", clear_after=False)
+# d = f.get_header_as_dict()
+# m = Map(f.file_path)
+#
+#
+# lon, lat = world_from_pixel_value(d, bim, x, y)
+# px, py = pixel_from_world(m, bim, lon, lat)
+#
+# c2 = Circle_Annot(px, py)
+# bim.draw_annotations()
+# bim.save_visual(f, "examples/test.png")
 
-
-print(f"lon,lat = {lon},{lat}")
-px, py = v.pixel_from_world(x, y)
-print(f"px,py = {px},{py}")
+# print(f"lon,lat = {lon}, {lat}")
+# print(f"px,py = {px}, {py}")
