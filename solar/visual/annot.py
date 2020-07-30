@@ -46,6 +46,8 @@ class Annot:
 
         return None
 
+        
+
 
 class Rect_Annot(Annot):
 
@@ -74,9 +76,9 @@ class Rect_Annot(Annot):
             new,
             self.w,
             self.h,
-            angle= 0 ,
+            angle=0,
             fill=False,
-            transform= prop_trans(fig,new,self.a),
+            transform=prop_trans(fig, new, self.a),
             **self.props
         )
         fig.patches.append(rect)
@@ -104,10 +106,37 @@ class Circle_Annot(Annot):
     def draw(self, fig, ax):
         new = fig.transFigure.transform((self.x, self.y))
         circ = patches.Circle(
-            new,
-            radius=self.r,
-            fill=True,
-            transform=None,
-            **self.props
+            new, radius=self.r, fill=True, transform=None, **self.props
         )
         fig.patches.append(circ)
+
+
+class Text_Point(Annot):
+
+    """Docstring for Rect_annot. """
+
+    def __init__(self, x, y, text, r=10, **kwargs):
+        """TODO: to be defined.
+
+        :param x: TODO
+        :param y: TODO
+        :param w: TODO
+        :param h: TODO
+        :param a: TODO
+
+        """
+        self.x = x
+        self.y = y
+        self.r = r
+        self.text = text
+        self.props = kwargs
+
+    def draw(self, fig, ax):
+        ax.annotate(
+            self.text,
+            xy=(self.x, self.y),
+            xycoords="figure fraction",
+            xytext=(10, 10),
+            textcoords="offset points",
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3"),
+        )
