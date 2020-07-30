@@ -87,7 +87,7 @@ class Basic_Image(Image_Builder):
         plt.figure(self.fig.number)
         # self.fig.subplots_adjust(right = 1, left = -.2,top = 0.9, bottom=0.1)
         # self.ax.imshow(self.map.data)
-        self.map.plot()
+        self.map.plot(origin='lower')
         self.ax.set_xlabel("Solar X (arcsec)")
         self.ax.set_ylabel("Solar Y (arcsec)")
         self.ax.set_title(f"SDO-AIA   {title_obsdate}")

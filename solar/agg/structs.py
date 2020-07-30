@@ -3,9 +3,13 @@ from solar.database.tables.fits_file import Fits_File
 from solar.database.tables.visual_file import Visual_File
 from datetime import datetime, timedelta
 from solar.zooniverse.structs import ZPoint, ZRect
+from sunpy.map import Map
+from sunpy.io.header import FileHeader
+import numpy as np
+from solar.common.mapproc import world_from_pixel
 
 
-TIME_START = datetime(2000, 1, 1, 0, 0, 0)
+TIME_START = datetime(1995, 1, 1, 0, 0, 0)
 
 
 def since_start(time):
@@ -23,24 +27,107 @@ class Space_Obj:
     visual_id: int = -1
     frame: int = -1
 
-    time: datetime = datetime(1990, 1, 1)
+    _time: datetime = datetime(1990, 1, 1)
 
-    x: float = -1
-    y: float = -1
+    _x: float = -1
+    _y: float = -1
+
+    _smap: Map = None
 
     purpose: str = None
+
+    _smap: Map = None
 
     def make_data(self):
         raise NotImplementedError
 
-    def __set_time(self, z_struct):
-        f = Fits_File.get(Fits_File.id == self.fits_id)
-        self.time = f.image_time
+    def get_map(self, z_struct):
+        if not self._smap:
+            self.smap = z_struct.fits_header_data
 
-    def __set_hpcxy(self, z_struct):
-        v = Visual_File.get(Visual_File.id == self.visual_id)
-        coord = v.world_from_pixel(z_struct.x, z_struct.y)
-        self.y, self.x = coord.spherical.lat.arcsec, coord.spherical.lon.arcsec
+    @property
+    def smap(self):
+        return self._smap
+
+    @smap.setter
+    def smap(self, data):
+        header_dict = FileHeader(data)
+        fake_map = Map(np.zeros((1, 1)), header_dict)
+        self._smap = fake_map
+
+    def as_data(self):
+        return list((getattr(self, x) for x in self.data_members))
+
+    @property
+    def time(self):
+        return self._time
+
+    @time.setter
+    def time(self, z_struct):
+        self.get_map(z_struct)
+        if self.smap:
+            self._time = self.smap.meta["date-obs"]
+        else:
+            try:
+                f = Fits_File.get(Fits_File.id == self.fits_id)
+                self._time = f.image_time
+            except Exception as e:
+                print(e)
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, z_struct):
+        self.get_map(z_struct)
+        if self.smap:
+            coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
+            self._x = coord.spherical.lon.arcsec
+        else:
+            try:
+                v = Visual_File.get(Visual_File.id == self.visual_id)
+                coord = v.world_from_pixel(z_struct.x, z_struct.y)
+                self._x = coord.spherical.lon.arcsec
+            except Exception as e:
+                print(e)
+
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, z_struct):
+        self.get_map(z_struct)
+        if self.smap:
+            coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
+            self._y = coord.spherical.lat.arcsec
+        else:
+            try:
+                v = Visual_File.get(Visual_File.id == self.visual_id)
+                coord = v.world_from_pixel(z_struct.x, z_struct.y)
+                self._y = coord.spherical.lat.arcsec
+            except Exception as e:
+                print(e)
+
+    @property
+    def xy(self):
+        return (self._x, self._y)
+
+    @xy.setter
+    def xy(self, z_struct):
+        self.get_map(z_struct)
+        if self.smap:
+            coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
+            self._x, self._y = coord.spherical.lon.arcsec, coord.spherical.lat.arcsec
+        else:
+            try:
+                self._x, self._y = coord.spherical.lon.arcsec, coord.spherical.lat.arcsec
+                v = Visual_File.get(Visual_File.id == self.visual_id)
+                coord = v.world_from_pixel(z_struct.x, z_struct.y)
+            except Exception as e:
+                print(e)
 
     @classmethod
     def base_make(cls, z_struct):
@@ -53,16 +140,20 @@ class Space_Obj:
             visual_id=z_struct.visual_id,
             frame=z_struct.frame,
         )
-        new.__set_hpcxy(z_struct)
-        new.__set_time(z_struct)
+        new.smap = z_struct.fits_dict
+        new.time = z_struct
+        new.xy = z_struct
         return new
 
     @staticmethod
     def make(z_struct):
         if isinstance(z_struct, ZPoint):
+            print("Making Point")
             return Space_Point.make(z_struct)
         if isinstance(z_struct, ZRect):
+            print("Making Rect")
             return Space_Rect.make(z_struct)
+        print("Making None")
         return None
 
 

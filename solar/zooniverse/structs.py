@@ -5,6 +5,7 @@ import astropy.units as u
 from sunpy.io.header import FileHeader
 from sunpy.map import Map
 import json
+import numpy as np
 
 
 @dataclass
@@ -20,15 +21,17 @@ class ZBase:
 
     purpose: str = None
 
-    width: float = -1
-    height: float = -1
+    _fits_dict: dict = None
 
-    im_ll_x: float = -1
-    im_ll_y: float = -1
-    im_ur_x: float = -1
-    im_ur_y: float = -1
+    @property
+    def fits_dict(self):
+        return self._fits_dict
 
-    s_map: Map = None
+    @fits_dict.setter
+    def fits_dict(self, data):
+        # header_dict = FileHeader(data)
+        # fake_map = Map(np.zeros((1, 1)), header_dict)
+        self._fits_dict = data
 
     def as_data(self):
         return list((getattr(self, x) for x in self.data_members))
@@ -46,10 +49,13 @@ class ZSpatial(ZBase):
     x: float = -1
     y: float = -1
 
-    def scale(self, h, w):
-        self.x = self.x / float(w)
-        self.y = self.y / float(h)
-        return self
+    width: float = -1
+    height: float = -1
+
+    im_ll_x: float = -1
+    im_ll_y: float = -1
+    im_ur_x: float = -1
+    im_ur_y: float = -1
 
 
 @dataclass
@@ -60,12 +66,6 @@ class ZRect(ZSpatial):
     w: float = -1
     h: float = -1
     a: float = -1
-
-    def scale(self, w, h):
-        super().scale(w, h)
-        self.w = self.w / float(w)
-        self.h = self.h / float(h)
-        return self
 
 
 @dataclass

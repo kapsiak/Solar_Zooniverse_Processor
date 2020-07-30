@@ -3,6 +3,13 @@ from matplotlib.transforms import IdentityTransform
 from functools import wraps
 import matplotlib.transforms as tr
 
+
+def prop_trans(fig, point, angle):
+    return fig.transFigure + tr.Affine2D().rotate_deg_around(
+        *fig.transFigure.transform(point), angle
+    )
+
+
 class Annot:
     def draw(self, fig, ax):
         raise NotImplementedError
@@ -21,11 +28,11 @@ class Annot:
 
         if all([hasattr(struct, att) for att in rect_attr]):
             return Rect_Annot(
-                struct.x, 1 - struct.y, struct.w, struct.h, struct.a, **kwargs
+                struct.x, struct.y, struct.w, struct.h, struct.a, **kwargs
             )
 
         if all([hasattr(struct, att) for att in point_attr]):
-            return Circle_Annot(struct.x, 1 - struct.y, **kwargs)
+            return Circle_Annot(struct.x, struct.y, **kwargs)
 
         try:
             if len(struct) == 2:
@@ -67,9 +74,9 @@ class Rect_Annot(Annot):
             new,
             self.w,
             self.h,
-            angle=0,
+            angle= 0 ,
             fill=False,
-            transform=tr.Affine2D().rotate(self.a) * fig.transFigure,
+            transform= prop_trans(fig,new,self.a),
             **self.props
         )
         fig.patches.append(rect)
@@ -95,15 +102,12 @@ class Circle_Annot(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
-        new = tuple(fig.transFigure.transform((self.x, self.y)))
-        new_r = fig.transFigure.transform((self.r, self.r))
-        print(new)
+        new = fig.transFigure.transform((self.x, self.y))
         circ = patches.Circle(
             new,
             radius=self.r,
             fill=True,
             transform=None,
-            # fig.transFigure,
             **self.props
         )
         fig.patches.append(circ)
