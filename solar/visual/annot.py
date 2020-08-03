@@ -46,8 +46,6 @@ class Annot:
 
         return None
 
-        
-
 
 class Rect_Annot(Annot):
 

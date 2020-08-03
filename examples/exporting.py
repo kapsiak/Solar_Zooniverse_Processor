@@ -21,11 +21,9 @@ to_export = [
         .where(Hek_Event.id == e)
         .order_by(Fits_File.image_time)
     ]
-    for e in Hek_Event.select()
+    for e in Hek_Event.select()[0:10]
 ]
 
-print(to_export)
-to_export = [x[0:20] for x in to_export if x]
+to_export = [x for x in to_export if x]
 
-print([split(x, 4, 1) for x in to_export])
-zooniverse_export(*[split(x, 4, 1) for x in to_export])
+zooniverse_export(*[split(x, 20, 2) for x in to_export])

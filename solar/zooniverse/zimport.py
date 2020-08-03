@@ -64,7 +64,7 @@ def point_maker(value, s_data):
         load_image_info(
             ZPoint(
                 x=float(v["x"]) / float(s_data["#width"]),
-                y= 1 - (float(v["y"]) / float(s_data["#height"])),
+                y=1 - (float(v["y"]) / float(s_data["#height"])),
                 frame=v["frame"],
                 purpose=v["tool_label"],
             ),

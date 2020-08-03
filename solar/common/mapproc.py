@@ -77,6 +77,6 @@ def world_from_pixel_norm(sunmap, image_data, x: float, y: float):
     axis_y_normalized = (y - im_ll_y) / (im_ur_y - im_ll_y)
 
     pix_x = axis_x_normalized * fits_width
-    pix_y = ( axis_y_normalized) * fits_height
+    pix_y = (axis_y_normalized) * fits_height
 
     return sunmap.pixel_to_world(pix_x * u.pix, pix_y * u.pix)

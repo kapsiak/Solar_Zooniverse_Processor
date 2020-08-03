@@ -18,7 +18,9 @@ to_draw = [x for x in annots if isinstance(x, ZPoint)]
 for s in to_draw:
     print(f"{s.x} , {s.y}")
 fid = annots[0].fits_id
-to_draw = [Text_Point(s.x, s.y, "{:.2f},{:.2f}".format(*Space_Obj.make(s).xy)) for s in to_draw]
+to_draw = [
+    Text_Point(s.x, s.y, "{:.2f},{:.2f}".format(*Space_Obj.make(s).xy)) for s in to_draw
+]
 t = Text_Point(0.5, 0.5, "Hello World")
 to_draw.append(t)
 

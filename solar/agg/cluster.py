@@ -5,11 +5,13 @@ from sklearn.datasets import make_blobs
 
 
 def aff_fit(data):
-    """TODO: Docstring for fit_points.
+    """
+    Perform an affinity propagation fit of the data
 
-    :param point_list: TODO
-    :returns: TODO
+    For more information see `SKLearn MeanShift <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AffinityPropagation.html#sklearn.cluster.AffinityPropagation\>`
 
+    :param data: data
+    :type data: array type
     """
     af = AffinityPropagation(preference=-50).fit(data)
     cluster_centers_indices = af.cluster_centers_indices_
@@ -17,6 +19,13 @@ def aff_fit(data):
 
 
 def mean_fit(data):
+    """
+    Perform a mean fit of the data.
+    For more information see `SKLearn MeanShift <https://scikit-learn.org/stable/modules/generated/sklearn.cluster.MeanShift.html#sklearn.cluster.MeanShift/>`
+
+    :param data: data
+    :type data: array type
+    """
     bandwidth = estimate_bandwidth(data, quantile=0.2, n_samples=500)
     ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
     ms.fit(data)

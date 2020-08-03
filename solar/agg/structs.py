@@ -13,6 +13,12 @@ TIME_START = datetime(1995, 1, 1, 0, 0, 0)
 
 
 def since_start(time):
+    """
+    Simple function to convert a time into a float by taking the difference between the time and TIME_START in milliseconds
+
+    :param time: The time to convert
+    :type time: Datetime
+    """
     return (time - TIME_START) / timedelta(milliseconds=1)
 
 
@@ -92,7 +98,6 @@ class Space_Obj:
             except Exception as e:
                 print(e)
 
-
     @property
     def y(self):
         return self._y
@@ -123,7 +128,10 @@ class Space_Obj:
             self._x, self._y = coord.spherical.lon.arcsec, coord.spherical.lat.arcsec
         else:
             try:
-                self._x, self._y = coord.spherical.lon.arcsec, coord.spherical.lat.arcsec
+                self._x, self._y = (
+                    coord.spherical.lon.arcsec,
+                    coord.spherical.lat.arcsec,
+                )
                 v = Visual_File.get(Visual_File.id == self.visual_id)
                 coord = v.world_from_pixel(z_struct.x, z_struct.y)
             except Exception as e:
