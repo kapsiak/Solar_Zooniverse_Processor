@@ -3,10 +3,16 @@ from sunpy.io.header import FileHeader
 from sunpy.map import Map, GenericMap
 import numpy as np
 from astropy.wcs import WCS
-import astropy.units as u
 
 
 def get_map(data):
+    """Function get_map: Create a empty with the correct header
+    
+    :param data: TODO
+    :type data: TODO
+    :returns: TODO
+    :type return: TODO
+    """
     if issubclass(type(data), GenericMap):
         return data
     else:
@@ -16,6 +22,28 @@ def get_map(data):
 
 
 def pixel_from_world(sunmap, image_data, hpc_x, hpc_y, normalized=False):
+    """Function pixel_from_world: Take a solar map, an image, and use these to convert a world coordinate to a coordinate in pixels on the image.
+    If normalized is set to true, the resulting image coordinate is given in normalized image coordinates in the range [0,1].
+    
+    
+    WARNING: This function is broken for now
+
+    :param sunmap: The map containing the WCS data
+    :type sunmap: sunpy.map.GenericMap
+    :param image_data: The structure containing data about the image
+    :type image_data: Visual_File or Subclass of Base_Visual
+    :param hpc_x: x coordinate in space
+    :type hpc_x: float
+    :param hpc_y: y coordinate in space
+    :type hpc_y: float
+    :param normalized: If true, return normalized coordinates, defaults to False
+    :type normalized: bool
+    :returns: The resulting coordinates
+    :type return: tuple(float)
+    """
+
+    raise NotImplementedError
+
     im_width = image_data.width
     im_height = image_data.height
     im_ll_x = image_data.im_ll_x
@@ -41,6 +69,20 @@ def pixel_from_world(sunmap, image_data, hpc_x, hpc_y, normalized=False):
 
 
 def world_from_pixel(sunmap, image_data, x, y):
+    """Function world_from_pixel: Get a world pixel from a pixel coordinate.
+    This is basically a wrapper the chooses the correct function based on the values of x and y
+
+    :param sunmap: The map containing the WCS data
+    :type sunmap: sunpy.map.GenericMap
+    :param image_data: The structure containing data about the image
+    :type image_data: Visual_File or Subclass of Base_Visual
+    :param x: x coordinate in space
+    :type x: float
+    :param y: y coordinate in space
+    :type y: float
+    :returns: The resulting coordinates
+    :type return: Sunpy coordinate object
+    """
     if x > 1 and y > 1:
         return world_from_pixel_abs(sunmap, image_data, x, y)
     else:
@@ -48,18 +90,58 @@ def world_from_pixel(sunmap, image_data, x, y):
 
 
 def world_from_pixel_value(sunmap, image_data, x, y):
+    """Function world_from_pixel_value: 
+    
+    :param sunmap: The map containing the WCS data
+    :type sunmap: sunpy.map.GenericMap
+    :param image_data: The structure containing data about the image
+    :type image_data: Visual_File or Subclass of Base_Visual
+    :param x: x image coordinate
+    :type x: float
+    :pram y: y image coordinate
+    :type y: float
+    :returns: the heliorojectile coordinates cure sponging to the image coordinate
+    :type return: tuple(float,float)
+    """
     v = world_from_pixel(sunmap, image_data, x, y)
     return v.spherical.lon.arcsec, v.spherical.lat.arcsec
 
 
 def world_from_pixel_abs(sunmap, image_data, x: int, y: int):
+    """Function world_from_pixel_abs: Get a world pixel from a pixel coordinate.
+    Here x and y are given in pixel coordinates with the origin being the bottom left
+
+    :param sunmap: The map containing the WCS data
+    :type sunmap: sunpy.map.GenericMap
+    :param image_data: The structure containing data about the image
+    :type image_data: Visual_File or Subclass of Base_Visual
+    :param x: x image coordinate
+    :type x: float
+    :param y: y image coordinate
+    :type y: float
+    :returns: The resulting coordinates
+    :type return: Sunpy coordinate object
+    """
     im_width = image_data.width
     im_height = image_data.height
     return world_from_pixel_norm(sunmap, image_data, x / im_width, y / im_height)
 
 
 def world_from_pixel_norm(sunmap, image_data, x: float, y: float):
+    """Function world_from_pixel_norm: Get a world pixel from a pixel coordinate.
+    Here x and y are given in normalized coordinates with the origin being the bottom left
 
+    :param sunmap: The map containing the WCS data
+    :type sunmap: sunpy.map.GenericMap
+    :param image_data: The structure containing data about the image
+    :type image_data: Visual_File or Subclass of Base_Visual
+    :param x: x normalized image coordinate
+    :type x: float
+    :param y: y normalized image coordinate
+    :type y: float
+    :returns: The resulting coordinates
+    :type return: Sunpy coordinate object
+    """
     sunmap = get_map(sunmap)
 
     fits_width = sunmap.meta["naxis1"]

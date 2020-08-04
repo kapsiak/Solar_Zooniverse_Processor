@@ -13,6 +13,9 @@ def chat(*args, **kwargs):
         print(*args, **kwargs)
 
 
+# The following two functions are currently unused.
+
+
 def lr_print(*a, **b):
     with lprint_lock:
         print(*a, **b, end="\r")

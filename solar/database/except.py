@@ -1,3 +1,4 @@
+# Currently unused
 class AlreadyExists(Exception):
     def __init__(self, row: Any):
         self.row = row

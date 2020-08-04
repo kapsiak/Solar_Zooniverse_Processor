@@ -20,6 +20,9 @@ class Fits_File(File_Model):
     """
     Fits_File
     =============
+
+    The database table that stores fits files, mostly downloaded from the ssw cutout service
+
     """
 
     event = pw.ForeignKeyField(Hek_Event, backref="fits_files", null=True)
@@ -48,12 +51,6 @@ Hash            = {self.file_hash}
 
     @staticmethod
     def make_path(fits_model, default_format=Config.storage_path.fits, **kwargs):
-        """TODO: Docstring for make_path.
-
-        :param default_format: TODO
-        :returns: TODO
-
-        """
         return dbroot(dbformat(default_format, fits_model, **kwargs))
 
     @staticmethod

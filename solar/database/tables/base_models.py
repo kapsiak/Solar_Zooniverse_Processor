@@ -19,10 +19,24 @@ class PathField(pw.Field):
     field_type = "text"
 
     def db_value(self, value):
-        return str(value)  # convert UUID to hex string.
+        """Function db_value: Convert path into something text that may be stored in the database
+        
+        :param value: the path
+        :type value: Path
+        :returns: str(path)
+        :type return: str
+        """
+        return str(value)
 
     def python_value(self, value):
-        return Path(value)  # convert hex string to UUIDk
+        """Function python_value: Convert the text in the database back into a path
+        
+        :param value: the database text
+        :type value: str
+        :returns: Path(str)
+        :type return: Path
+        """
+        return Path(value)
 
 
 class File_Model(Base_Model):
@@ -52,7 +66,7 @@ class File_Model(Base_Model):
         self.save()
         return self.file_hash
 
-    def check_integrity(self) -> bool:
+    def check_integrity(self):
         """
         See if the current contents of the file match the checksum
 

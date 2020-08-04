@@ -3,11 +3,7 @@ from pathlib import Path
 from typing import Union
 
 
-def checksum(
-    string: Union[str, Path],
-    hash_factory: object = hashlib.md5,
-    chunk_num_blocks: int = 128,
-) -> str:
+def checksum(string, hash_factory=hashlib.md5, chunk_num_blocks=128):
     """
     A simple checksum function.
 
@@ -32,7 +28,7 @@ def checksum(
         return h.hexdigest()
 
 
-def into_number(string: str) -> Union[float, int, str]:
+def into_number(string):
     """
     Basic function to cast a string into an int, float, or str.
 

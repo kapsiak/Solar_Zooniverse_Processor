@@ -50,8 +50,7 @@ class Config(metaclass=ConfMeta):
         img="generated/{extension}/{event_id}/{ffilename}",
     )
     file_storage = Map(
-        fits="{server_file_name}",
-        img="{file_name.stem}{id}.{extension}",
+        fits="{server_file_name}", img="{file_name.stem}{id}.{extension}"
     )
     time_format = Map(hek="%Y-%m-%dT%H:%M:%S", fits="%Y-%m-%dT%H:%M:%S.%f")
     chatty = True

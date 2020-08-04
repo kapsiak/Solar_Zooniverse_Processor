@@ -24,7 +24,6 @@ def since_start(time):
 
 @dataclass
 class Space_Obj:
-    subject_id: int = 0
     user_id: int = 0
     workflow_id: int = 0
     class_id: int = 0
@@ -48,20 +47,42 @@ class Space_Obj:
         raise NotImplementedError
 
     def get_map(self, z_struct):
+        """Function get_map: Construct a sunpy.map.Map from a given fits header. The data is irrelevant, we care only about the header.
+        
+        :param z_struct: Zooniverse Data Structure
+        :type z_struct: None
+        :returns: None
+        :type return: None
+        """
         if not self._smap:
             self.smap = z_struct.fits_header_data
 
     @property
     def smap(self):
+        """Function smap: Setter for smap
+        :returns: None
+        :type return: None
+        """
         return self._smap
 
     @smap.setter
     def smap(self, data):
+        """Function smap: Set the value of smap using a dictionary, constructs a fake smap with the desired header
+        
+        :param data: Dict like object from which a header may be constructs
+        :type data: dict-like
+        :returns: None
+        :type return: None
+        """
         header_dict = FileHeader(data)
         fake_map = Map(np.zeros((1, 1)), header_dict)
         self._smap = fake_map
 
     def as_data(self):
+        """Function as_data: Convert class into a tuple of data suitable for aggregation
+        :returns: List of data
+        :type return: List[vals]
+        """
         return list((getattr(self, x) for x in self.data_members))
 
     @property
@@ -70,6 +91,10 @@ class Space_Obj:
 
     @time.setter
     def time(self, z_struct):
+        """Function time: Setter for time 
+        
+        """
+
         self.get_map(z_struct)
         if self.smap:
             self._time = self.smap.meta["date-obs"]
@@ -82,10 +107,21 @@ class Space_Obj:
 
     @property
     def x(self):
+        """Function x: Getter for x coord
+        :returns: None
+        :type return: None
+        """
         return self._x
 
     @x.setter
     def x(self, z_struct):
+        """Function x: Setter for x coord
+        
+        :param z_struct: Zooniverse import structure
+        :type z_struct: ZBase
+        :returns: None
+        :type return: None
+        """
         self.get_map(z_struct)
         if self.smap:
             coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
@@ -104,6 +140,13 @@ class Space_Obj:
 
     @y.setter
     def y(self, z_struct):
+        """Function y: Setter for y coord
+        
+        :param z_struct: Zooniverse import structure
+        :type z_struct: ZBase
+        :returns: None
+        :type return: None
+        """
         self.get_map(z_struct)
         if self.smap:
             coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
@@ -122,6 +165,13 @@ class Space_Obj:
 
     @xy.setter
     def xy(self, z_struct):
+        """Function xy: Setter for x and y coordinates simultaneously
+        
+        :param z_struct: Zooniverse import structure
+        :type z_struct: ZBase
+        :returns: None
+        :type return: None
+        """
         self.get_map(z_struct)
         if self.smap:
             coord = world_from_pixel(self.smap, z_struct, z_struct.x, z_struct.y)
@@ -139,6 +189,13 @@ class Space_Obj:
 
     @classmethod
     def base_make(cls, z_struct):
+        """Function base_make: Base function for creating Space_Obj
+        
+        :param z_struct: Zooniverse Structure
+        :type z_struct: ZBase
+        :returns: Appropriate Space_Obj subclass
+        :type return: Space_Obj
+        """
         new = cls(
             subject_id=z_struct.subject_id,
             user_id=z_struct.user_id,
@@ -155,6 +212,13 @@ class Space_Obj:
 
     @staticmethod
     def make(z_struct):
+        """Function make: Create an appropriate Space_Obj
+        
+        :param z_struct: Zooniverse Structure
+        :type z_struct: ZBase
+        :returns: Appropriate Space_Obj subclass
+        :type return: Space_Obj
+        """
         if isinstance(z_struct, ZPoint):
             print("Making Point")
             return Space_Point.make(z_struct)
