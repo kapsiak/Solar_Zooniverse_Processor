@@ -82,3 +82,15 @@ class Visual_Builder:
                 self.map,
             )
         )
+
+    def __dict__(self):
+        return {
+            "extension": self.extension,
+            "im_ll_x": self.im_ll_x,
+            "im_ll_y": self.im_ll_y,
+            "im_ur_x": self.im_ur_x,
+            "im_ur_y": self.im_ur_y,
+            "width": self.width,
+            "height": self.height,
+            "dpi": self.dpi,
+        }

@@ -15,15 +15,25 @@ class Base_Model(pw.Model):
         database = db
 
 
+class PathField(pw.Field):
+    field_type = "text"
+
+    def db_value(self, value):
+        return str(value)  # convert UUID to hex string.
+
+    def python_value(self, value):
+        return Path(value)  # convert hex string to UUIDk
+
+
 class File_Model(Base_Model):
     """
     A wrapper class for files. Includes methods to hash the contents of file, and then later verify its integrity.
     """
 
-    file_path = pw.CharField(
+    file_path = PathField(
         default="NA", unique=True
     )  # The location of the file on the disk
-    file_name = pw.CharField(default="NA")  # The name of the file
+    file_name = PathField(default="NA")  # The name of the file
     file_hash = pw.CharField(default="NA")  # The file checksum
 
     def get_hash(self) -> str:

@@ -47,7 +47,6 @@ Hash            = {self.file_hash}
             """
 
     @staticmethod
-    @dbroot
     def make_path(fits_model, default_format=Config.storage_path.fits, **kwargs):
         """TODO: Docstring for make_path.
 
@@ -55,7 +54,7 @@ Hash            = {self.file_hash}
         :returns: TODO
 
         """
-        return dbformat(default_format, fits_model, **kwargs)
+        return dbroot(dbformat(default_format, fits_model, **kwargs))
 
     @staticmethod
     def from_file(file_path, file_name):

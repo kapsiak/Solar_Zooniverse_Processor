@@ -8,7 +8,7 @@ import numpy as np
 from .base_models import File_Model
 from .fits_file import Fits_File
 from typing import Any
-from solar.database.utils import dbformat, dbroot
+from solar.database.utils import dbformat, dbroot, dbpathformat
 from solar.common.printing import chat
 from solar.visual.img import Image_Builder
 from solar.visual.vid import Video_Builder
@@ -79,8 +79,8 @@ class Visual_File(File_Model):
     def create_new_visual(
         input_file: Any,
         visual_builder: Any,
-        file_name=None,
         save_format: str = Config.storage_path.img,
+        file_name_format: str = Config.file_storage.img,
         desc: str = "",
         overwrite=True,
     ):
@@ -88,20 +88,35 @@ class Visual_File(File_Model):
         if issubclass(btype, Video_Builder):
             chat("Looks like you want me to create a video")
             return Visual_File.__create_new_video(
-                input_file, visual_builder, file_name, save_format, desc, overwrite
+                input_file,
+                visual_builder,
+                save_format,
+                file_name_format,
+                desc,
+                overwrite,
             )
 
         if issubclass(btype, Image_Builder):
             if isinstance(input_file, Fits_File):
                 chat("Looks like you want me to create an image")
                 return Visual_File.__create_new_image(
-                    input_file, visual_builder, file_name, save_format, desc, overwrite
+                    input_file,
+                    visual_builder,
+                    save_format,
+                    file_name_format,
+                    desc,
+                    overwrite,
                 )
             else:
                 chat("Looks like you want me to create several images image")
                 return [
                     Visual_File.__create_new_image(
-                        x, visual_builder, file_name, save_format, desc, overwrite
+                        x,
+                        visual_builder,
+                        save_format,
+                        file_name_format,
+                        desc,
+                        overwrite,
                     )
                     for x in input_file
                 ]
@@ -113,7 +128,6 @@ class Visual_File(File_Model):
         return file_name
 
     @staticmethod
-    @dbroot
     def __make_path_name(fits, image_maker, save_format, file_name):
         file_path = dbformat(
             save_format,
@@ -122,7 +136,7 @@ class Visual_File(File_Model):
             extension=image_maker.extension,
             event_id=fits.event.event_id,
         )
-        return file_path
+        return dbroot(file_path)
 
     @staticmethod
     def __delete(im):
@@ -196,17 +210,20 @@ class Visual_File(File_Model):
     def __create_new_image(
         input_file: Any,
         visual_builder: Any,
-        file_name=None,
         save_format: str = Config.storage_path.img,
+        file_name_format: str = Config.file_storage.img,
         desc: str = "",
         overwrite=True,
     ):
+
         base_fits = input_file
-        if not file_name:
-            file_name = Visual_File.__make_fname(base_fits, visual_builder)
-        full_path = Visual_File.__make_path_name(
-            base_fits, visual_builder, save_format, file_name=file_name
+
+        file_name = dbformat(file_name_format, base_fits, visual_builder)
+        full_path = dbpathformat(
+            file_name_format, save_format, base_fits, visual_builder, base_fits.event
         )
+        print(file_name)
+        print(full_path)
 
         im, exists = Visual_File.__try_create_visual(
             full_path, file_name, visual_builder, desc
@@ -237,17 +254,16 @@ class Visual_File(File_Model):
     def __create_new_video(
         input_files: Any,
         visual_builder: Any,
-        file_name=None,
         save_format: str = Config.storage_path.img,
+        file_name_format: str = Config.file_storage.img,
         desc: str = "",
         overwrite=True,
         base_fits=None,
     ):
         base_fits = base_fits if base_fits else input_files[0]
-        if not file_name:
-            file_name = Visual_File.__make_fname(base_fits, visual_builder)
-        full_path = Visual_File.__make_path_name(
-            base_fits, visual_builder, save_format, file_name=file_name
+        file_name = dbformat(file_name_format, base_fits, visual_builder)
+        full_path = dbpathformat(
+            file_name_format, save_format, base_fits, visual_builder, base_fits.event
         )
         im, exists = Visual_File.__try_create_visual(
             full_path, file_name, visual_builder, desc
