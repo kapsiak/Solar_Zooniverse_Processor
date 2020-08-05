@@ -39,9 +39,12 @@ def prepare_row(files, export_dir="export"):
 
     file_info = {f: val for f, val in zip(file_names, [x.file_name for x in files])}
 
+    print(file_info)
+
     check_info = {
         check: val for check, val in zip(checksums, [x.file_hash for x in files])
     }
+
     fits_db_id = {
         f: val
         for f, val in zip(

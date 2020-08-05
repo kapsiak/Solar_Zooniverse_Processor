@@ -17,6 +17,8 @@ from solar.common.utils import into_number
 
 
 class Fits_File(File_Model):
+    file_name_format = Config.file_storage.fits
+    file_path_format = Config.storage_path.fits
     """
     Fits_File
     =============

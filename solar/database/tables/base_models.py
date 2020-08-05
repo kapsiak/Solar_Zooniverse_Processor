@@ -4,6 +4,8 @@ from pathlib import Path
 from solar.common.utils import checksum
 import shutil
 from typing import Union
+from solar.database.utils import dbformat, dbpathformat
+from solar.common.config import Config
 
 
 class Base_Model(pw.Model):
@@ -49,6 +51,26 @@ class File_Model(Base_Model):
     )  # The location of the file on the disk
     file_name = PathField(default="NA")  # The name of the file
     file_hash = pw.CharField(default="NA")  # The file checksum
+
+    def rename(self, file_name_format=None, file_path_format=None, *args, **kwargs):
+        if not file_name_format:
+            file_name_format = self.file_name_format
+        if not file_path_format:
+            file_path_format = self.file_path_format
+
+        old_path = self.file_path
+        self.file_path = dbpathformat(
+            file_name_format, file_path_format, *args, **kwargs
+        )
+        self.file_name = dbformat(file_name_format, *args, **kwargs)
+
+        p = Path(self.file_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+
+        self.save()
+        print(self.file_name)
+
+        shutil.move(old_path, self.file_path)
 
     def get_hash(self) -> str:
         """

@@ -17,6 +17,8 @@ import datetime
 
 
 class Visual_File(File_Model):
+    file_name_format = Config.file_storage.img
+    file_path_format = Config.storage_path.img
     """
     The table to store visual files. Also includes the necessary functions to extract
     world coordinates from coordinate on the image
@@ -219,11 +221,10 @@ class Visual_File(File_Model):
         base_fits = input_file
 
         file_name = dbformat(file_name_format, base_fits, visual_builder)
+        print(base_fits.file_name.stem)
         full_path = dbpathformat(
             file_name_format, save_format, base_fits, visual_builder, base_fits.event
         )
-        print(file_name)
-        print(full_path)
 
         im, exists = Visual_File.__try_create_visual(
             full_path, file_name, visual_builder, desc
