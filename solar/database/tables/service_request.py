@@ -31,9 +31,21 @@ class Service_Request(Base_Model):
         return self.parameters.where(Service_Parameter.key == key).get().value
 
     def get_param(self, param):
-        self.parameters.where(Service_Parameter.key == key).get()
+        """Function get_param: Get a parameter of the request
+        
+        :param param: parameter name
+        :type param: str
+        :returns: the parameter, if it exists
+        :type return: Service_Parameter
+        """
 
-    def get_params_as_dict(self) -> Dict[str, Any]:
+        self.parameters.where(Service_Parameter.key == param).get()
+
+    def get_params_as_dict(self):
+        """Function get_params_as_dict: Get all the parameters as a dictionary
+        :returns: Parameters formatted as dict
+        :type return: dict
+        """
         return {x.key: x.value for x in self.parameters}
 
     def __str__(self):

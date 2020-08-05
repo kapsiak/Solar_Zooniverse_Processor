@@ -1,3 +1,7 @@
+"""
+This module is designed to implement a naive "union" type sqlite column for storing fits_headers. 
+"""
+
 import peewee as pw
 from .base_models import Base_Model
 from datetime import datetime
@@ -13,6 +17,15 @@ class NoFormat(Exception):
 
 
 def get_type(value, data_format=None):
+    """Function get_type: Get the type of a value
+    
+    :param value: the value to insect
+    :type value: any
+    :param data_format: str, defaults to None
+    :type data_format: str
+    :returns: The type and subtype
+    :type return: (str,str)
+    """
     field_type = None
     subtype = None
     field_type = value.__class__.__name__
@@ -29,7 +42,9 @@ class UnionCol(Base_Model):
     A table designed to hold different types.
     """
 
+    # The table to store the elements of lists
     list_storage_table = None
+
 
     _field_type = pw.CharField(column_name="type")
     _subtype = pw.CharField(null=True, column_name="subtype")

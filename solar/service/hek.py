@@ -100,7 +100,7 @@ class Hek_Service(Base_Service):
 
         self.for_testing_data = {"result": []}
 
-    def __parse_attributes(self, params: List[Attribute], **kwargs) -> Dict[str, Any]:
+    def __parse_attributes(self, params, **kwargs):
         """
         Parse attributes and return a dictionary that can be passed to a request object
 
@@ -113,7 +113,7 @@ class Hek_Service(Base_Service):
         new_params = build_from_defaults(params, other)
         return {att.name: att.value for att in new_params}
 
-    def __break_into_intervals(self, days: int = 60) -> None:
+    def __break_into_intervals(self, days=60):
         """
         Break the time interval into subintervals, to avoid reaching the HEK response limit
 
@@ -142,9 +142,7 @@ class Hek_Service(Base_Service):
             for x, y in ret
         ]
 
-    def _request_one_interval(
-        self, start_time: datetime.datetime, end_time: datetime.datetime
-    ) -> None:
+    def _request_one_interval(self, start_time, end_time):
         """
         Make a request to the HEK server for a single time interval
 
@@ -180,7 +178,7 @@ class Hek_Service(Base_Service):
     def data(self):
         return self._data
 
-    def submit_request(self) -> None:
+    def submit_request(self):
         """
         Request all time intervals
 
@@ -202,7 +200,7 @@ class Hek_Service(Base_Service):
 
         print(f"Found {len(self._data)} new events")
 
-    def fetch_data(self) -> List[Hek_Event]:
+    def fetch_data(self):
         """
         Return a list of the found events
 
@@ -211,7 +209,11 @@ class Hek_Service(Base_Service):
         """
         return self.data
 
-    def save_data(self) -> None:
+    def save_data(self):
+        """Function save_data: Save the data found from the request to the database
+        :returns: None
+        :type return: None
+        """
         self._data = [
             e
             if Hek_Event.select().where(Hek_Event.event_id == e.event_id).count() == 0
@@ -229,6 +231,13 @@ class Hek_Service(Base_Service):
 
     @staticmethod
     def _from_model(serv_obj):
+        """Function _from_model: Create a Hek_Service from an existing model
+             
+        :param serv_obj: Service_Request object (from table)
+        :type serv_obj: Service_Request
+        :returns: The created request
+        :type return: Hek_Service
+        """
         att_list = [Att.from_model(x) for x in serv_obj.parameters]
         h = Hek_Service(*att_list)
         h.status = serv_obj.status

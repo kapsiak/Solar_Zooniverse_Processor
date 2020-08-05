@@ -72,6 +72,13 @@ Hash            = {self.file_hash}
             return fits
 
     def update_single(self):
+        """Function update_single: 
+
+        If integrity check fails, attempt to fetch and update a single fits file.
+        
+        :returns: None
+        :type return: None
+        """
         if not self.check_integrity():
             if self.server_full_path:
                 download_single_file(self.server_full_path, self.file_path)
@@ -114,7 +121,7 @@ Hash            = {self.file_hash}
 
         print(f"Update complete")
 
-    def extract_fits_data(self) -> None:
+    def extract_fits_data(self):
         """
         Extract data from the associated fits file, and save it in the Fits_Header_Elem table
 
@@ -150,10 +157,26 @@ Hash            = {self.file_hash}
         """
         return self.fits_keys.where(Fits_Header_Elem.key == key).get().value
 
-    def get_header_as_dict(self) -> Dict[str, Any]:
+    def get_header_as_dict(self):
+        """Function get_header_as_dict: 
+    
+        Get the fits header as a dictionary, using the existing fits header elems stored in the database.
+        Warning! If fits_header_elem has been modified, then the fits header returned by the function may not match the one in the fits file.
+
+        :returns: Fits header formatted as a dict
+        :type return: dict
+        """
         return {x.key: x.value for x in self.fits_keys}
 
     def get_header_as_json(self):
+        """Function get_header_as_json: 
+    
+        Get the fits header as json, using the existing fits header elems stored in the database.
+        Warning! If fits_header_elem has been modified, then the fits header returned by the function may not match the one in the fits file.
+
+        :returns: Fits header formatted as a json
+        :type return: json
+        """
         return json.dumps(self.get_header_as_dict())
 
     def __iter__(self):
@@ -175,4 +198,5 @@ class Fits_Header_Elem_List(List_Storage):
     table = pw.ForeignKeyField(Fits_Header_Elem, backref="list_values")
 
 
+# We must add this after the class has been declared to avoid circular issues
 Fits_Header_Elem.list_storage_table = Fits_Header_Elem_List

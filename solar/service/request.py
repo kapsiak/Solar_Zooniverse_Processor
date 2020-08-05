@@ -36,6 +36,10 @@ class Base_Service:
         self.__save_request_impl()
 
     def __save_request_impl(self):
+        """Function __save_request_impl: Basic implementation for storing the service_request
+        :returns: None
+        :type return: None
+        """
         if self.status == "unsubmitted":
             chat("No reason to save an unsubmitted service request")
             return None

@@ -7,7 +7,10 @@ from typing import Any, Dict
 
 class Hek_Event(Base_Model):
 
-    event_id = pw.CharField(default="NA", unique=True)
+    event_id = pw.CharField(default="NA", unique=True) 
+    # Event_id is used mostly to circumvent issues where the sol standard contains ':' 
+    # which on mac (BSD?) behaves like a directory delimiter and causes problems with file saving
+    # Event_id is Sol_Standard with the ':' replaced by '-'
     sol_standard = pw.CharField(default="NA")
 
     start_time = pw.DateTimeField(default=datetime.now)
@@ -29,14 +32,28 @@ class Hek_Event(Base_Model):
 
     frm_identifier = pw.CharField(default="NA")
 
+    # The algorithm that identified the event in HEK
     search_frm_name = pw.CharField(default="NA")
 
     description = pw.CharField(default="NA")
 
+    # May never be used, just in case one day someone wants to add files from a different source
     source = pw.CharField(default="HEK")
 
     @staticmethod
-    def from_hek(h: Dict[str, Any], source: str) -> None:
+    def from_hek(h, source):
+        """Function from_hek: 
+
+        Create a Hek event from a dict like object containing relevant parameters.
+        Intended for use on the json returned by Hek_Service.
+        
+        :param h: The data structure containing the information
+        :type h: dict-like
+        :param source: Where the event came from
+        :type source: str
+        :returns: Hek_Event
+        :type return: Hek_Event
+        """
         params = dict(
             event_id=h["SOL_standard"].replace(":", "-"),
             sol_standard=h["SOL_standard"],

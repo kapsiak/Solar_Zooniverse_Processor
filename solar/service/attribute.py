@@ -20,7 +20,7 @@ class Attribute:
         self.description = None
 
     @property
-    def value(self, **kwargs) -> Any:
+    def value(self, **kwargs):
         """
         Get the value of the attribute
         :rtype: Any

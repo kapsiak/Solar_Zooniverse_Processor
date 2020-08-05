@@ -11,6 +11,13 @@ def f(x):
 
 
 def read_class(path):
+    """Function read_class: Read a zooniverse classification file 
+    
+    :param path: The location of the file
+    :type path: Path-like
+    :returns: pandas dataframe containing the data
+    :type return: pd.dataframe
+    """
     im_path = Path(path)
     return pd.read_csv(im_path)
 
@@ -36,12 +43,27 @@ def rotate(origin, point, angle):
 
 
 def rectangle_transform(x, y, w, h, angle):
+    """Function rectangle_transform: Convert a rectangle from x,y,w,h as given by the zooniverse classification file to 
+    x,y,w,h as needed for this program. 
+    
+    :returns: Transformed rectangle coordinates
+    :type return: dict
+    """
     center = (x + w / 2, y + h / 2)
     x, y = rotate(center, (x, y), angle)
     return {"x": x, "y": y, "w": w, "h": h, "a": angle}
 
 
 def load_image_info(struct, s_data):
+    """Function load_image_info: Load the image data from zooniverse classification and add it to struct
+    
+    :param struct: The struct to add the data to
+    :type struct: ZStruct
+    :param s_data: Dictionary containing the data required to describe the image
+    :type s_data: dict-like
+    :returns: The structure with the data appended
+    :type return: ZStruct
+    """
     struct.im_ll_x = f(s_data["#im_ll_x"])
     struct.im_ll_y = f(s_data["#im_ll_y"])
     struct.im_ur_x = f(s_data["#im_ur_x"])
@@ -52,6 +74,15 @@ def load_image_info(struct, s_data):
 
 
 def bool_maker(value, s_data):
+    """Function bool_maker: Create a ZBool from the subject data
+    
+    :param value: the value of the boolean (True or False)
+    :type value: bool
+    :param s_data: Dictionary containing the zooniverse subject data
+    :type s_data: dict
+    :returns: A list of the created booleans
+    :type return: List[ZBool]
+    """
     purp = "See_Start"
     if value == "Yes":
         return [ZBool(val=True, purpose=purp)]
@@ -60,6 +91,15 @@ def bool_maker(value, s_data):
 
 
 def point_maker(value, s_data):
+    """Function point_maker: Create a ZPoint from the subject data
+   
+    :param value: The values from the universe classification
+    :type value: dict
+    :param s_data: Dictionary containing the zooniverse subject data
+    :type s_data: dict
+    :returns: A list of the created Point
+    :type return: List[ZPoint]
+    """
     return [
         load_image_info(
             ZPoint(
@@ -75,6 +115,15 @@ def point_maker(value, s_data):
 
 
 def rect_maker(value, s_data):
+    """Function rect_maker: Create a ZRect from the subject data
+   
+    :param value: The values from the universe classification
+    :type value: dict
+    :param s_data: Dictionary containing the zooniverse subject data
+    :type s_data: dict
+    :returns: A list of the created rect
+    :type return: List[ZRect]
+    """
     ret = []
     for v in value:
         w = v["width"] / float(s_data["#width"])
@@ -90,6 +139,7 @@ def rect_maker(value, s_data):
     return ret
 
 
+# This dict tells us which factory to use based on the 'tool' value 
 task_allocator = {
     "T0": bool_maker,
     "T1": point_maker,
@@ -98,6 +148,7 @@ task_allocator = {
 }
 
 
+# The following three functions use the frame to get different data from the classification file
 def frame_to_visid(meta, frame):
     data = next(iter(meta.items()))[1]
     total_frames = int(data["#frame_per_sub"])
@@ -120,6 +171,13 @@ def frame_to_fits_data(meta, frame):
 
 
 def make_row(z_row):
+    """Function make_row: Create a list of zooniverse data structs from a given classification
+    
+    :param z_row: A row if the zooniverse csv file
+    :type z_row: pd.dataframe
+    :returns: A list of all the structs contained in that classification
+    :type return: List[ZStruct]
+    """
     uid = z_row.loc["user_id"]
     cid = z_row.loc["classification_id"]
     wid = z_row.loc["workflow_id"]
@@ -143,6 +201,15 @@ def make_row(z_row):
 
 
 def load_all(path, row=None):
+    """Function load_all: Load an entire csv file an get all the classifications as python structures
+    
+    :param path: The path to the csv
+    :type path: Path-like
+    :param row: If given, work on only a single row, defaults to None
+    :type row: int
+    :returns: A list of all the structs
+    :type return: List[ZStruct]
+    """
     if isinstance(row, int):
         df = read_class(path).iloc[row]
         ret = [make_row(df)]

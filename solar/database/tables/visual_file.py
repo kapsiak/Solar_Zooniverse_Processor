@@ -17,12 +17,18 @@ import datetime
 
 
 class Visual_File(File_Model):
-    file_name_format = Config.file_storage.img
-    file_path_format = Config.storage_path.img
+
     """
     The table to store visual files. Also includes the necessary functions to extract
     world coordinates from coordinate on the image
+
+
+    Sorry, this class is a bit of a mess, I probably should have made separate functions to create the images.
     """
+
+
+    file_name_format = Config.file_storage.img
+    file_path_format = Config.storage_path.img
 
     visual_type = pw.CharField()
     extension = pw.CharField()

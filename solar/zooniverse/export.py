@@ -4,8 +4,19 @@ from itertools import chain
 
 
 def zooniverse_export(*files, export_dir="export", existing_csv=None):
-    """
-     Files is 
+    """Function zooniverse_export: Export a list of lists of lists of visual_files
+    
+    :param *files: The list of files
+    :type *files: List[List[List[Visual_File]]]
+    :param export_dir: The directory to export to , defaults to "export"
+    :type export_dir: Path-like
+    :param existing_csv: whether to append to an existing csv, defaults to None (! NOT CURRENTLY USED)
+    :type existing_csv: bool
+    :returns: None
+    :type return: None
+
+
+    Files is 
      [
     subject_2 ->   [[file1, file2,...] ,[file_1,file_2,...]] 
     subject 1->   ,[[file1, file2,...] ,[file_1,file_2,...]]
@@ -26,9 +37,14 @@ def zooniverse_export(*files, export_dir="export", existing_csv=None):
         f.export(export)
 
 
-def prepare_row(files, export_dir="export"):
-    files_dir = Path(export_dir)
-    files_dir.mkdir(exist_ok=True, parents=True)
+def prepare_row(files):
+    """Function prepare_row: Prepare a list of visual files for export.
+    
+    :param files: The collection of visual files
+    :type files: List[Visual_File]
+    :returns: A dictionary of csv data {Header : Value} 
+    :type return: dict
+    """
 
     file_names = ["file_name_{}".format(x) for x in range(len(files))]
     fits_db_id_names = ["fits_db_{}".format(x) for x in range(len(files))]
@@ -101,7 +117,23 @@ def prepare_row(files, export_dir="export"):
     return new_row
 
 
+
 def split(values, size, overlap=2):
+    """Function split: Break an iterable into lists of lenth size with list overlap 'overlap'
+    
+    :param values: The list of values to splot
+    :type values: iterable
+    :param size: The length of each list
+    :type size: int
+    :param overlap: The overlap of list, defaults to 2
+    :type overlap: int
+    :returns: A list of the generated lists
+    :type return: List[List]
+
+    Example: split([1,2,3,4,5,6,7,8,9,10], 4, 2]) -> [[1,2,3,4] ,[3,4,5,6], [6,7,8,9], [7,8,9,10]]
+
+    Notice that the last list has an overlap appropriate to ensure that it if of length size
+    """
     step = size - overlap
     new = [values[i : i + size] for i in range(0, len(values) - overlap, step)]
     if len(new[-1]) < size:

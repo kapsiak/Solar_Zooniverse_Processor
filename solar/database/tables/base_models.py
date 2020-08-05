@@ -53,6 +53,22 @@ class File_Model(Base_Model):
     file_hash = pw.CharField(default="NA")  # The file checksum
 
     def rename(self, file_name_format=None, file_path_format=None, *args, **kwargs):
+        """Function rename: Rename a file within the database, and move it to the new location
+
+        The format strings may use any parameters, provided that they appear either in one of the dict-like object or classes passed to *args,
+        or as one of the kwargs.
+
+        file_path_format takes the special argument "ffilename" which is the result, after formatting, of file_name_format.
+
+        :param file_name_format: The format to use for the name of the file, defaults to None
+        :type file_name_format: str
+        :param file_path_format: The format to use for the path, defaults to None
+        :type file_path_format: str
+        :param *args: List of dictionary-like objects
+        :type *args: List[dict]
+        :returns: None
+        :type return: None
+        """
         if not file_name_format:
             file_name_format = self.file_name_format
         if not file_path_format:
@@ -68,11 +84,10 @@ class File_Model(Base_Model):
         p.parent.mkdir(parents=True, exist_ok=True)
 
         self.save()
-        print(self.file_name)
 
         shutil.move(old_path, self.file_path)
 
-    def get_hash(self) -> str:
+    def get_hash(self):
         """
         Compute the hash of the file.
         Also sets the self.file_hash variable
@@ -111,12 +126,12 @@ class File_Model(Base_Model):
     def update_table():
         raise NotImplementedError
 
-    def export(self, new_path: Union[str, Path]):
+    def export(self, new_path):
         """
         Create a copy of this file at a given path.
 
         :param new_path: The location of the new file
-        :type new_path: Union[str, Path]
+        :type new_path: Path-like
         """
         new = Path(new_path)
 
