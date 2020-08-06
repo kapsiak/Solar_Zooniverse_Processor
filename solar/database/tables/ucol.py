@@ -45,7 +45,6 @@ class UnionCol(Base_Model):
     # The table to store the elements of lists
     list_storage_table = None
 
-
     _field_type = pw.CharField(column_name="type")
     _subtype = pw.CharField(null=True, column_name="subtype")
     _format = pw.CharField(null=True, column_name="format")

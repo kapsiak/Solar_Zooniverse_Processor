@@ -7,8 +7,8 @@ from typing import Any, Dict
 
 class Hek_Event(Base_Model):
 
-    event_id = pw.CharField(default="NA", unique=True) 
-    # Event_id is used mostly to circumvent issues where the sol standard contains ':' 
+    event_id = pw.CharField(default="NA", unique=True)
+    # Event_id is used mostly to circumvent issues where the sol standard contains ':'
     # which on mac (BSD?) behaves like a directory delimiter and causes problems with file saving
     # Event_id is Sol_Standard with the ':' replaced by '-'
     sol_standard = pw.CharField(default="NA")

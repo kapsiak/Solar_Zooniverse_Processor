@@ -26,7 +26,6 @@ class Visual_File(File_Model):
     Sorry, this class is a bit of a mess, I probably should have made separate functions to create the images.
     """
 
-
     file_name_format = Config.file_storage.img
     file_path_format = Config.storage_path.img
 

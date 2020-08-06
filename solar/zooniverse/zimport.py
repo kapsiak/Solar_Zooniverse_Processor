@@ -139,7 +139,7 @@ def rect_maker(value, s_data):
     return ret
 
 
-# This dict tells us which factory to use based on the 'tool' value 
+# This dict tells us which factory to use based on the 'tool' value
 task_allocator = {
     "T0": bool_maker,
     "T1": point_maker,

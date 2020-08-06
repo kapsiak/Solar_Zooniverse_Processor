@@ -117,7 +117,6 @@ def prepare_row(files):
     return new_row
 
 
-
 def split(values, size, overlap=2):
     """Function split: Break an iterable into lists of lenth size with list overlap 'overlap'
     

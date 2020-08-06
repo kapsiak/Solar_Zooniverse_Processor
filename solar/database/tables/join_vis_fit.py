@@ -13,6 +13,7 @@ class Join_Visual_Fits(Base_Model):
 
     In the future it may work out better to refractor videos into the their own class, in which case this may become different/unnecessary
     """
+
     fits_file = pw.ForeignKeyField(ff.Fits_File, backref="visual_join")
     visual_file = pw.ForeignKeyField(vf.Visual_File, backref="fits_join")
 
