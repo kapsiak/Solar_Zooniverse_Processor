@@ -11,16 +11,22 @@ def prop_trans(fig, point, angle):
 
 
 class Annot:
+    """
+    Base class for annotations to be added to images
+    """
+
     def draw(self, fig, ax):
         raise NotImplementedError
 
     @staticmethod
     def to_annot(struct, **kwargs):
-        """TODO: Docstring for to_annot.
+        """Function to_annot: Convert a zooniverse struct to an annotation.
+        Also can construct an annotation from arbitrary tuples of data.        
 
-        :param struct: TODO
-        :returns: TODO
-
+        :param struct: Data structure
+        :type struct: any
+        :param **kwargs: Passed to constructor of individual annotations
+        :returns: Annot
         """
 
         rect_attr = ["x", "y", "w", "h", "a"]
@@ -48,18 +54,24 @@ class Annot:
 
 
 class Rect_Annot(Annot):
-
-    """Docstring for Rect_annot. """
+    """
+    A rectangular annotation
+    """
 
     def __init__(self, x, y, w, h, a, **kwargs):
-        """TODO: to be defined.
-
-        :param x: TODO
-        :param y: TODO
-        :param w: TODO
-        :param h: TODO
-        :param a: TODO
-
+        """Function __init__: 
+        
+        :param x: x position of bottom left corner (in normalized image coordinates)
+        :type x: float
+        :param y: y coord of bottom left corner (in normalized image coordinates)
+        :type y: float
+        :param w: width of rectangle (in normalized image coordinates)
+        :type w: float
+        :param h: height or rectangle (in normalized image coordinates)
+        :type h: float
+        :param a: angle of rectangle relative to horizontal (degrees)
+        :type a: float
+        :param **kwargs: parameters passed to matplotlib.patches.Rectangle
         """
         self.x = x
         self.y = y
@@ -69,6 +81,14 @@ class Rect_Annot(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
+        """Function draw: Draw this rectangle of the image fig
+        
+        :param fig: The matplotlib figure to draw on
+        :type fig: matplotlib Figure
+        :param ax: UNUSED
+        :returns: None
+        :type return: None
+        """
         new = (self.x, self.y)
         rect = patches.Rectangle(
             new,
@@ -83,25 +103,37 @@ class Rect_Annot(Annot):
 
 
 class Circle_Annot(Annot):
-
-    """Docstring for Rect_annot. """
+    """
+    A circular annotation (also used to draw points).
+    """
 
     def __init__(self, x, y, r=10, **kwargs):
-        """TODO: to be defined.
-
-        :param x: TODO
-        :param y: TODO
-        :param w: TODO
-        :param h: TODO
-        :param a: TODO
-
+        """Function __init__: 
+        
+        :param x: x position of bottom left corner (in normalized image coordinates)
+        :type x: float
+        :param y: y coord of bottom left corner (in normalized image coordinates)
+        :type y: float
+        :param r: Radius of the circle
+        :type r: float
+        :param **kwargs: parameters passed to matplotlib.patches.Circle
         """
+
         self.x = x
         self.y = y
         self.r = r
         self.props = kwargs
 
     def draw(self, fig, ax):
+        """Function draw: Draw this circle of the image fig
+        
+        :param fig: The matplotlib figure to draw on
+        :type fig: matplotlib Figure
+        :param ax: UNUSED
+        :returns: None
+        :type return: None
+        """
+
         new = fig.transFigure.transform((self.x, self.y))
         circ = patches.Circle(
             new, radius=self.r, fill=True, transform=None, **self.props
@@ -111,18 +143,24 @@ class Circle_Annot(Annot):
 
 class Text_Point(Annot):
 
-    """Docstring for Rect_annot. """
+    """
+    Draw an arrow pointing to a point, with a text description.
+    """
 
     def __init__(self, x, y, text, r=10, **kwargs):
-        """TODO: to be defined.
-
-        :param x: TODO
-        :param y: TODO
-        :param w: TODO
-        :param h: TODO
-        :param a: TODO
+        """Function __init__: 
+        
+        :param x: x position of bottom left corner (in normalized image coordinates)
+        :type x: float
+        :param y: y coord of bottom left corner (in normalized image coordinates)
+        :type y: float
+        :param r: Radius of the circle
+        :type r: float
+        :param text: The text to write
+        :type text: str
 
         """
+
         self.x = x
         self.y = y
         self.r = r

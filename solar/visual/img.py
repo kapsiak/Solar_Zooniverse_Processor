@@ -6,6 +6,9 @@ from solar.common.printing import chat
 
 
 class Image_Builder(Visual_Builder):
+    """
+    Basic image builder
+    """
 
     generator_name = "generic_image"
     visual_type = "image"
@@ -15,6 +18,13 @@ class Image_Builder(Visual_Builder):
         self.creation_params = None
 
     def generate_image_data(self):
+        """Function generate_image_data: 
+
+        Analyze the existing self.fig to get information about the image.
+
+        :returns: None
+        :type return: None
+        """
         bbox = self.fig.get_window_extent().transformed(
             self.fig.dpi_scale_trans.inverted()
         )
@@ -24,6 +34,24 @@ class Image_Builder(Visual_Builder):
         )
 
     def save_visual(self, fits, save_path, max_size=1000, clear_after=True):
+        """Function save_visual: Save this visual
+        
+        :param fits: The fits file used to generate the image. Used for metadata extraction.
+        (This is not great practice and should probably be rewritten)
+        :type fits: Fits_File
+        :param save_path: The location to save the image
+        :type save_path: Path-like
+        :param max_size: Maximum file size in kilobytes, defaults to 1000
+        :type max_size: float
+        :param clear_after: Clear the image from memory after it has been saved ,defaults to True
+        
+        If generating a large number of images this should be set to true or there will be a memory overflow error.
+        On the other hand, if manipulating a single image repeadedly, probably better to keep it around between saves.
+        
+        :type clear_after: bool
+        :returns: None
+        :type return: None
+        """
         self.generate_image_data()
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -52,6 +80,9 @@ class Image_Builder(Visual_Builder):
 
 
 class Unframed_Image(Image_Builder):
+    """
+    An image with no frame
+    """
     generator_name = "unframed_image"
 
     def __init__(self, im_type, dpi=300):
@@ -89,6 +120,9 @@ class Basic_Image(Image_Builder):
 
         self._store_create_params(fpath=file_path, cmap=cmap, size=size, dpi=dpi)
 
+        # TODO: 
+        # Refractor this class so there is less stuff in the create() function. 
+        # <06-08-20, yourname> #
         if not issubclass(type(file_path), sm.GenericMap):
             self.map = sm.Map(file_path)
             if not Path(file_path).is_file():
