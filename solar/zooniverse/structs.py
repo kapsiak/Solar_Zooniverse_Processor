@@ -8,6 +8,9 @@ import json
 import numpy as np
 
 
+def r(x):
+    return round(x,2)
+
 @dataclass
 class ZBase:
     subject_id: int = 0
@@ -36,11 +39,19 @@ class ZBase:
     def as_data(self):
         return list((getattr(self, x) for x in self.data_members))
 
+    def __str__(self):
+        if type(self) == ZBase:
+            return f"{self.__class__.__name__}({self.subject_id})"
+        return f"{self.__class__.__name__}({self.subject_id}" + ", {})"
+
 
 @dataclass
 class ZBool(ZBase):
     data_members: Tuple[str] = field(default=("val",), init=False, repr=False)
     val: bool = False
+
+    def __str__(self):
+        return super().__str__().format(self.val)
 
 
 @dataclass
@@ -57,6 +68,11 @@ class ZSpatial(ZBase):
     im_ur_x: float = -1
     im_ur_y: float = -1
 
+    def __str__(self):
+        if type(self) in (ZSpatial, ZPoint):
+            return super().__str__().format(f"{r(self.x),r(self.y)}")
+        return super().__str__().format(f"{r(self.x),r(self.y)}, " + "{}")
+
 
 @dataclass
 class ZRect(ZSpatial):
@@ -66,6 +82,9 @@ class ZRect(ZSpatial):
     w: float = -1
     h: float = -1
     a: float = -1
+
+    def __str__(self):
+        return super().__str__().format(f"{r(self.w),r(self.h)}")
 
 
 @dataclass

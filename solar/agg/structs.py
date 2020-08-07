@@ -7,6 +7,7 @@ from sunpy.map import Map
 from sunpy.io.header import FileHeader
 import numpy as np
 from solar.common.mapproc import world_from_pixel
+from solar.common.config import Config
 
 
 TIME_START = datetime(1995, 1, 1, 0, 0, 0)
@@ -22,11 +23,16 @@ def since_start(time):
     return (time - TIME_START) / timedelta(milliseconds=1)
 
 
+def r(x):
+    return round(x, 2)
+
+
 @dataclass
 class Space_Obj:
     user_id: int = 0
     workflow_id: int = 0
     class_id: int = 0
+    subject_id: int = 0
 
     fits_id: int = -1
     visual_id: int = -1
@@ -42,6 +48,14 @@ class Space_Obj:
     purpose: str = None
 
     _smap: Map = None
+
+    def __str__(self):
+        if type(self) in (Space_Obj, Space_Point):
+            return f"{self.__class__.__name__}({self.subject_id},{self._time}, {r(self._x),r(self._y)})"
+        return (
+            f"{self.__class__.__name__}({self.subject_id},{self._time}, {r(self._x),r(self._y)}"
+            + ", {})"
+        )
 
     def make_data(self):
         raise NotImplementedError
@@ -97,7 +111,9 @@ class Space_Obj:
 
         self.get_map(z_struct)
         if self.smap:
-            self._time = self.smap.meta["date-obs"]
+            self._time = datetime.strptime(
+                self.smap.meta["date-obs"], Config.time_format.fits
+            )
         else:
             try:
                 f = Fits_File.get(Fits_File.id == self.fits_id)
@@ -210,24 +226,6 @@ class Space_Obj:
         new.xy = z_struct
         return new
 
-    @staticmethod
-    def make(z_struct):
-        """Function make: Create an appropriate Space_Obj
-        
-        :param z_struct: Zooniverse Structure
-        :type z_struct: ZBase
-        :returns: Appropriate Space_Obj subclass
-        :type return: Space_Obj
-        """
-        if isinstance(z_struct, ZPoint):
-            print("Making Point")
-            return Space_Point.make(z_struct)
-        if isinstance(z_struct, ZRect):
-            print("Making Rect")
-            return Space_Rect.make(z_struct)
-        print("Making None")
-        return None
-
 
 @dataclass
 class Space_Point(Space_Obj):
@@ -245,6 +243,9 @@ class Space_Rect(Space_Obj):
     h: float = -1
     a: float = -1
 
+    def __str__(self):
+        return super().__str__().format(f"{r(self.w),r(self.h)}")
+
     def make_data(self):
         return (self.x, self.y, self.w, self.h, self.a, since_start(self.time))
 
@@ -253,3 +254,17 @@ class Space_Rect(Space_Obj):
         new = super().base_make(z_struct)
         new.w, new.h, new.a = z_struct.w, z_struct.h, z_struct.a
         return new
+
+
+def make(z_struct):
+    """Function make: Create an appropriate Space_Obj
+    :param z_struct: Zooniverse Structure
+    :type z_struct: ZBase
+    :returns: Appropriate Space_Obj subclass
+    :type return: Space_Obj
+    """
+    if isinstance(z_struct, ZPoint):
+        return Space_Point.make(z_struct)
+    if isinstance(z_struct, ZRect):
+        return Space_Rect.make(z_struct)
+    return None

@@ -2,6 +2,7 @@ from sklearn.cluster import AffinityPropagation
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn import metrics
 from sklearn.datasets import make_blobs
+import hdbscan
 
 
 def aff_fit(data):
@@ -32,3 +33,12 @@ def mean_fit(data):
     labels = ms.labels_
     cluster_centers = ms.cluster_centers_
     return (labels, cluster_centers)
+
+
+def hdb(data):
+    clusterer = hdbscan.HDBSCAN()
+    clusterer.fit(data)
+    return clusterer.labels_
+
+
+
