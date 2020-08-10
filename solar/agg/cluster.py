@@ -39,6 +39,3 @@ def hdb(data):
     clusterer = hdbscan.HDBSCAN()
     clusterer.fit(data)
     return clusterer.labels_
-
-
-

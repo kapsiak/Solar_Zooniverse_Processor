@@ -83,6 +83,7 @@ class Unframed_Image(Image_Builder):
     """
     An image with no frame
     """
+
     generator_name = "unframed_image"
 
     def __init__(self, im_type, dpi=300):
@@ -120,8 +121,8 @@ class Basic_Image(Image_Builder):
 
         self._store_create_params(fpath=file_path, cmap=cmap, size=size, dpi=dpi)
 
-        # TODO: 
-        # Refractor this class so there is less stuff in the create() function. 
+        # TODO:
+        # Refractor this class so there is less stuff in the create() function.
         # <06-08-20, yourname> #
         if not issubclass(type(file_path), sm.GenericMap):
             self.map = sm.Map(file_path)

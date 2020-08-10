@@ -9,7 +9,8 @@ import numpy as np
 
 
 def r(x):
-    return round(x,2)
+    return round(x, 2)
+
 
 @dataclass
 class ZBase:
