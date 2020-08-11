@@ -73,8 +73,8 @@ class Rect_Annot(Annot):
         :type a: float
         :param **kwargs: parameters passed to matplotlib.patches.Rectangle
         """
-        self.x = x
-        self.y = y
+        self.x = x  # Of Center
+        self.y = y  # Of Center
         self.w = w
         self.h = h
         self.a = a
@@ -89,14 +89,14 @@ class Rect_Annot(Annot):
         :returns: None
         :type return: None
         """
-        new = (self.x, self.y)
+        new = (self.x - self.w / 2, self.y - self.h / 2)
         rect = patches.Rectangle(
             new,
             self.w,
             self.h,
             angle=0,
             fill=False,
-            transform=prop_trans(fig, new, self.a),
+            transform=prop_trans(fig, (self.x,self.y), self.a),
             **self.props
         )
         fig.patches.append(rect)

@@ -52,7 +52,7 @@ def rectangle_transform(x, y, w, h, angle):
     :type return: dict
     """
     center = (x + w / 2, y + h / 2)
-    x, y = rotate(center, (x, y), angle)
+    #x, y = rotate(center, (x, y), angle)
     return {"x": x, "y": y, "w": w, "h": h, "a": angle}
 
 
@@ -133,6 +133,8 @@ def rect_maker(value, s_data):
         x = v["x"] / float(s_data["#width"])
         y = (1 - (v["y"] / float(s_data["#height"]))) - h
         a = v["angle"]
+        x = x + w/2
+        y = y + h/2
         ret.append(ZPoint(x=x + w / 2, y=y + h / 2))
         new_dict = rectangle_transform(x, y, w, h, a)
         new_rect = ZRect(**new_dict, frame=v["frame"], purpose=v["tool_label"])
