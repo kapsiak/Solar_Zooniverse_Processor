@@ -27,7 +27,7 @@ def mean_fit(data):
     :param data: data
     :type data: array type
     """
-    bandwidth = estimate_bandwidth(data, quantile=0.2, n_samples=500)
+    bandwidth = estimate_bandwidth(data)
     ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
     ms.fit(data)
     labels = ms.labels_
@@ -36,6 +36,8 @@ def mean_fit(data):
 
 
 def hdb(data):
-    clusterer = hdbscan.HDBSCAN()
+    clusterer = hdbscan.HDBSCAN(
+        min_samples=1, cluster_selection_epsilon=1, min_cluster_size=2
+    )
     clusterer.fit(data)
     return clusterer.labels_

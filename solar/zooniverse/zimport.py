@@ -4,6 +4,7 @@ import json
 from .structs import ZRect, ZPoint, ZBool
 import math
 from solar.common.utils import into_number
+from numpy.linalg import norm
 
 
 def f(x):
@@ -39,6 +40,7 @@ def rotate(origin, point, angle):
 
     qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
     qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+
     return qx, qy
 
 
@@ -131,11 +133,11 @@ def rect_maker(value, s_data):
         x = v["x"] / float(s_data["#width"])
         y = (1 - (v["y"] / float(s_data["#height"]))) - h
         a = v["angle"]
+        ret.append(ZPoint(x=x + w / 2, y=y + h / 2))
         new_dict = rectangle_transform(x, y, w, h, a)
         new_rect = ZRect(**new_dict, frame=v["frame"], purpose=v["tool_label"])
         ret.append(load_image_info(new_rect, s_data))
-        ang = math.radians(a)
-        c_x, c_y = rotate((x, y), (x + w / 2, y + h / 2), ang)
+        ret.append(ZPoint(x=new_dict["x"], y=new_dict["y"]))
     return ret
 
 
