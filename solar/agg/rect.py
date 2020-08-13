@@ -5,6 +5,12 @@ import shapely.geometry
 import shapely.affinity
 
 def contour(r):
+    """Function contour: Given a rectangle, compute its contour
+    
+    :param r: Rectangle data
+    :type r: tuple
+    :returns: Shapely contour
+    """
     w = r[2]
     h = r[3]
     c = shapely.geometry.box(-w / 2.0, -h / 2.0, w / 2.0, h / 2.0)
@@ -13,14 +19,26 @@ def contour(r):
 
 
 def get_area(r):
+    """Function get_area: Compute the area of a rectangle
+    
+    :param r: Rectangle data
+    :type r: tuple
+    :returns: area of the rectangle
+    :type return: float
+    """
     return contour(r).area
 
 
 def intersection(r1, r2):
+    """Function intersection: Compute the polygon representing the intersection of two rectangles
+    
+    """
     return contour(r1).intersection(contour(r2))
 
 
 def i_area(r1, r2):
+    """Function i_area: Compute the percent area of overlap of two rectangles
+    """
     total = get_area(r1) + get_area(r2)
     ia = intersection(r1, r2).area
     if ia > 0:
