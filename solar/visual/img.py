@@ -119,6 +119,8 @@ class Basic_Image(Image_Builder):
         if not dpi:
             dpi = self.dpi
 
+        # This function is here so that we can recall this function later with the
+        # same parameters if we need to rescale
         self._store_create_params(fpath=file_path, cmap=cmap, size=size, dpi=dpi)
 
         # TODO:

@@ -96,7 +96,7 @@ class Rect_Annot(Annot):
             self.h,
             angle=0,
             fill=False,
-            transform=prop_trans(fig, (self.x,self.y), self.a),
+            transform=prop_trans(fig, (self.x, self.y), self.a),
             **self.props
         )
         fig.patches.append(rect)

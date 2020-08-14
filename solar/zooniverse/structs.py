@@ -61,7 +61,7 @@ class ZSpatial(ZBase):
     x: float = -1  # x coord in image coordinates of the center of the rectangle
     y: float = -1  # y coord in image coordinates of the center of the rectangle
 
-    width: float = -1   # width of the image in pixels
+    width: float = -1  # width of the image in pixels
     height: float = -1  # height of the image in pixels
 
     im_ll_x: float = -1  # x location of lower left corner of the actual solar image
@@ -80,9 +80,9 @@ class ZRect(ZSpatial):
     data_members: Tuple[str] = field(
         default=("x", "y", "w", "h", "a"), init=False, repr=False
     )
-    w: float = -1 # width of the rectangle in image coords
-    h: float = -1 # height of the rectangle in image coords
-    a: float = -1 # angle of the rectangle relative to the x axis
+    w: float = -1  # width of the rectangle in image coords
+    h: float = -1  # height of the rectangle in image coords
+    a: float = -1  # angle of the rectangle relative to the x axis
 
     def __str__(self):
         return super().__str__().format(f"{r(self.w),r(self.h)}")

@@ -7,7 +7,7 @@ from .rect import compute_overlap, contour
 from shapely.ops import nearest_points
 from shapely.geometry import Point, Polygon
 
-# As a rule, the first two letters denote what is being compared 
+# As a rule, the first two letters denote what is being compared
 # and the d1, d2, ..., are just labels for distance 1, ...
 #   r : rectangle
 #   p : point
@@ -106,6 +106,7 @@ def build_metric(func, *args, **kwargs):
     :returns: A metric
     :type return: func(a,b)
     """
+
     def ret(a, b):
         return func(a, b, *args, **kwargs)
 

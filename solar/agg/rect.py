@@ -4,6 +4,7 @@ import numpy as np
 import shapely.geometry
 import shapely.affinity
 
+
 def contour(r):
     """Function contour: Given a rectangle, compute its contour
     

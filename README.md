@@ -185,6 +185,24 @@ all_spatial = [x for x in all_spatial if x]
 
 For aggregation purposes, each spatial structs comes with a method `make_data()`, which converts the structs into a tuple of data suitable for aggregation.
 
+# Visualizations
+
+The package comes with several functions which add additional annotations to images. 
+
+```python
+import solar.visual.annot as an
+from solar.datatabase.tables.fits_file import Fits_File
+from solar.visual.img import Basic_Image
+
+rect = an.Rect_Annot(x,y,w,h,a, **kwargs)
+circ = an.Circl_Annot(x,y,r=10, **kwargs)
+im_factory = Basic_Image('png')
+im_factory.add_annotation(rect,circ)
+f = Fits_File.get()
+im_factory.create(f)
+```
+
+
 # (Work in Progress) Command line interface
 
 
