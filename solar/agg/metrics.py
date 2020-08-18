@@ -78,7 +78,7 @@ def ppd1(p1, p2):
 def compute_dmatrix(val_list, metric=np.inner):
     """Function compute_dmatrix: Compute the distance matrix for a set of features
     """
-    return np.array([[metric(x, y) for x in rect_list] for y in val_list])
+    return np.array([[metric(x, y) for x in val_list] for y in val_list])
 
 
 def ud1(a, b, ppmet=ppd1, rrmet=rrd2, rpmet=rpd1):
@@ -117,4 +117,3 @@ if __name__ == "__main__":
     r = [1, 2, 3, 4, 45]
     p = [3, 5]
     p1 = rpd1(r, p)
-    print(p1)
