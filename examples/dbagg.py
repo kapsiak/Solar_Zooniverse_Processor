@@ -44,16 +44,16 @@ color_palette = sns.color_palette("deep", 8)
 cluster_colors = [color_palette[x] if x >= 0 else (0.5, 0.5, 0.5) for x in labels]
 
 
-annots = [Annot.to_annot(x, color=c) for x, c in zip(data, cluster_colors)]
+annots = [Annot.to_annot(x, color=c, ls="--") for x, c in zip(data, cluster_colors)]
 
-# for x in set(labels):
-#    print(x)
-#    av = average(x, labels, data, narrow="rect")
-#    avc = average(x, labels, data, narrow="point")
-#    if av is not None:
-#        print(av)
-#        annots.append(Rect_Annot(*av, color=cluster_colors[x], lw=2))
-#        annots.append(Circle_Annot(*avc, color=cluster_colors[x], r=20))
+for x in set((x for x in labels if x > -1)):
+    print(x)
+    av = average(x, labels, data, narrow="rect")
+    avc = average(x, labels, data, narrow="point")
+    if av is not None:
+        print(av)
+        annots.append(Rect_Annot(*av, color=color_palette[x], lw=2))
+        annots.append(Circle_Annot(*avc, color=color_palette[x], r=20))
 
 annots = [x for x in annots if x]
 

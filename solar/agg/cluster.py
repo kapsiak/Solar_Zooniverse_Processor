@@ -39,6 +39,7 @@ def hdb(data, metric="euclidean"):
     clusterer = hdbscan.HDBSCAN(
             min_samples=2, 
             alpha=1.0,
+            #cluster_selection_epsilon=10.0,
             #min_cluster_size=2, 
             metric=metric)
     clusterer.fit(data)
