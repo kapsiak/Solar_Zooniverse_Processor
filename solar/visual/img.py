@@ -135,8 +135,6 @@ class Basic_Image(Image_Builder):
                 return False
         else:
             self.map = file_path
-            if not Path(file_path).is_file():
-                return False
 
         title_obsdate = self.map.date.strftime("%Y-%b-%d %H:%M:%S")
 
@@ -157,6 +155,7 @@ class Basic_Image(Image_Builder):
         self.ax.set_xlabel("Solar X (arcsec)")
         self.ax.set_ylabel("Solar Y (arcsec)")
         self.ax.set_title(f"SDO-AIA   {title_obsdate}")
+        self.generate_image_data()
         self.draw_annotations()
         # self.generate_image_data()
         return True

@@ -36,6 +36,10 @@ def mean_fit(data):
 
 
 def hdb(data, metric="euclidean"):
-    clusterer = hdbscan.HDBSCAN(min_samples=1, min_cluster_size=2, metric=metric)
+    clusterer = hdbscan.HDBSCAN(
+            min_samples=2, 
+            alpha=1.0,
+            #min_cluster_size=2, 
+            metric=metric)
     clusterer.fit(data)
     return clusterer.labels_
