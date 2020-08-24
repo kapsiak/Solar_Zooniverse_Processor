@@ -25,7 +25,6 @@ def pixel_from_world(sunmap, image_data, hpc_x, hpc_y, normalized=False):
     """Function pixel_from_world: Take a solar map, an image, and use these to convert a world coordinate to a coordinate in pixels on the image.
     If normalized is set to true, the resulting image coordinate is given in normalized image coordinates in the range [0,1].
     
-    
     WARNING: This function is broken for now
 
     :param sunmap: The map containing the WCS data
@@ -41,8 +40,6 @@ def pixel_from_world(sunmap, image_data, hpc_x, hpc_y, normalized=False):
     :returns: The resulting coordinates
     :type return: tuple(float)
     """
-
-    raise NotImplementedError
 
     im_width = image_data.width
     im_height = image_data.height
