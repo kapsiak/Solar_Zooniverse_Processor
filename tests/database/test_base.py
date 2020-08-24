@@ -36,7 +36,7 @@ class TestPathField(unittest.TestCase):
             "other.txt",
             "~/another/",
             "~/another/anotherone/again.txt",
-            "cool/coolfile"
+            "cool/coolfile",
         ]
 
         paths = [Path(x) for x in pathstrs]
