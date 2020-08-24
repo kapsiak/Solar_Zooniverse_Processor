@@ -12,14 +12,14 @@ bim = Basic_Image("png")
 bim.create(f.file_path)
 
 coord = mp.world_from_pixel_value(header, bim, x, y)
-coord = tuple((round(x,2) for x in coord))
+coord = tuple((round(x, 2) for x in coord))
 pixel = mp.pixel_from_world(header, bim, *coord, normalized=True)
 
 
 tp = Text_Point(*(pixel), f"{coord}")
 circ = Circle_Annot(x, y)
 
-bim.add_annotation(circ,tp)
+bim.add_annotation(circ, tp)
 
 bim.create(f.file_path)
 bim.save_visual(f, "examples/coord.png")
