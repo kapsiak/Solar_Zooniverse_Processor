@@ -105,8 +105,6 @@ im.world_from_pixel(0.3,0.2)
 ```
 In the last line, we show how to get a world pixel from a location on the image, either by using the actual pixel location, or a normalized image coordinate. 
 
-<img src="imgs/ssw_cutout_20100604_131450_aia_304_.png" width="400">
-<img src="imgs/sun.gif" width="500">
 
 # Working with Zooniverse
 
