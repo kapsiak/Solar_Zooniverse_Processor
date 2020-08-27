@@ -26,15 +26,23 @@ class Visual_File(File_Model):
     Sorry, this class is a bit of a mess, I probably should have made separate functions to create the images.
     """
 
+    
     file_name_format = Config.file_storage.img
     file_path_format = Config.storage_path.img
 
+    #: The type of visual (either image for video)
     visual_type = pw.CharField()
+
+    #: The extension of the file
     extension = pw.CharField()
 
+    #: The generator used to create the visual
     visual_generator = pw.CharField(null=True)
 
+    #: An optional description of the generated visual
     description = pw.CharField(default="NA")
+
+    #: The time the visual was generated
     time_generated = pw.DateTimeField(default=datetime.datetime.now)
 
     # The following 4 float fields hold the normalized image coordinate describing the location of the actual image on the picture.
@@ -91,6 +99,22 @@ class Visual_File(File_Model):
         desc: str = "",
         overwrite=True,
     ):
+        """
+        Create a new visual. This is a wrapper that uses a :class:`~solar.visual.base_visual.Visual_Builder` to create new files and automatically add them to the database.
+
+        :param input_file: The :class:`~solar.database.tables.fites_file.Fits_File` to be used in generating the images.
+        :type input_file: Either a list or a single :class:`~solar.database.tables.fites_file.Fits_File`
+        :param visual_builder: The :class:`~solar.visual.base_visual.Visual_Builder` to use to generate the images
+        :type visual_builder: :class:`~solar.visual.base_visual.Visual_Builder`
+        :param save_format: The format to save the files
+        :type save_format: str
+        :param file_save_format: The format for the file name
+        :type save_format: str
+        :param desc: Optional Description
+        :type save_format: str
+        :param overwrite: Whether to overwrite existing files. If true aborts if a file that elready exists would be generated
+        :type save_format: bool
+        """
         btype = type(visual_builder)
         if issubclass(btype, Video_Builder):
             chat("Looks like you want me to create a video")
@@ -328,18 +352,26 @@ class Visual_File(File_Model):
         return join
 
     def pixel_from_world(self, hpc_x, hpc_y, normalized=False):
+        """ Get the pixel coordinate from a world coordinate
+        """
         fits = self.fits_join.get().fits_file
         header_dict = FileHeader(fits.get_header_as_dict())
         fake_map = Map(np.zeros((1, 1)), header_dict)
         return mp.pixel_from_world(fake_map, self, hpc_x, hpc_y, normalized=normalized)
 
     def world_from_pixel(self, x, y):
+        """ Get a world coordinate from a pixel on the image.
+        
+        :rtype: sunpy coordinate
+        """
         if x > 1 and y > 1:
             return self.__world_from_pixel_abs(x, y)
         else:
             return self.__world_from_pixel_norm(x, y)
 
     def world_from_pixel_value(self, x, y):
+        """Returns the HPC coordinate from a pixel coordinate as a tuple.
+        """
         v = self.world_from_pixel(x, y)
         return v.spherical.lon.arcsec, v.spherical.lat.arcsec
 
@@ -354,6 +386,9 @@ class Visual_File(File_Model):
         return mp.world_from_pixel_norm(fake_map, self, x, y)
 
     def get_fits(self):
+        """
+        Get the fits files used to generate this image
+        """
         from .join_vis_fit import Join_Visual_Fits
 
         found = Join_Visual_Fits.select().where(Join_Visual_Fits.visual_file == self)

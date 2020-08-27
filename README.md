@@ -27,7 +27,7 @@ h.save_data()
 
 ```python
 from solar.database import Hek_Event, Cutout_Service
-event Hek_Event.get()
+event =  Hek_Event.get()
 cutout = Cutout_Service._from_event(event)
 cutout.submit_request()
 cutout.save_request()

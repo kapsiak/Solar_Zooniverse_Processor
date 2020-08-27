@@ -1,0 +1,70 @@
+\documentclass[margin=5mm]{standalone}
+\usepackage{tikz}
+\usetikzlibrary{patterns,intersections,angles,quotes, calc, graphs, positioning}
+\begin{document}
+\begin{tikzpicture}[node distance = 1cm]
+    \def\colorext{gray}
+    \def\colordata{blue}
+    \def\colorclass{red}
+    \tikzset{shiftnode/.style = {yshift=-1cm}}
+    \tikzset{external/.style={draw,
+            align=center,
+            line width = 1, 
+            fill= \colorext!10, 
+            draw = \colorext!40, 
+            minimum width = 2cm,
+            minimum height = 1cm,
+            rounded corners
+    }}
+    \tikzset{database/.style={draw,
+            align=center,
+            line width = 1, 
+            fill= \colordata!10, 
+            draw = \colordata!40, 
+            minimum width = 2cm,
+            minimum height = 1cm,
+            rounded corners
+    }}
+    \tikzset{fetcher/.style={
+            align=center,
+            in front of path,
+            fill=\colorclass!10,
+    }}
+    \tikzset{connector/.style={-latex}}
+
+    \node[external] (hekdatabase) at (-3,0) {Hek Database};
+    \node[fetcher, right=of hekdatabase] (hekserv) {Hek Service};
+    \node[database, below=of hekserv] (hekev) {Hek Event};
+    \draw[connector] (hekdatabase) -- (hekserv);
+    \draw[connector] (hekserv) -- (hekev);
+    \node[fetcher, right=of hekev] (cutserv) { Cutout Service};
+    \node[external, right=of cutserv] (ssw) {SSW Cutout};
+    \draw[connector] (hekev) -- (cutserv);
+    \draw[connector] (ssw) -- (cutserv);
+    \node[database, below=of cutserv] (fits) {Fits Files};
+    \draw[connector] (cutserv) -- (fits);
+    \node[fetcher, below=of fits] (imggen) {Image Generators};
+    \node[database, below=of imggen] (img) {Image Files};
+    \draw[connector] (fits) -- (imggen);
+    \draw[connector] (imggen) -- (img);
+    \node[fetcher, left = of img] (zoogen) {Zooniverse \\ Export Function};
+    \node[database, xshift = 1.3cm , below=of zoogen] (zooimg) {Zooniverse\\ Images};
+    \node[database,xshift = -1.3cm, below=of zoogen] (zoometa) {Zooniverse\\ Metadata};
+    \draw[connector] (img) -- (zoogen);
+    \draw[connector] (zoogen) -- (zooimg);
+    \draw[connector] (zoogen) -- (zoometa);
+
+    \node[external, fill=green, below= of zoogen, yshift = -2cm] (zoo) {Zooniverse};
+    \draw[connector] (zooimg) -- (zoo);
+    \draw[connector] (zoometa) -- (zoo);
+
+    \matrix[draw] at (-3,-4.5) {
+        \node[external, minimum size=3mm] {}; & 
+            \node[] {External Services}; \\ 
+            \node[database, minimum size=3mm] {}; & 
+                \node[] {Local Data}; \\ 
+                \node[fetcher, minimum size=3mm] {}; & 
+                    \node[] {Python Utility classes}; \\ 
+                    } ;
+            \end{tikzpicture}
+            \end{document}

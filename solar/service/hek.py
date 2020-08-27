@@ -30,18 +30,14 @@ class Hek_Service(Base_Service):
     # Lock to prevent data races
     event_adder_lock = Lock()
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args, **kwargs):
         """
-        Initialize the request
+        Initialize the request.
+        The kwargs correspond exactly to the keywords described in `HEK API Reference
+        <http://solar.stanford.edu/hekwiki/ApplicationProgrammingInterface?action=print>`_
 
-        :param start_time: The time to start the search
-        :type start_time: str
-        :param end_time: The time to end the search
-        :type end_time: str
         :param kwargs: kwargs to pass to the hek query
         :type kwargs: Any
-        :return: None
-        :rtype: None
         """
 
         self.service_request_id = None
@@ -180,10 +176,7 @@ class Hek_Service(Base_Service):
 
     def submit_request(self):
         """
-        Request all time intervals
-
-        :return: None
-        :rtype: None
+        Submit a request to the HEK service.
         """
         intervals = self.__break_into_intervals()
         with cf.ThreadPoolExecutor(max_workers=5) as executor:
@@ -205,14 +198,14 @@ class Hek_Service(Base_Service):
         Return a list of the found events
 
         :return: List of events found by the hek search
-        :rtype: List[Hek_Event]
+        .. py:module:: solar.database.tables.hek_event
+        :rtype: List[:class:`Hek_Event`]
         """
         return self.data
 
     def save_data(self):
-        """Function save_data: Save the data found from the request to the database
-        :returns: None
-        :type return: None
+        """
+        Save the data found from the request to the database
         """
         self._data = [
             e

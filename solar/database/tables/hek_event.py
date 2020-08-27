@@ -6,38 +6,55 @@ from typing import Any, Dict
 
 
 class Hek_Event(Base_Model):
+    """
+    """
 
+    #: Event_id is used mostly to circumvent issues where the sol standard contains ':'
+    #: which on mac (BSD?) behaves like a directory delimiter and causes problems with file saving
+    #: Event_id is Sol_Standard with the ':' replaced by '-'
     event_id = pw.CharField(default="NA", unique=True)
-    # Event_id is used mostly to circumvent issues where the sol standard contains ':'
-    # which on mac (BSD?) behaves like a directory delimiter and causes problems with file saving
-    # Event_id is Sol_Standard with the ':' replaced by '-'
+
+    #: The sol standard
     sol_standard = pw.CharField(default="NA")
 
+    #: The event starttime
     start_time = pw.DateTimeField(default=datetime.now)
+    #: the event endtime
     end_time = pw.DateTimeField(default=datetime.now)
 
+    #: The unit the coordinates are given in
     coord_unit = pw.CharField(default="NA")
 
+    #: the x coord of the lower left corner of the bounding box in hpc
     x_min = pw.FloatField(default=-1)
+    #: the y coord of the lower left corner of the bounding box in hpc
     y_min = pw.FloatField(default=-1)
 
+    #: the x coord of the upper right corner of the bounding box in hpc
     x_max = pw.FloatField(default=-1)
+    #: the y coord of the upper right corner of the bounding box in hpc
     y_max = pw.FloatField(default=-1)
 
+    #: The x coord of the event in HPC
     hpc_x = pw.FloatField(default=-1)
+    #: The y coord of the event in HPC
     hpc_y = pw.FloatField(default=-1)
 
+    #: The x coord of the event in HGC
     hgc_x = pw.FloatField(default=-1)
+    #: The y coord of the event in HGC
     hgc_y = pw.FloatField(default=-1)
 
+    #: Who identified the event
     frm_identifier = pw.CharField(default="NA")
 
-    # The algorithm that identified the event in HEK
+    #: The algorithm that identified the event in HEK
     search_frm_name = pw.CharField(default="NA")
 
+    #: An option description
     description = pw.CharField(default="NA")
 
-    # May never be used, just in case one day someone wants to add files from a different source
+    #: May never be used, just in case one day someone wants to add files from a different source
     source = pw.CharField(default="HEK")
 
     @staticmethod

@@ -6,17 +6,24 @@ from .hek_event import Hek_Event
 
 
 class Service_Request(Base_Model):
+    """
+    Class to store information from both the hek and ssw requests, so thay they can be replicated later if needed.
+    """
+    
+    #: Foreign key to the event from which this request was generated (used only for the ssw requests)
     event = pw.ForeignKeyField(Hek_Event, backref="service_requests", null=True)
 
     # The service type should be either hek or cutout.
-    # TODO:  Add JSOC? #
+    #: The type of service (either ssw or hek) 
     service_type = pw.CharField()
 
-    # Status should be one of
-    #  - unsubmitted
-    #  - submitted (but not complete)
-    #  - completed (request has been completed)
+    #: Status should be one of
+    #:  - unsubmitted
+    #:  - submitted (but not complete)
+    #:  - completed (request has been completed)
     status = pw.CharField()
+
+    #: The job id of the request (used only for ssw)
     job_id = pw.CharField(null=True)
 
     def __getitem__(self, key: str) -> Any:
@@ -31,7 +38,7 @@ class Service_Request(Base_Model):
         return self.parameters.where(Service_Parameter.key == key).get().value
 
     def get_param(self, param):
-        """Function get_param: Get a parameter of the request
+        """Get a parameter of the request
         
         :param param: parameter name
         :type param: str
@@ -42,7 +49,7 @@ class Service_Request(Base_Model):
         self.parameters.where(Service_Parameter.key == param).get()
 
     def get_params_as_dict(self):
-        """Function get_params_as_dict: Get all the parameters as a dictionary
+        """ Get all the parameters as a dictionary
         :returns: Parameters formatted as dict
         :type return: dict
         """
