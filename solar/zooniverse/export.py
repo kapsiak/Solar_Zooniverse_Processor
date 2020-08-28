@@ -6,8 +6,8 @@ from itertools import chain
 def zooniverse_export(*files, export_dir="export", existing_csv=None):
     """Function zooniverse_export: Export a list of lists of lists of visual_files
     
-    :param *files: The list of files
-    :type *files: List[List[List[Visual_File]]]
+    :param files: The list of files
+    :type files: List[List[List[Visual_File]]]
     :param export_dir: The directory to export to , defaults to "export"
     :type export_dir: Path-like
     :param existing_csv: whether to append to an existing csv, defaults to None (! NOT CURRENTLY USED)
@@ -17,15 +17,19 @@ def zooniverse_export(*files, export_dir="export", existing_csv=None):
 
 
     Files is 
+
      [
+
     subject_2 ->   [[file1, file2,...] ,[file_1,file_2,...]] 
+
     subject 1->   ,[[file1, file2,...] ,[file_1,file_2,...]]
+
     ]
     """
     export = Path(export_dir)
     files_dir = export
     files_dir.mkdir(exist_ok=True, parents=True)
-    data = [prepare_row(x) for event in files for x in event]
+    data = [__prepare_row(x) for event in files for x in event]
     header = [x for x in data[0]]
     with open(export / "meta.csv", "w") as f:
         writer = csv.DictWriter(f, fieldnames=header)
@@ -37,8 +41,9 @@ def zooniverse_export(*files, export_dir="export", existing_csv=None):
         f.export(export)
 
 
-def prepare_row(files):
-    """Function prepare_row: Prepare a list of visual files for export.
+def __prepare_row(files):
+    """
+    Prepare a list of visual files for export.
     
     :param files: The collection of visual files
     :type files: List[Visual_File]

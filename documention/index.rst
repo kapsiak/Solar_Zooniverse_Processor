@@ -22,12 +22,10 @@ Welcome to Zooniverse Jet Processor's documentation!
 
     zooniverse/index
 
-.. Indices and tables
-.. ==================
-.. 
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
+    dataprocessing/index
+
+    misc/index
+
 
 
 
@@ -37,6 +35,12 @@ To get a sense of the workings of the program, please see :doc:`overview/general
 
 To get started quickly, please see :doc:`overview/quickstart`. 
 
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`
 
 
 

@@ -7,12 +7,31 @@ from solar.common.utils import into_number
 from numpy.linalg import norm
 
 
+def load_all(path, row=None):
+    """Function load_all: Load an entire csv file an get all the classifications as python structures
+    
+    :param path: The path to the csv
+    :type path: Path-like
+    :param row: If given, work on only a single row, defaults to None
+    :type row: int
+    :returns: A list of all the classification as :class:`~solar.zooniverse.structs.ZBase`.
+    :type return: List[:class:`~solar.zooniverse.structs.ZBase`]
+    """
+    if isinstance(row, int):
+        df = __read_class(path).iloc[row]
+        ret = [__make_row(df)]
+    else:
+        df = __read_class(path)
+        ret = [__make_row(df.iloc[x]) for x in range(df.shape[0])]
+    return [x for y in ret for x in y]
+
+
 def f(x):
     return into_number(x)
 
 
-def read_class(path):
-    """Function read_class: Read a zooniverse classification file 
+def __read_class(path):
+    """Function __read_class: Read a zooniverse classification file 
     
     :param path: The location of the file
     :type path: Path-like
@@ -28,7 +47,7 @@ def json_annot(df, index):
     return json.loads(y)
 
 
-def rotate(origin, point, angle):
+def __rotate(origin, point, angle):
     """
     Rotate a point counterclockwise by a given angle around a given origin.
 
@@ -44,15 +63,15 @@ def rotate(origin, point, angle):
     return qx, qy
 
 
-def rectangle_transform(x, y, w, h, angle):
-    """Function rectangle_transform: Convert a rectangle from x,y,w,h as given by the zooniverse classification file to 
+def __rectangle_transform(x, y, w, h, angle):
+    """Function __rectangle_transform: Convert a rectangle from x,y,w,h as given by the zooniverse classification file to 
     x,y,w,h as needed for this program. 
     
     :returns: Transformed rectangle coordinates
     :type return: dict
     """
     center = (x + w / 2, y + h / 2)
-    # x, y = rotate(center, (x, y), angle)
+    # x, y = __rotate(center, (x, y), angle)
     return {"x": x, "y": y, "w": w, "h": h, "a": angle}
 
 
@@ -136,14 +155,14 @@ def rect_maker(value, s_data):
         x = x + w / 2
         y = y + h / 2
         ret.append(ZPoint(x=x + w / 2, y=y + h / 2))
-        new_dict = rectangle_transform(x, y, w, h, a)
+        new_dict = __rectangle_transform(x, y, w, h, a)
         new_rect = ZRect(**new_dict, frame=v["frame"], purpose=v["tool_label"])
         ret.append(load_image_info(new_rect, s_data))
         ret.append(ZPoint(x=new_dict["x"], y=new_dict["y"]))
     return ret
 
 
-# This dict tells us which factory to use based on the 'tool' value
+#: This dict tells us which factory to use based on the 'tool' value
 task_allocator = {
     "T0": bool_maker,
     "T1": point_maker,
@@ -153,29 +172,29 @@ task_allocator = {
 
 
 # The following three functions use the frame to get different data from the classification file
-def frame_to_visid(meta, frame):
+def __frame_to_visid(meta, frame):
     data = next(iter(meta.items()))[1]
     total_frames = int(data["#frame_per_sub"])
     frames = [data[f"#vis_db_{x}"] for x in range(total_frames)]
     return frames[frame]
 
 
-def frame_to_fid(meta, frame):
+def __frame_to_fid(meta, frame):
     data = next(iter(meta.items()))[1]
     total_frames = int(data["#frame_per_sub"])
     frames = [data[f"#fits_db_{x}"] for x in range(total_frames)]
     return frames[frame]
 
 
-def frame_to_fits_data(meta, frame):
+def __frame_to_fits_data(meta, frame):
     data = next(iter(meta.items()))[1]
     total_frames = int(data["#frame_per_sub"])
     header_data = [json.loads(data[f"#fits_header_{x}"]) for x in range(total_frames)]
     return header_data[frame]
 
 
-def make_row(z_row):
-    """Function make_row: Create a list of zooniverse data structs from a given classification
+def __make_row(z_row):
+    """Function __make_row: Create a list of zooniverse data structs from a given classification
     
     :param z_row: A row if the zooniverse csv file
     :type z_row: pd.dataframe
@@ -197,30 +216,11 @@ def make_row(z_row):
         struct.user_id = uid
         struct.workflow_id = wid
         struct.class_id = cid
-        struct.visual_id = frame_to_visid(meta, struct.frame)
-        struct.fits_id = frame_to_fid(meta, struct.frame)
-        struct.fits_dict = frame_to_fits_data(meta, struct.frame)
+        struct.visual_id = __frame_to_visid(meta, struct.frame)
+        struct.fits_id = __frame_to_fid(meta, struct.frame)
+        struct.fits_dict = __frame_to_fits_data(meta, struct.frame)
 
     return ret
-
-
-def load_all(path, row=None):
-    """Function load_all: Load an entire csv file an get all the classifications as python structures
-    
-    :param path: The path to the csv
-    :type path: Path-like
-    :param row: If given, work on only a single row, defaults to None
-    :type row: int
-    :returns: A list of all the structs
-    :type return: List[ZStruct]
-    """
-    if isinstance(row, int):
-        df = read_class(path).iloc[row]
-        ret = [make_row(df)]
-    else:
-        df = read_class(path)
-        ret = [make_row(df.iloc[x]) for x in range(df.shape[0])]
-    return [x for y in ret for x in y]
 
 
 if __name__ == "__main__":

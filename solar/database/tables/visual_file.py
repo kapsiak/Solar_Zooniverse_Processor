@@ -102,6 +102,8 @@ class Visual_File(File_Model):
         """
         Create a new visual. This is a wrapper that uses a :class:`~solar.visual.base_visual.Visual_Builder` to create new files and automatically add them to the database.
 
+        Information about the actual image generation can be found in :doc:`/visuals/index`.
+
         :param input_file: The :class:`~solar.database.tables.fites_file.Fits_File` to be used in generating the images.
         :type input_file: Either a list or a single :class:`~solar.database.tables.fites_file.Fits_File`
         :param visual_builder: The :class:`~solar.visual.base_visual.Visual_Builder` to use to generate the images

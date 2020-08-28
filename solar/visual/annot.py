@@ -20,12 +20,13 @@ class Annot:
 
     @staticmethod
     def to_annot(struct, **kwargs):
-        """Function to_annot: Convert a zooniverse struct to an annotation.
+        """
+        Convert a zooniverse struct to an annotation.
         Also can construct an annotation from arbitrary tuples of data.        
 
         :param struct: Data structure
         :type struct: any
-        :param **kwargs: Passed to constructor of individual annotations
+        :param kwargs: Passed to constructor of individual annotations
         :returns: Annot
         """
 
@@ -71,7 +72,7 @@ class Rect_Annot(Annot):
         :type h: float
         :param a: angle of rectangle relative to horizontal (degrees)
         :type a: float
-        :param **kwargs: parameters passed to matplotlib.patches.Rectangle
+        :param kwargs: parameters passed to matplotlib.patches.Rectangle
         """
         self.x = x  # Of Center
         self.y = y  # Of Center
@@ -86,8 +87,6 @@ class Rect_Annot(Annot):
         :param fig: The matplotlib figure to draw on
         :type fig: matplotlib Figure
         :param ax: UNUSED
-        :returns: None
-        :type return: None
         """
         new = (self.x - self.w / 2, self.y - self.h / 2)
         rect = patches.Rectangle(
@@ -116,7 +115,7 @@ class Circle_Annot(Annot):
         :type y: float
         :param r: Radius of the circle
         :type r: float
-        :param **kwargs: parameters passed to matplotlib.patches.Circle
+        :param kwargs: parameters passed to matplotlib.patches.Circle
         """
 
         self.x = x
@@ -168,6 +167,13 @@ class Text_Point(Annot):
         self.props = kwargs
 
     def draw(self, fig, ax):
+        """Function draw: Draw this text_point.
+        
+        :param fig: The matplotlib figure to draw on
+        :type fig: matplotlib Figure
+        :param ax: UNUSED
+        :returns: None
+        """
         ax.annotate(
             self.text,
             xy=(self.x, self.y),

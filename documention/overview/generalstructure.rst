@@ -17,6 +17,8 @@ Figure :numref:`figworkflow` shows a general representation of how this is accom
 .. figure:: /_static/workflow.png
   :alt: The general workflow
 
+  The general workflow.
+
 .. _Zooniverse: https://www.zooniverse.org/
 
 The persistence is provided by an sqlite3 database. This database is accessed through the python wrapper `peewee <http://docs.peewee-orm.com/en/latest/>`_. An description of the api is provided in :doc:`/database/index`.

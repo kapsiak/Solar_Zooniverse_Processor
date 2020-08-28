@@ -41,12 +41,22 @@ def pixel_from_world(sunmap, image_data, hpc_x, hpc_y, normalized=False):
     :type return: tuple(float)
     """
 
-    im_width = image_data.width
-    im_height = image_data.height
-    im_ll_x = image_data.im_ll_x
-    im_ll_y = image_data.im_ll_y
-    im_ur_x = image_data.im_ur_x
-    im_ur_y = image_data.im_ur_y
+    if hasattr(image_data, "width"):
+        im_width = image_data.width
+        im_height = image_data.height
+        im_ll_x = image_data.im_ll_x
+        im_ll_y = image_data.im_ll_y
+        im_ur_x = image_data.im_ur_x
+        im_ur_y = image_data.im_ur_y
+    elif len(image_data) == 6:
+        im_width = image_data[0]
+        im_height = image_data[1]
+        im_ll_x = image_data[2]
+        im_ll_y = image_data[3]
+        im_ur_x = image_data[4]
+        im_ur_y = image_data[5]
+    else:
+        raise ValueError
 
     sunmap = get_map(sunmap)
     wcs = sunmap.wcs

@@ -1,3 +1,19 @@
+"""
+Below are a number of functions for dealing with metrics.
+
+As a rule, the first two letters denote what is being compared
+and the d1, d2, ..., are just labels for distance 1, ...
+
+*TODO* : Need to make metrics accept :mod:`solar.agg.structs` instead of just tuples.
+
+:r:  rectangle
+:p: point
+:u: universal
+
+|
+|
+"""
+
 import math
 from solar.zooniverse.structs import ZRect
 import numpy as np
@@ -6,12 +22,6 @@ import shapely.affinity
 from .rect import compute_overlap, contour
 from shapely.ops import nearest_points
 from shapely.geometry import Point, Polygon
-
-# As a rule, the first two letters denote what is being compared
-# and the d1, d2, ..., are just labels for distance 1, ...
-#   r : rectangle
-#   p : point
-#   u : universal
 
 
 def rrd1(r1, r2):
@@ -67,25 +77,22 @@ def rpd1(r1, p1):
 
 
 def ppd1(p1, p2):
-    """Function ppd1: 
-
+    """
     Compare two points as vectors.
-    
     """
     return np.linalg.norm(np.array(p1) - np.array(p2))
 
 
 def compute_dmatrix(val_list, metric=np.inner):
-    """Function compute_dmatrix: Compute the distance matrix for a set of features
+    """ 
+    Compute the distance matrix for a set of features
     """
     return np.array([[metric(x, y) for x in val_list] for y in val_list])
 
 
 def ud1(a, b, ppmet=ppd1, rrmet=rrd2, rpmet=rpd1):
-    """Function ud1: 
-
+    """
     Compare any combination of points and rectangles
-    
     """
     if len(a) == 2 and len(b) == 2:
         return ppmet(a, b)
@@ -97,12 +104,12 @@ def ud1(a, b, ppmet=ppd1, rrmet=rrd2, rpmet=rpd1):
 
 
 def build_metric(func, *args, **kwargs):
-    """Function build_metric: Construct a metric given some arguments    
+    """ Construct a metric given some arguments    
 
     :param func: Metric
-    :type func: func(a,b, *args, **kwargs)
-    :param *args: arguments to pass to metric
-    :param **kwargs: Kwargs to pass to metric
+    :type func: func(a,b, args, kwargs)
+    :param args: arguments to pass to metric
+    :param kwargs: Kwargs to pass to metric
     :returns: A metric
     :type return: func(a,b)
     """

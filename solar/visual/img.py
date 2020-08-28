@@ -34,7 +34,7 @@ class Image_Builder(Visual_Builder):
         )
 
     def save_visual(self, fits, save_path, max_size=1000, clear_after=True):
-        """Function save_visual: Save this visual
+        """Save this visual. If fits is none, no metadata will be generated.
         
         :param fits: The fits file used to generate the image. Used for metadata extraction.
         (This is not great practice and should probably be rewritten)
@@ -55,7 +55,11 @@ class Image_Builder(Visual_Builder):
         self.generate_image_data()
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self.fig.savefig(save_path, metadata=self.generate_metadata(fits))
+        if fits:
+            self.fig.savefig(save_path, metadata=self.generate_metadata(fits))
+        else:
+            self.fig.savefig(save_path)
+
         img_size = p.stat().st_size
         if img_size > max_size * 1000:
             chat("Looks like the dpi is too high, reducing")
@@ -91,6 +95,17 @@ class Unframed_Image(Image_Builder):
         self.frame = False
 
     def create(self, file_path, cmap="hot", size=None, dpi=None):
+        """Create the visual in memory
+        
+        :param file_path: The path to the fits file
+        :type file_path: str
+        :param cmap: color map, defaults to "hot"
+        :type cmap: str
+        :param size: the size of the image, defaults to None
+        :type size: float
+        :param dpi: the dpi of the image, defaults to None
+        :type dpi: int
+        """
         if not Path(file_path).is_file():
             return False
         self.map = sm.Map(file_path)
@@ -109,6 +124,9 @@ class Unframed_Image(Image_Builder):
 
 
 class Basic_Image(Image_Builder):
+    """
+    The basic image used in the zooniverse project.
+    """
     generator_name = "basic_image"
 
     def __init__(self, im_type, dpi=300):
@@ -116,6 +134,17 @@ class Basic_Image(Image_Builder):
         self.frame = False
 
     def create(self, file_path, cmap="hot", size=None, dpi=None):
+        """Create the visual in memory
+        
+        :param file_path: The path to the fits file
+        :type file_path: str
+        :param cmap: color map, defaults to "hot"
+        :type cmap: str
+        :param size: the size of the image, defaults to None
+        :type size: flaot
+        :param dpi: the dpi of the image, defaults to None
+        :type dpi: int
+        """
         if not dpi:
             dpi = self.dpi
 

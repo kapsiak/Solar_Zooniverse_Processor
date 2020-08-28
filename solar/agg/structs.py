@@ -6,14 +6,28 @@ from solar.zooniverse.structs import ZPoint, ZRect
 from sunpy.map import Map
 from sunpy.io.header import FileHeader
 import numpy as np
-from solar.common.mapproc import world_from_pixel
+from solar.common.mapproc import world_from_pixel, pixel_from_world
 from solar.common.config import Config
 
 
 TIME_START = datetime(1995, 1, 1, 0, 0, 0)
 
+def make(z_struct):
+    """Create an appropriate Space_Obj
 
-def since_start(time):
+    :param z_struct: Zooniverse Structure
+    :type z_struct: ZBase
+    :returns: Appropriate Space_Obj subclass
+    :rtype: Space_Obj
+    """
+    if isinstance(z_struct, ZPoint):
+        return Space_Point.make(z_struct)
+    if isinstance(z_struct, ZRect):
+        return Space_Rect.make(z_struct)
+    return None
+
+
+def __since_start(time):
     """
     Simple function to convert a time into a float by taking the difference between the time and TIME_START in milliseconds
 
@@ -23,19 +37,28 @@ def since_start(time):
     return (time - TIME_START) / timedelta(milliseconds=1)
 
 
-def r(x):
+def __r(x):
     return round(x, 2)
 
 
 @dataclass
 class Space_Obj:
+
+    #: The user who made this classification
     user_id: int = 0
+    #: The ID of the workflow for this classification
     workflow_id: int = 0
+    #: The ID of this classification
     class_id: int = 0
+    #: The subject ID
     subject_id: int = 0
 
+    #: The ID of the fits file used to generate the image used in this classification
     fits_id: int = -1
+    #: The ID of the visual file used in this classification
     visual_id: int = -1
+
+    #: The frame of this classification
     frame: int = -1
 
     _time: datetime = datetime(1990, 1, 1)
@@ -45,15 +68,22 @@ class Space_Obj:
 
     _smap: Map = None
 
+    #: The purpose of this data
     purpose: str = None
 
-    _smap: Map = None
+    width: float = -1  #: width of the image in pixels
+    height: float = -1  #: height of the image in pixels
+
+    im_ll_x: float = -1  #: x location of lower left corner of the actual solar image
+    im_ll_y: float = -1  #: y location of lower left corner of the actual solar image
+    im_ur_x: float = -1  #: x location of upper right corner of the actual solar image
+    im_ur_y: float = -1  #: x location of upper right corner of the actual solar image
 
     def __str__(self):
         if type(self) in (Space_Obj, Space_Point):
-            return f"{self.__class__.__name__}({self.subject_id},{self._time}, {r(self._x),r(self._y)})"
+            return f"{self.__class__.__name__}({self.subject_id},{self._time}, {__r(self._x),__r(self._y)})"
         return (
-            f"{self.__class__.__name__}({self.subject_id},{self._time}, {r(self._x),r(self._y)}"
+            f"{self.__class__.__name__}({self.subject_id},{self._time}, {__r(self._x),__r(self._y)}"
             + ", {})"
         )
 
@@ -61,7 +91,7 @@ class Space_Obj:
         raise NotImplementedError
 
     def get_map(self, z_struct):
-        """Function get_map: Construct a sunpy.map.Map from a given fits header. The data is irrelevant, we care only about the header.
+        """Construct a sunpy.map.Map from a given fits header. The data is irrelevant, we care only about the header.
         
         :param z_struct: Zooniverse Data Structure
         :type z_struct: None
@@ -73,15 +103,14 @@ class Space_Obj:
 
     @property
     def smap(self):
-        """Function smap: Setter for smap
-        :returns: None
-        :type return: None
+        """
+        The sunpy map containing the image header
         """
         return self._smap
 
     @smap.setter
     def smap(self, data):
-        """Function smap: Set the value of smap using a dictionary, constructs a fake smap with the desired header
+        """Set the value of smap using a dictionary, constructs a fake smap with the desired header
         
         :param data: Dict like object from which a header may be constructs
         :type data: dict-like
@@ -93,7 +122,8 @@ class Space_Obj:
         self._smap = fake_map
 
     def as_data(self):
-        """Function as_data: Convert class into a tuple of data suitable for aggregation
+        """Convert class into a tuple of data suitable for aggregation
+
         :returns: List of data
         :type return: List[vals]
         """
@@ -101,14 +131,13 @@ class Space_Obj:
 
     @property
     def time(self):
+        """
+        The time of the classification
+        """
         return self._time
 
     @time.setter
     def time(self, z_struct):
-        """Function time: Setter for time 
-        
-        """
-
         self.get_map(z_struct)
         if self.smap:
             self._time = datetime.strptime(
@@ -123,15 +152,14 @@ class Space_Obj:
 
     @property
     def x(self):
-        """Function x: Getter for x coord
-        :returns: None
-        :type return: None
+        """
+        HPC x coordinate of the classification. 
         """
         return self._x
 
     @x.setter
     def x(self, z_struct):
-        """Function x: Setter for x coord
+        """Setter for x coord
         
         :param z_struct: Zooniverse import structure
         :type z_struct: ZBase
@@ -152,11 +180,14 @@ class Space_Obj:
 
     @property
     def y(self):
+        """
+        HPC y coordinate for the classification
+        """
         return self._y
 
     @y.setter
     def y(self, z_struct):
-        """Function y: Setter for y coord
+        """Setter for y coord
         
         :param z_struct: Zooniverse import structure
         :type z_struct: ZBase
@@ -177,11 +208,14 @@ class Space_Obj:
 
     @property
     def xy(self):
+        """
+        Simultaneously set :attr:`x` and :attr:`y`.
+        """
         return (self._x, self._y)
 
     @xy.setter
     def xy(self, z_struct):
-        """Function xy: Setter for x and y coordinates simultaneously
+        """Setter for x and y coordinates simultaneously
         
         :param z_struct: Zooniverse import structure
         :type z_struct: ZBase
@@ -203,12 +237,35 @@ class Space_Obj:
             except Exception as e:
                 print(e)
 
+    @property
+    def imageData(self):
+        """
+        The data associated with the zooniverse image from which this spatial classification was derived.
+        """
+        return (
+            self.width,
+            self.height,
+            self.im_ll_x,
+            self.im_ll_y,
+            self.im_ur_x,
+            self.im_ur_y,
+        )
+
+    @imageData.setter
+    def imageData(self, zstruct):
+        self.width = zstruct.width
+        self.height = zstruct.height
+        self.im_ll_x = zstruct.im_ll_x
+        self.im_ll_y = zstruct.im_ll_y
+        self.im_ur_x = zstruct.im_ur_x
+        self.im_ur_y = zstruct.im_ur_y
+
     @classmethod
     def base_make(cls, z_struct):
-        """Function base_make: Base function for creating Space_Obj
+        """Base function for creating Space_Obj
         
         :param z_struct: Zooniverse Structure
-        :type z_struct: ZBase
+        :type z_struct: :class:`solar.zooniverse.structs.ZBase`
         :returns: Appropriate Space_Obj subclass
         :type return: Space_Obj
         """
@@ -221,16 +278,26 @@ class Space_Obj:
             visual_id=z_struct.visual_id,
             frame=z_struct.frame,
         )
+        new.imageData = z_struct
         new.smap = z_struct.fits_dict
         new.time = z_struct
         new.xy = z_struct
         return new
 
+    @property
+    def pixel_coords(self):
+        """
+        Convert the spatial coordinates of this object to coordinates on the image using the data :meth:`imageData`.
+        """
+        return pixel_from_world(
+            self.smap, self.imageData, self.x, self.y, normalized=True
+        )
+
 
 @dataclass
 class Space_Point(Space_Obj):
     def make_data(self):
-        return (self.x, self.y, since_start(self.time))
+        return (self.x, self.y, __since_start(self.time))
 
     @classmethod
     def make(cls, z_struct):
@@ -239,15 +306,18 @@ class Space_Point(Space_Obj):
 
 @dataclass
 class Space_Rect(Space_Obj):
+    #: The width of the rect in arcseconds
     w: float = -1
+    #: The height of the rect in arcseconds
     h: float = -1
+    #: The angle of the rect relative to the x axis
     a: float = -1
 
     def __str__(self):
-        return super().__str__().format(f"{r(self.w),r(self.h)}")
+        return super().__str__().format(f"{__r(self.w),__r(self.h)}")
 
     def make_data(self):
-        return (self.x, self.y, self.w, self.h, self.a, since_start(self.time))
+        return (self.x, self.y, self.w, self.h, self.a, __since_start(self.time))
 
     @classmethod
     def make(cls, z_struct):
@@ -256,15 +326,4 @@ class Space_Rect(Space_Obj):
         return new
 
 
-def make(z_struct):
-    """Function make: Create an appropriate Space_Obj
-    :param z_struct: Zooniverse Structure
-    :type z_struct: ZBase
-    :returns: Appropriate Space_Obj subclass
-    :type return: Space_Obj
-    """
-    if isinstance(z_struct, ZPoint):
-        return Space_Point.make(z_struct)
-    if isinstance(z_struct, ZRect):
-        return Space_Rect.make(z_struct)
-    return None
+

@@ -3,8 +3,7 @@ class Visual_Builder:
     generator_name = "generic_visual"
 
     def __init__(self, im_type, metadata=None, annotations=(), dpi=300):
-        """Function __init__: 
-        
+        """
         :param im_type: The extension of the image (ie jpeg, mp4, png, ...)
         :type im_type: str
         :param metadata: What metadata to append add to the generated image, defaults to None
@@ -36,8 +35,8 @@ class Visual_Builder:
 
         Add annotations to this visual
         
-        :param *annot: Annotation objects
-        :type *annot: subclass of Annot
+        :param annot: Annotation objects
+        :type annot: subclass of Annot
         :returns: None
         :type return: None
         """
