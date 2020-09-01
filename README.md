@@ -10,6 +10,18 @@ This is a package to aid in the construction of the JETS universe database. The 
 6. Convert fits files into movies and pngs for use in zooniverse (`solar.visual`)
 7. Map image coordinates to world coordinates
 
+# Generating The Documentation
+
+Thanks to [sphinx](https://www.sphinx-doc.org/en/master/), generating the documention is quite fast. Simply run 
+```console
+mkdir build
+make html
+make latexpdf
+```
+to generate an html webpage and pdf of the documention, respectively. These files will be generated in the build directory. 
+
+Additionally, there is a presentation located within the documentation folder, which contains more or less the same content as the quickstart. 
+
 # Package Contents
 ## Request events from HEK
 ```python
