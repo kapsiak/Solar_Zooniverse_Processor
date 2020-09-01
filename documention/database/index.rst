@@ -19,3 +19,10 @@ The most important tables are described below:
 :Fits Files: Fits files found from queries to the SSW Cutout Service are stored in the table :class:`~solar.database.tables.fits_files.Fits_File`
 :Generated Visuals: Images and videos generated from the Fits files are stores in the table :class:`~solar.database.tables.visual_file.Visual_File`
 
+There other utility tables, but for the most part they are an implementation detail. The entire schema is shown in :numref:`database`.
+
+.. _database:
+.. figure:: /_static/database.png    
+    :alt: database
+
+    The database schema.

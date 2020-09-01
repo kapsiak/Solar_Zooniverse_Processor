@@ -7,8 +7,8 @@ from solar.database.tables.join_vis_fit import Join_Visual_Fits
 from solar.visual.img import Basic_Image
 from solar.visual.vid import Basic_Video
 from solar.database import create_tables
-from solar.zooniverse.export import zooniverse_export, prepare_row, split
-from solar.zooniverse.zimport import load_all, rotate
+from solar.zooniverse.export import zooniverse_export,  split
+from solar.zooniverse.zimport import load_all
 from solar.zooniverse.structs import ZRect, ZPoint, ZSpatial
 from solar.agg.structs import make
 from solar.agg.cluster import hdb, mean_fit, aff_fit
@@ -44,7 +44,9 @@ color_palette = sns.color_palette("deep", 8)
 cluster_colors = [color_palette[x] if x >= 0 else (0.5, 0.5, 0.5) for x in labels]
 
 
-annots = [Annot.to_annot(x, color=c, ls="--") for x, c in zip(data, cluster_colors)]
+annots = [Annot.to_annot(x, 
+   # color=c, 
+    ls="--") for x, c in zip(data, cluster_colors)]
 
 for x in set((x for x in labels if x > -1)):
     print(x)
@@ -52,8 +54,8 @@ for x in set((x for x in labels if x > -1)):
     avc = average(x, labels, data, narrow="point")
     if av is not None:
         print(av)
-        annots.append(Rect_Annot(*av, color=color_palette[x], lw=2))
-        annots.append(Circle_Annot(*avc, color=color_palette[x], r=20))
+       # annots.append(Rect_Annot(*av, color=color_palette[x], lw=2))
+       # annots.append(Circle_Annot(*avc, color=color_palette[x], r=20))
 
 annots = [x for x in annots if x]
 

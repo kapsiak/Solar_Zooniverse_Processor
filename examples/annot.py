@@ -18,11 +18,8 @@ rect = Rect_Annot(x=0.4, y=0.4, w=0.3, h=0.4, a=45, lw=2)
 circ = Circle_Annot(x=0.8, y=0.8)
 rect_center = Circle_Annot(x=0.4, y=0.4, color="blue")
 text = Text_Point(0.5, 0.5, "Look at this")
-
-
-fits_database_id = 1
-
 bim.add_annotation(rect, circ, rect_center, text)
+fits_database_id = 1
 f = Fits_File.get(Fits_File.id == fits_database_id)
 bim.create(f.file_path)
 bim.save_visual(f, "examples/new.png")
