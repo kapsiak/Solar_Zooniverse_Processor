@@ -72,4 +72,4 @@ def setup(app):
 
 
 html_static_path = ['_static']
-html_logo = "_static/zoo_logo.png"
+html_logo = "_static/logo.png"
