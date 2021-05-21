@@ -2,7 +2,7 @@
 
 ## Foreword
 
-This project hosts a software developed in Python (package) used to create the database of subjects used in the  [Solar Jet Hunter](https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter) Zooniverse project. The aim of this tool is to access the [HEK database](https://lmsal.com/hek/) in which some jets are reported, download the data using the [SDO cutout service](https://www.lmsal.com/get_aia_data/) and create the corresponding subjects for the Zooniverse platform.  
+This project hosts a software package developed in Python used to create the database of subjects used in the  [Solar Jet Hunter](https://www.zooniverse.org/projects/sophiemu/solar-jet-hunter) Zooniverse project. The aim of this tool is to access the [HEK database](https://lmsal.com/hek/) in which some jets are reported, download the data using the [SDO cutout service](https://www.lmsal.com/get_aia_data/) and create the corresponding subjects for the Zooniverse platform.  
 
 ## Structure
 
