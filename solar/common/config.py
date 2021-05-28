@@ -43,7 +43,7 @@ class Config(metaclass=ConfMeta):
     """
 
     # TODO: Allow this class to defined via a yaml/toml document #
-    db_path = "test.db"
+    db_path = "test_zooniverse_database.db"
     db_save = "files"
     storage_path = Map(
         fits="fits/{event_id}/{server_file_name}",
