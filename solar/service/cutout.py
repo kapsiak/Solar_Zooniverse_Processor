@@ -55,11 +55,14 @@ class Cutout_Service(Base_Service):
                 pass
         chat("I could not find request matching this event, I will create a new one")
         # Either way, we get the parameters we need from the event
+        hek_xr = abs(event.x_max - event.x_min)
+        hek_yr = abs(event.y_max - event.y_min)
+        min_xyr = 120. # in arcsec 
         to_pass = dict(
             xcen=event.hpc_x,
             ycen=event.hpc_y,
-            fovx=abs(event.x_max - event.x_min),
-            fovy=abs(event.y_max - event.y_min),
+            fovx=max(min_xyr,hek_xr),
+            fovy=max(min_xyr,hek_yr),
             notrack=1,
             starttime=event.start_time,
             endtime=event.end_time,
@@ -149,7 +152,7 @@ class Cutout_Service(Base_Service):
 
         self._data = None  # The text from the response
 
-    def __compute_frames(self, start_time, end_time, cadence=12):
+    def __compute_frames(self, start_time, end_time, cadence=24):
         seconds = math.ceil(
             (end_time.value - start_time.value) / timedelta(seconds=cadence)
         )
