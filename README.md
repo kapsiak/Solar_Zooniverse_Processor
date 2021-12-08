@@ -175,7 +175,8 @@ After the export function the data can be exported to the Solar Jet Hunter Zooni
 This can be installed using the terminal command 
 $ pip install panoptes-client
 
-The export is done through the terminal interface run in the *export* directory. The following lines are then run
+The export is done through the terminal interface run in the *export* directory. The following lines are then run 
+
 1)  The user is asked to log in to Zooniverse account.
 ```
 $ panoptes configure
