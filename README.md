@@ -170,6 +170,30 @@ to_export = [x for x in to_export if x]
 zooniverse_export(*[split(x, files_per_subject, subject_overlap) for x in to_export])
 ```
 
+## Export to Zooniverse with Panoptes**
+After the export function the data can be exported to the Solar Jet Hunter Zooniverse project. For this step we use the *Panoptes CLI*, available on GitHub https://github.com/zooniverse/panoptes-cli
+This can be installed using the terminal command 
+$ pip install panoptes-client
+
+The export is done through the terminal interface run in the *export* directory. The following lines are then run
+1)  The user is asked to log in to Zooniverse account.
+```
+$ panoptes configure
+```
+2)  Users links to the Solar Jet Hunter project with id: 11265.
+```
+$ panoptes project modify 11265 
+```
+3)  A new subject set is created with the name *"Jetdata"* in the Solar Jet Hunter project
+```
+$ panoptes subject-set create 11265 "Jetdata"  
+```
+4)  The terminal will now print a subject id, example shows *10000*, for the new subject, add this into the following terminal command to add subjects to the new set. Finally the subjects in export can be uploaded in the project.
+```
+$ panoptes subject-set upload-subjects 10000 meta_reduced.csv
+```
+*Note:* The csv file that should be used for the export is meta_reduced.csv, this file is automatically created additional to meta.csv. If meta.csv is used, the quotation style of the headers of the fits files will not work properly with the Panoptes CLI package and no files will be found. Since the information in the header is not needed for Zooniverse the headers are left out in the meta_reduced.csv
+
 ## Importing the classified data
 
 Once the data has been classified by zooniverse volunteers, we must read in the data and analyze it. 
