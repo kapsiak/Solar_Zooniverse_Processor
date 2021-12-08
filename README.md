@@ -170,7 +170,7 @@ to_export = [x for x in to_export if x]
 zooniverse_export(*[split(x, files_per_subject, subject_overlap) for x in to_export])
 ```
 
-## Export to Zooniverse with Panoptes**
+## Export to Zooniverse with Panoptes
 After the export function the data can be exported to the Solar Jet Hunter Zooniverse project. For this step we use the *Panoptes CLI*, available on GitHub https://github.com/zooniverse/panoptes-cli
 This can be installed using the terminal command 
 $ pip install panoptes-client
