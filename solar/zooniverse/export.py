@@ -36,12 +36,21 @@ def zooniverse_export(*files, export_dir="export", existing_csv=None):
         writer.writeheader()
         for row in data:
             writer.writerow(row)
+#Write seperate csv file meta_reduced.csv for export to zooniverse Panoptes
+    data = [__prepare_row(x,reduced=True) for event in files for x in event]
+    header = [x for x in data[0]]
+    with open(export / "meta_reduced.csv", "w") as f:
+        writer = csv.DictWriter(f, fieldnames=header)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
     print(set([z for x in files for y in x for z in y]))
     for f in set([z for x in files for y in x for z in y]):
         f.export(export)
 
 
-def __prepare_row(files):
+def __prepare_row(files,reduced=False):
     """
     Prepare a list of visual files for export.
     
@@ -118,6 +127,16 @@ def __prepare_row(files):
         **uniform,
         **fits_header_info,
     }
+    if reduced==True:
+        new_row = {
+            **file_info,
+            #**check_info,
+            **fits_db_id,
+            **vis_db_id,
+            **uniform,
+            #**fits_header_info,
+    }
+
     new_row = {"#" + x: y for x, y in new_row.items()}
     return new_row
 
