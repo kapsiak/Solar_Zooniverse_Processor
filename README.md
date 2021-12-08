@@ -177,15 +177,15 @@ $ pip install panoptes-client
 
 The export is done through the terminal interface run in the *export* directory. The following lines are then run 
 
-1)  The user is asked to log in to Zooniverse account.
+1)  The user is asked to log in to their Zooniverse account.
 ```
 $ panoptes configure
 ```
-2)  Users links to the Solar Jet Hunter project with id: 11265.
+2)  Users link to the Solar Jet Hunter project with id: 11265.
 ```
 $ panoptes project modify 11265 
 ```
-3)  A new subject set is created with the name *"Jetdata"* in the Solar Jet Hunter project
+3)  A new subject set is created with the name *"Jetdata"* in the Solar Jet Hunter project.
 ```
 $ panoptes subject-set create 11265 "Jetdata"  
 ```
