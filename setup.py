@@ -9,7 +9,7 @@ Created on Tue Feb 28 09:53:56 2017
 from setuptools import find_packages, setup
 
 setup(name="solar",
-      version="0.0.1",
+      version="0.0.2",
       description="Solar Zooniverse Processor for the jet zooniverse project. This will request and create data to populate the zooniverse project, and aggregate the results.",
       author="Charlie Kapsiak, Sophie Musset ",
       author_email='musset.sophie@gmail.com',

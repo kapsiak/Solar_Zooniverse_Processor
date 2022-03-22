@@ -3,6 +3,8 @@ import sunpy.map as sm
 from pathlib import Path
 from .base_visual import Visual_Builder
 from solar.common.printing import chat
+import os
+import numpy as np
 
 
 class Image_Builder(Visual_Builder):
@@ -41,7 +43,9 @@ class Image_Builder(Visual_Builder):
         :type fits: Fits_File
         :param save_path: The location to save the image
         :type save_path: Path-like
-        :param max_size: Maximum file size in kilobytes, defaults to 1000
+        :param max_size: Maximum fits file size in kilobytes, defaults to 1000.
+            we use this max size to calculate the max theoretical output dpi^2*fits_size using default dpi of 300.
+            if the theoretical output is greater that this max then we reduce the dpi accordingly
         :type max_size: float
         :param clear_after: Clear the image from memory after it has been saved ,defaults to True
         
@@ -55,13 +59,18 @@ class Image_Builder(Visual_Builder):
         self.generate_image_data()
         p = Path(save_path)
         p.parent.mkdir(parents=True, exist_ok=True)
+        size_fits_file = os.path.getsize(fits.file_path)
+                
         if fits:
             self.fig.savefig(save_path, metadata=self.generate_metadata(fits))
         else:
             self.fig.savefig(save_path)
-
-        img_size = p.stat().st_size
-        if img_size > max_size * 1000:
+                   
+        default_dpi = 300
+        output_max = default_dpi * default_dpi * max_size * 1000
+        output_size = self.fig.dpi * self.fig.dpi * size_fits_file
+        
+        if output_size > output_max:
             chat("Looks like the dpi is too high, reducing")
             self.create(
                 self.creation_params["fpath"],
@@ -69,8 +78,8 @@ class Image_Builder(Visual_Builder):
                 self.creation_params["size"],
                 int(
                     self.creation_params["dpi"]
-                    * (1 - (img_size - max_size * 1000) / img_size)
-                ),
+                    * np.sqrt(max_size*1000/size_fits_file)
+                ),   
             )
             self.save_visual(fits, save_path, max_size, clear_after)
         if clear_after:
