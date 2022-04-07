@@ -35,7 +35,7 @@ class Image_Builder(Visual_Builder):
             self.fig.axes[0].get_position().get_points()
         )
 
-    def save_visual(self, fits, save_path, max_size=1000, clear_after=True):
+    def save_visual(self, fits, save_path, max_size=900, clear_after=True, default_dpi=300):
         """Save this visual. If fits is none, no metadata will be generated.
         
         :param fits: The fits file used to generate the image. Used for metadata extraction.
@@ -66,7 +66,6 @@ class Image_Builder(Visual_Builder):
         else:
             self.fig.savefig(save_path)
                    
-        default_dpi = 300
         output_max = default_dpi * default_dpi * max_size * 1000
         output_size = self.fig.dpi * self.fig.dpi * size_fits_file
         
