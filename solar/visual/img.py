@@ -35,7 +35,7 @@ class Image_Builder(Visual_Builder):
             self.fig.axes[0].get_position().get_points()
         )
 
-    def save_visual(self, fits, save_path, max_size=900, clear_after=True, default_dpi=300):
+    def save_visual(self, fits, save_path, max_size=800, clear_after=True, default_dpi=300):
         """Save this visual. If fits is none, no metadata will be generated.
         
         :param fits: The fits file used to generate the image. Used for metadata extraction.
