@@ -344,8 +344,11 @@ def png_to_mp4(pngs, fps=10, movie_name=None, overwrite=False, max_size=2**10 * 
     #Lowest possible crf is 25
     crf = 25
 
-    #Only need to repeat the loop if overwrite is true
-    while crf == 25 or overwrite:
+    #Set initial file size to be larger than the max size so that the first loop runs
+    file_size = max_size + 1
+
+    #Loop is repeated until file size is sufficiently small
+    while file_size > max_size:
         #Build the ffmpeg command to create the video
         #Base command
         ffmpeg_command = "ffmpeg "
@@ -379,12 +382,6 @@ def png_to_mp4(pngs, fps=10, movie_name=None, overwrite=False, max_size=2**10 * 
 
         #Calculates output video size
         file_size = os.path.getsize(movie_folder + '/' + movie_name)
-
-        #If video is too large, remakes it with higher compression (higher crf)
-        if file_size > max_size:
-            crf += 1
-        else:
-            break
 
     #Remove temporary folder and its contents
     os.system('rm -rf ' + temp_folder)
